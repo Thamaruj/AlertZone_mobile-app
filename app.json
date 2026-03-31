@@ -9,7 +9,10 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "config": {
+        "googleMapsApiKey": "AIzaSyC43kjBIm6oio6od630NQbjVw9x-f2xp5Q"
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -19,7 +22,13 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyC43kjBIm6oio6od630NQbjVw9x-f2xp5Q"
+        }
+      },
+      "package": "com.anonymous.alertzone"
     },
     "web": {
       "output": "static",
@@ -27,6 +36,12 @@
     },
     "plugins": [
       "expo-router",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow AlertZone to use your location to show nearby issues."
+        }
+      ],
       [
         "expo-splash-screen",
         {
