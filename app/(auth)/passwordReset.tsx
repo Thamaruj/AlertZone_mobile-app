@@ -99,12 +99,12 @@ export default function ForgotPasswordScreen() {
               </Text>
             </View>
 
-            <View className={`bg-[#1E3A44] border rounded-2xl px-4 py-2 flex-row items-center ${
+            <View className={`bg-[#1E3A44] border rounded-2xl py-2 flex-row items-center ${
               isEmailFocused ? "border-[#4CC2D1]" : "border-[#2D4F5C]"
             }`}>
 
                 {/* Icon Box */}
-                <View className="px-1 py- border-r border-[#2D4F5C] justify-center items-center">
+                <View className="px-4 py-3 border-r border-[#2D4F5C] justify-center items-center">
                 <Ionicons name="mail-outline" size={25} color="#30A89C" />
                 </View>
 
