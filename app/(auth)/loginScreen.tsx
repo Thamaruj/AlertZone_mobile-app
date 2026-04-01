@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -14,90 +14,103 @@ import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons'; 
 import Toast from 'react-native-toast-message';
-
-// --- FIREBASE IMPORTS ---
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth, db } from '../../services/firebase'; 
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
-
 
 export default function LoginScreen() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
-
   const [isEmailFocused, setIsEmailFocused] = useState(false);
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
-
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  // ✅ Ref for keyboard "Next" chain: Email → Password → Submit
   const passwordRef = useRef<TextInput>(null);
+
+  // Pre-fill email if Remember Me was previously saved
+  useEffect(() => {
+    AsyncStorage.getItem('rememberMe').then((saved) => {
+      if (saved) {
+        setEmail(saved);
+        setRememberMe(true);
+      }
+    });
+  }, []);
 
   const handleLogin = async () => {
     if (!email || !password) {
-        Toast.show({
+      Toast.show({
         type: 'error',
         text1: 'Incomplete Details',
         text2: 'Email and password are required to continue.',
-        });
+      });
       return;
     }
 
     setLoading(true);
 
     try {
+      // 1. Sign in with Firebase Auth
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const uid = userCredential.user.uid;
 
-      const userDoc = await getDoc(doc(db, "users", uid));
+      // 2. Save or clear Remember Me
+      if (rememberMe) {
+        await AsyncStorage.setItem('rememberMe', email);
+      } else {
+        await AsyncStorage.removeItem('rememberMe');
+      }
+
+      // 3. Fetch user profile from Firestore to get their name for the welcome toast
+      const userDoc = await getDoc(doc(db, 'users', uid));
 
       if (userDoc.exists()) {
         const userData = userDoc.data();
-        console.log("✅ Auth Success:", userData.fullName);
 
+        // 4. Show success toast
         Toast.show({
-        type: 'success',
-        text1: 'Auth Successful',
-        text2: `Hang tight`,
+          type: 'success',
+          text1: 'Login Successful',
+          text2: `Welcome back, ${userData.fullName}! 👋`,
         });
 
+        // 5. Navigate to home after a short delay so user sees the toast
         setTimeout(() => {
-            router.replace("/(tabs)/home");
-        }, 500);
-            
-        setTimeout(() =>{
-            Toast.show({
-            type: 'success',
-            text1: 'Login Successful',
-            text2: `Welcome ${userData.fullName}`,
-            });
-        },1500)
+          router.replace('/(tabs)/home');
+        }, 1000);
 
       } else {
-            Toast.show({
-            type: 'error',
-            text1: 'Database Error',
-            text2: 'Auth successful, but no profile found in Firestore.',
-            });
+        // Auth worked but no Firestore profile — navigate anyway
+        Toast.show({
+          type: 'success',
+          text1: 'Login Successful',
+          text2: 'Welcome back!',
+        });
+        setTimeout(() => {
+          router.replace('/(tabs)/home');
+        }, 1000);
       }
 
     } catch (error: any) {
-      console.error("❌ Login Error:", error.message);
-      
-      let errorMessage = "Invalid email or password.";
-      if (error.code === 'auth/network-request-failed') errorMessage = "Network error. Check your connection.";
-      
-        Toast.show({
+      console.error('❌ Login Error:', error.code);
+
+      let errorMessage = 'Invalid email or password.';
+      if (error.code === 'auth/network-request-failed') errorMessage = 'Network error. Check your connection.';
+      if (error.code === 'auth/too-many-requests')      errorMessage = 'Too many attempts. Try again later.';
+      if (error.code === 'auth/user-disabled')          errorMessage = 'This account has been disabled.';
+
+      Toast.show({
         type: 'error',
         text1: 'Login Failed',
-        text2: `${errorMessage}`,
-        });
+        text2: errorMessage,
+      });
 
-        setPassword("")
-        setRememberMe(false)
+      setPassword('');
+      setRememberMe(false);
 
     } finally {
       setLoading(false);
@@ -106,16 +119,11 @@ export default function LoginScreen() {
 
   return (
     <LinearGradient colors={['#0D1F2D', '#0A1820', '#071318']} className="flex-1">
-
-      {/* ✅ FIX 1: behavior="padding" works on both platforms.
-              keyboardVerticalOffset gives breathing room on Android */}
       <KeyboardAvoidingView 
         behavior="padding"
         keyboardVerticalOffset={Platform.OS === 'android' ? 30 : 0}
         className="flex-1"
       >
-        {/* ✅ FIX 2: keyboardShouldPersistTaps so buttons stay tappable while
-                keyboard is open. paddingBottom so nothing gets clipped. */}
         <ScrollView
           contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }}
           showsVerticalScrollIndicator={false}
@@ -139,16 +147,16 @@ export default function LoginScreen() {
 
             {/* 2. Input Fields */}
             <View className="space-y-4">
-            {/* Email Field */}
-            <View className={`bg-[#1E3A44] border rounded-2xl flex-row items-center ${
+              {/* Email Field */}
+              <View className={`bg-[#1E3A44] border rounded-2xl flex-row items-center p-1 ${
                 isEmailFocused ? "border-[#4CC2D1]" : "border-[#2D4F5C]"
-            }`}>
-                <View className="px-3 py- border-r border-[#2D4F5C] justify-center items-center">
-                <Ionicons name="mail-outline" size={20} color="#30A89C" />
+              }`}>
+                <View className="px-3 py-3 border-r border-[#2D4F5C] justify-center items-center">
+                  <Ionicons name="mail-outline" size={20} color="#30A89C" />
                 </View>
                 <View className="flex-1 px-3 py-2">
-                <Text className="text-gray-400 text-xs p-0 m-0">E-mail:</Text>
-                <TextInput
+                  <Text className="text-gray-400 text-xs p-0 m-0">E-mail:</Text>
+                  <TextInput
                     placeholder="Enter your email"
                     placeholderTextColor="#5A7D8A"
                     className="text-white text-base p-0 m-0"
@@ -162,20 +170,20 @@ export default function LoginScreen() {
                     editable={!loading}
                     returnKeyType="next"
                     onSubmitEditing={() => passwordRef.current?.focus()}
-                />
+                  />
                 </View>
-            </View>
+              </View>
 
-            {/* Password Field */}
-            <View className={`bg-[#1E3A44] border rounded-2xl flex-row items-center mt-4 ${
+              {/* Password Field */}
+              <View className={`bg-[#1E3A44] border rounded-2xl flex-row items-center p-1 mt-4 ${
                 isPasswordFocused ? "border-[#4CC2D1]" : "border-[#2D4F5C]"
-            }`}>
+              }`}>
                 <View className="px-3 py-3 border-r border-[#2D4F5C] justify-center items-center">
-                <Ionicons name="lock-closed-outline" size={20} color="#30A89C" />
+                  <Ionicons name="lock-closed-outline" size={20} color="#30A89C" />
                 </View>
                 <View className="flex-1 px-3 py-2">
-                <Text className="text-gray-400 text-xs p-0 m-0">Password:</Text>
-                <TextInput
+                  <Text className="text-gray-400 text-xs p-0 m-0">Password:</Text>
+                  <TextInput
                     ref={passwordRef}
                     placeholder="Enter your password"
                     placeholderTextColor="#5A7D8A"
@@ -189,16 +197,16 @@ export default function LoginScreen() {
                     editable={!loading}
                     returnKeyType="done"
                     onSubmitEditing={handleLogin}
-                />
+                  />
                 </View>
                 <Pressable onPress={() => setShowPassword(!showPassword)} className="px-3">
-                <Ionicons
-                    name={showPassword ? "eye-off-outline" : "eye-outline"}
+                  <Ionicons
+                    name={showPassword ?  "eye-outline": "eye-off-outline"}
                     size={20}
                     color="#30A89C"
-                />
+                  />
                 </Pressable>
-            </View>
+              </View>
             </View>
 
             {/* 3. Remember Me & Forgot Password */}
@@ -208,14 +216,15 @@ export default function LoginScreen() {
                 onPress={() => setRememberMe(!rememberMe)}
               >
                 <View className={`w-5 h-5 rounded border ${rememberMe ? 'bg-[#30A89C] border-[#30A89C]' : 'border-gray-500'} items-center justify-center`}>
-                   {rememberMe && <Ionicons name="checkmark" size={14} color="white" />}
+                  {rememberMe && <Ionicons name="checkmark" size={14} color="white" />}
                 </View>
                 <Text className="text-gray-400 ml-2">Remember me</Text>
               </Pressable>
               
               <Pressable
-                onPress={()=>router.push("/(auth)/passwordReset")}
-                className='active:opacity-70'>
+                onPress={() => router.push("/(auth)/passwordReset")}
+                className="active:opacity-70"
+              >
                 <Text className="text-[#4CC2D1]">Forgot Password?</Text>
               </Pressable>
             </View>
@@ -230,7 +239,7 @@ export default function LoginScreen() {
                 {loading ? (
                   <ActivityIndicator color="#122D36" />
                 ) : (
-                  <Text className="text-[#122D36] text-center font-bold text-lg ">Log In</Text>
+                  <Text className="text-[#122D36] text-center font-bold text-lg">Log In</Text>
                 )}
               </Pressable>
 
