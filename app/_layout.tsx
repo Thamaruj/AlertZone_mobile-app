@@ -1,3 +1,4 @@
+import { AuthProvider } from "@/config/authConfig";
 import { Stack } from "expo-router";
 import { Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -9,6 +10,7 @@ export default function RootLayout() {
    const insets = useSafeAreaInsets();
   return (
     <>
+    <AuthProvider>
       <Stack screenOptions={{ headerShown: false }} />
           <Toast
             config={toastConfig}
@@ -16,6 +18,7 @@ export default function RootLayout() {
               Platform.OS === "ios" ? insets.top + 0 : 50
             }
           />
+          </AuthProvider>
     </>
   );
 }
