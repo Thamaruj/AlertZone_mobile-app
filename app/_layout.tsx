@@ -7,18 +7,18 @@ import { toastConfig } from "../config/toastConfig"; // make sure this matches t
 import "../global.css";
 
 export default function RootLayout() {
-   const insets = useSafeAreaInsets();
+    const insets = useSafeAreaInsets();
   return (
     <>
-    <AuthProvider>
-      <Stack screenOptions={{ headerShown: false }} />
+      <AuthProvider>
+        <Stack screenOptions={{ headerShown: false }} />
           <Toast
             config={toastConfig}
             topOffset={
               Platform.OS === "ios" ? insets.top + 0 : 50
             }
           />
-          </AuthProvider>
+      </AuthProvider>
     </>
   );
 }
