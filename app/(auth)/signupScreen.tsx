@@ -1,26 +1,26 @@
-import React, { useState, useRef } from 'react';
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  Pressable, 
-  Image, 
-  KeyboardAvoidingView, 
-  Platform, 
-  ScrollView, 
-  ActivityIndicator, 
-  Modal 
-} from 'react-native';
-import { useRouter } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import React, { useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  Image,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View
+} from 'react-native';
 import Toast from 'react-native-toast-message';
-import { BlurView } from 'expo-blur'; 
 
 // Firebase Imports
-import { auth, db } from '../../services/firebase'; 
 import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
+import { auth, db } from '../../services/firebase';
 
 
 export default function RegisterScreen() {
@@ -164,7 +164,10 @@ const validatePassword = (password:string) => {
             <View className="space-y-2">
               {/* Full Name */}
               <View className="bg-[#1E3A44] border border-[#2D4F5C] rounded-2xl p-2 flex-row items-center">
-                <Ionicons name="person-outline" size={20} color="#30A89C" />
+                    <View className="px-4 py-3 border-r border-[#2D4F5C] justify-center items-center">
+                    <Ionicons name="person-outline" size={20} color="#30A89C" />
+                  </View>
+
                 <View className="ml-3 flex-1">
                   <Text className="text-gray-400 text-[10px] uppercase font-bold">Full Name:</Text>
                   <TextInput
@@ -182,7 +185,9 @@ const validatePassword = (password:string) => {
 
               {/* Email */}
               <View className="bg-[#1E3A44] border border-[#2D4F5C] rounded-2xl p-2 flex-row items-center mt-3">
-                <Ionicons name="mail-outline" size={20} color="#30A89C" />
+                  <View className="px-4 py-3 border-r border-[#2D4F5C] justify-center items-center">
+                      <Ionicons name="mail-outline" size={20} color="#30A89C" />
+                  </View>
                 <View className="ml-3 flex-1">
                   <Text className="text-gray-400 text-[10px] uppercase font-bold">E-mail:</Text>
                   <TextInput
@@ -203,7 +208,9 @@ const validatePassword = (password:string) => {
 
               {/* Phone */}
               <View className="bg-[#1E3A44] border border-[#2D4F5C] rounded-2xl p-2 flex-row items-center mt-3">
-                <Ionicons name="call-outline" size={20} color="#30A89C" />
+                <View className="px-4 py-3 border-r border-[#2D4F5C] justify-center items-center">
+                    <Ionicons name="call-outline" size={20} color="#30A89C" />
+                </View>
                 <View className="ml-3 flex-1">
                   <Text className="text-gray-400 text-[10px] uppercase font-bold">Phone Number:</Text>
                   <TextInput
@@ -223,7 +230,9 @@ const validatePassword = (password:string) => {
 
               {/* Password */}
               <View className="bg-[#1E3A44] border border-[#2D4F5C] rounded-2xl p-2 flex-row items-center mt-3">
-                <Ionicons name="lock-closed-outline" size={20} color="#30A89C" />
+                <View className="px-4 py-3 border-r border-[#2D4F5C] justify-center items-center">
+                    <Ionicons name="call-outline" size={20} color="#30A89C" />
+                </View>
                 <View className="ml-3 flex-1">
                   <Text className="text-gray-400 text-[10px] uppercase font-bold">Password:</Text>
                   <TextInput
@@ -245,9 +254,11 @@ const validatePassword = (password:string) => {
               </View>
 
               {/* Confirm Password */}
-              <View className="bg-[#1E3A44] border border-[#2D4F5C] rounded-2xl p-2 flex-row items-center mt-3">
-                <Ionicons name="lock-closed-outline" size={20} color="#30A89C" />
-                <View className="ml-3 flex-1">
+                <View className="bg-[#1E3A44] border border-[#2D4F5C] rounded-2xl p-2 flex-row items-center mt-3">
+                <View className="px-4 py-3 border-r border-[#2D4F5C] justify-center items-center">
+                    <Ionicons name="lock-closed-outline" size={20} color="#30A89C" />
+                </View>
+                <View className="ml-3 flex-1 ">
                   <Text className="text-gray-400 text-[10px] uppercase font-bold">Confirm Password:</Text>
                   <TextInput
                     ref={confirmPassRef}
@@ -263,7 +274,7 @@ const validatePassword = (password:string) => {
                   />
                 </View>
                 <Pressable onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-                  <Ionicons name={showConfirmPassword ? "eye-off-outline" : "eye-outline"} size={20} color="#30A89C" />
+                   <Ionicons name={showConfirmPassword ? "eye-outline": "eye-off-outline"} size={20} color="#30A89C" />
                 </Pressable>
               </View>
             </View>

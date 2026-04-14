@@ -1,23 +1,22 @@
-import React, { useState, useRef } from 'react';
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  Pressable, 
-  Image, 
-  KeyboardAvoidingView, 
-  Platform, 
-  ScrollView, 
-  ActivityIndicator 
-} from 'react-native';
-import { useRouter } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View
+} from 'react-native';
 import Toast from 'react-native-toast-message';
 
 // Firebase imports
-import { auth } from '../../services/firebase';
 import { sendPasswordResetEmail } from 'firebase/auth';
+import { auth } from '../../services/firebase';
 
 
 export default function ForgotPasswordScreen() {
@@ -99,12 +98,12 @@ export default function ForgotPasswordScreen() {
               </Text>
             </View>
 
-            <View className={`bg-[#1E3A44] border rounded-2xl px-4 py-2 flex-row items-center ${
+             <View className={`bg-[#1E3A44] border rounded-2xl py-2 flex-row items-center ${
               isEmailFocused ? "border-[#4CC2D1]" : "border-[#2D4F5C]"
             }`}>
 
                 {/* Icon Box */}
-                <View className="px-1 py- border-r border-[#2D4F5C] justify-center items-center">
+                <View className="px-4 py-3 border-r border-[#2D4F5C] justify-center items-center">
                 <Ionicons name="mail-outline" size={25} color="#30A89C" />
                 </View>
 

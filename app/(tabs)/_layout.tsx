@@ -1,8 +1,9 @@
-import React from 'react';
-import { Tabs, useRouter, usePathname } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { View, Text, Platform, Pressable, Animated } from 'react-native';
+import { Redirect, Tabs, usePathname, useRouter } from 'expo-router';
+import React from 'react';
+import { ActivityIndicator, Animated, Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAuth } from "../../config/authConfig";
 import { ScrollProvider, useScrollContext } from '../../config/tabBarScrollContext';
 
 // ─────────────────────────────────────────────
@@ -113,7 +114,24 @@ function CustomTabBar() {
 // Root Layout
 // ─────────────────────────────────────────────
 export default function TabLayout() {
+    const { user, loading } = useAuth();
+
+    // Still checking auth state — show spinner
+  if (loading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#071318', alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator color="#4CC2D1" size="large" />
+      </View>
+    );
+  }
+
+  // Not logged in → redirect to login
+  if (!user) {
+    return <Redirect href="/(auth)/loginScreen" />;
+  }
+
   return (
+    
     <ScrollProvider>
       <Tabs
         tabBar={() => <CustomTabBar />}
