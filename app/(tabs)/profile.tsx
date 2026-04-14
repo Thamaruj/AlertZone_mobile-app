@@ -1,53 +1,34 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  Pressable,
-  Image,
-  Modal,
-  Switch,
-  TextInput,
-  Platform,
-} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { doc, updateDoc } from 'firebase/firestore';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  Animated,
+  Image,
+  Modal,
+  Pressable,
+  ScrollView,
+  Switch,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Toast from 'react-native-toast-message';
+import { useAuth } from '../../config/authConfig';
 import { useScrollContext } from '../../config/tabBarScrollContext';
-
-// ─────────────────────────────────────────────
-// TODO: Replace with real Firebase user data
-// import { auth, db } from '../../services/firebase';
-// import { doc, getDoc, updateDoc } from 'firebase/firestore';
-// import { useAuthState } from 'react-firebase-hooks/auth'; // or your auth hook
-// ─────────────────────────────────────────────
-
-// ── Mock Data (replace with Firebase fetch) ──
-const MOCK_USER = {
-  name: 'James Cam',
-  role: 'Safety Contributor',
-  level: 12,
-  avatar: 'https://i.pravatar.cc/300?img=11',
-  contributionPoints: 1250,
-  pointsTrend: '+15% this month',
-  reportsValidated: 84,
-  reportsLabel: 'Top 8% in Seattle',
-  email: 'james.cam123@gmail.com',
-  phone: '+94 70 890 8524',
-  address: '1st Lane, Crane Road, Jayewardenepura Kotte',
-  notificationSound: true,
-  alertRadius: '10 Km',
-};
+import { db } from '../../services/firebase';
 
 const BADGES = [
-  { id: '1', label: 'First\nResponder', icon: 'shield',         color: '#4CC2D1', bg: '#0D2A35' },
-  { id: '2', label: 'Early\nBird',      icon: 'sunny',          color: '#F59E0B', bg: '#3D2E0A' },
-  { id: '3', label: 'Community\nHero',  icon: 'people',         color: '#A78BFA', bg: '#2D1F4A' },
-  { id: '4', label: 'Mapper',           icon: 'map',            color: '#30A89C', bg: '#0D3D35' },
+  { id: '1', label: 'First\nResponder', icon: 'shield',  color: '#4CC2D1', bg: '#0D2A35' },
+  { id: '2', label: 'Early\nBird',      icon: 'sunny',   color: '#F59E0B', bg: '#3D2E0A' },
+  { id: '3', label: 'Community\nHero',  icon: 'people',  color: '#A78BFA', bg: '#2D1F4A' },
+  { id: '4', label: 'Mapper',           icon: 'map',     color: '#30A89C', bg: '#0D3D35' },
 ];
 
 // ─────────────────────────────────────────────
-// Sub-components
+// Sub-components (unchanged from original)
 // ─────────────────────────────────────────────
 
 function StatCard({ label, value, trend, icon }: { label: string; value: string | number; trend?: string; icon: string }) {
@@ -85,10 +66,7 @@ function SettingsRow({ icon, iconBg, iconColor, label, subtitle, onPress, danger
   label: string; subtitle: string; onPress?: () => void; danger?: boolean;
 }) {
   return (
-    <Pressable
-      onPress={onPress}
-      className="flex-row items-center py-3.5 active:opacity-70"
-    >
+    <Pressable onPress={onPress} className="flex-row items-center py-3.5 active:opacity-70">
       <View className="w-9 h-9 rounded-xl items-center justify-center mr-3.5"
         style={{ backgroundColor: iconBg }}
       >
@@ -104,34 +82,61 @@ function SettingsRow({ icon, iconBg, iconColor, label, subtitle, onPress, danger
 }
 
 // ─────────────────────────────────────────────
-// Edit Modal
+// Edit Modal — fully wired to Firebase
 // ─────────────────────────────────────────────
 function EditModal({
   visible,
   onClose,
-  user,
 }: {
   visible: boolean;
   onClose: () => void;
-  user: typeof MOCK_USER;
 }) {
-  // TODO: Wire these to Firebase update
-  // const [saving, setSaving] = useState(false);
-  // const handleSave = async () => { setSaving(true); await updateDoc(...); setSaving(false); onClose(); };
+  const { user, profile, refreshProfile } = useAuth();
 
-  const [email, setEmail]             = useState(user.email);
-  const [phone, setPhone]             = useState(user.phone);
-  const [address, setAddress]         = useState(user.address);
-  const [notifSound, setNotifSound]   = useState(user.notificationSound);
-  const [alertRadius, setAlertRadius] = useState(user.alertRadius);
+  // Local form state — initialised from real profile data
+  const [phone, setPhone]             = useState(profile?.phoneNumber ?? '');
+  const [address, setAddress]         = useState(profile?.address ?? '');
+  const [notifSound, setNotifSound]   = useState(profile?.notificationSound ?? true);
+  const [alertRadius, setAlertRadius] = useState(profile?.alertRadius ?? '10 Km');
+  const [saving, setSaving]           = useState(false);
   const [showImageOptions, setShowImageOptions] = useState(false);
 
-  // TODO: Replace with Firebase Storage upload
-  const handleTakePhoto      = () => { setShowImageOptions(false); /* launch camera */ };
-  const handleUploadGallery  = () => { setShowImageOptions(false); /* launch image picker */ };
-  const handleDeletePhoto    = () => { setShowImageOptions(false); /* delete from Storage */ };
+  // Sync form fields if profile loads after modal mounts
+  useEffect(() => {
+    if (profile) {
+      setPhone(profile.phoneNumber ?? '');
+      setAddress(profile.address ?? '');
+      setNotifSound(profile.notificationSound ?? true);
+      setAlertRadius(profile.alertRadius ?? '10 Km');
+    }
+  }, [profile]);
 
-  const inputStyle = "bg-[#111E27] text-white text-sm px-4 py-3 rounded-xl flex-1";
+  // ── Save to Firestore ──
+  const handleSave = async () => {
+    if (!user) return;
+    setSaving(true);
+    try {
+      await updateDoc(doc(db, 'users', user.uid), {
+        phoneNumber: phone,
+        address,
+        notificationSound: notifSound,
+        alertRadius,
+      });
+      await refreshProfile(); // re-fetch so profile screen updates immediately
+      Toast.show({ type: 'success', text1: 'Profile Updated!', text2: 'Your changes have been saved.' });
+      onClose();
+    } catch (e) {
+      console.error('Update error:', e);
+      Toast.show({ type: 'error', text1: 'Save Failed', text2: 'Could not save changes. Try again.' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // TODO: Wire these to expo-image-picker + Firebase Storage
+  const handleTakePhoto     = () => { setShowImageOptions(false); /* ImagePicker.launchCameraAsync() */ };
+  const handleUploadGallery = () => { setShowImageOptions(false); /* ImagePicker.launchImageLibraryAsync() */ };
+  const handleDeletePhoto   = () => { setShowImageOptions(false); /* deleteObject(storageRef) */ };
 
   return (
     <Modal visible={visible} animationType="slide" transparent={false}>
@@ -152,10 +157,15 @@ function EditModal({
           {/* Avatar */}
           <View className="items-center mb-6">
             <Pressable onPress={() => setShowImageOptions(true)} className="active:opacity-80">
+              {/* TODO: replace with profile?.avatarUrl once Storage is wired */}
               <Image
-                source={{ uri: user.avatar }}
+                source={
+                  profile?.avatarUrl
+                    ? { uri: profile.avatarUrl }
+                    : require('../../assets/images/iconAlerZone-Bg-none.png')
+                }
                 className="w-24 h-24 rounded-full"
-                // TODO: Replace with Firebase Storage URL
+                style={{ borderWidth: 3, borderColor: '#4CC2D1' }}
               />
               <View className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-[#4CC2D1] items-center justify-center"
                 style={{ borderWidth: 2, borderColor: '#0A1820' }}
@@ -163,32 +173,26 @@ function EditModal({
                 <Ionicons name="camera" size={14} color="#071318" />
               </View>
             </Pressable>
-            <Text className="text-white font-bold text-lg mt-3">{user.name}</Text>
-            <Text className="text-gray-400 text-sm">{user.role} • Level {user.level}</Text>
+            <Text className="text-white font-bold text-lg mt-3">{profile?.fullName}</Text>
+            <Text className="text-gray-400 text-sm">{profile?.role} • Level {profile?.level ?? 1}</Text>
           </View>
 
-          {/* Image Picker Action Sheet */}
+          {/* Image Options */}
           {showImageOptions && (
             <View className="mx-5 mb-4 bg-[#1E3A44] rounded-2xl overflow-hidden"
               style={{ borderWidth: 1, borderColor: '#2D4F5C' }}
             >
-              <Pressable onPress={handleTakePhoto}
-                className="flex-row items-center px-4 py-4 active:bg-[#2D4F5C]"
-              >
+              <Pressable onPress={handleTakePhoto} className="flex-row items-center px-4 py-4 active:bg-[#2D4F5C]">
                 <Ionicons name="camera-outline" size={20} color="#4CC2D1" />
                 <Text className="text-white ml-3 font-medium">Take Photo</Text>
               </Pressable>
               <View className="h-px bg-[#2D4F5C]" />
-              <Pressable onPress={handleUploadGallery}
-                className="flex-row items-center px-4 py-4 active:bg-[#2D4F5C]"
-              >
+              <Pressable onPress={handleUploadGallery} className="flex-row items-center px-4 py-4 active:bg-[#2D4F5C]">
                 <Ionicons name="image-outline" size={20} color="#4CC2D1" />
                 <Text className="text-white ml-3 font-medium">Upload From Gallery</Text>
               </Pressable>
               <View className="h-px bg-[#2D4F5C]" />
-              <Pressable onPress={handleDeletePhoto}
-                className="flex-row items-center px-4 py-4 active:bg-[#2D4F5C]"
-              >
+              <Pressable onPress={handleDeletePhoto} className="flex-row items-center px-4 py-4 active:bg-[#2D4F5C]">
                 <Ionicons name="trash-outline" size={20} color="#E05C5C" />
                 <Text className="text-[#E05C5C] ml-3 font-medium">Delete Photo</Text>
               </Pressable>
@@ -198,27 +202,20 @@ function EditModal({
           {/* Personal Information */}
           <View className="px-5 mb-5">
             <Text className="text-white font-bold text-base mb-3">Personal Information</Text>
-
             <View className="bg-[#111E27] rounded-2xl px-4 py-1"
               style={{ borderWidth: 1, borderColor: '#1E3347' }}
             >
-              {/* Email */}
+              {/* Email — read only (Firebase requires re-auth to change) */}
               <View className="flex-row items-center py-3">
                 <View className="w-8 h-8 rounded-lg bg-[#1E3347] items-center justify-center mr-3">
                   <Ionicons name="mail-outline" size={16} color="#4CC2D1" />
                 </View>
                 <View className="flex-1">
                   <Text className="text-gray-500 text-[10px] uppercase font-bold tracking-wide">Email</Text>
-                  {/* TODO: Disable email editing (Firebase doesn't allow easy email change without re-auth) */}
-                  <TextInput
-                    value={email}
-                    onChangeText={setEmail}
-                    className="text-white text-sm mt-0.5 p-0"
-                    style={{ margin: 0, padding: 0 }}
-                    placeholderTextColor="#5A7D8A"
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                  />
+                  <Text className="text-gray-400 text-sm mt-0.5">{profile?.email}</Text>
+                </View>
+                <View className="px-2 py-0.5 rounded-md bg-[#1E3347]">
+                  <Text className="text-gray-600 text-[10px]">locked</Text>
                 </View>
               </View>
 
@@ -231,13 +228,13 @@ function EditModal({
                 </View>
                 <View className="flex-1">
                   <Text className="text-gray-500 text-[10px] uppercase font-bold tracking-wide">Phone Number</Text>
-                  {/* TODO: Wire to Firestore users/{uid}.phoneNumber */}
                   <TextInput
                     value={phone}
                     onChangeText={setPhone}
                     className="text-white text-sm mt-0.5 p-0"
                     style={{ margin: 0, padding: 0 }}
                     placeholderTextColor="#5A7D8A"
+                    placeholder="Add phone number"
                     keyboardType="phone-pad"
                   />
                 </View>
@@ -252,13 +249,13 @@ function EditModal({
                 </View>
                 <View className="flex-1">
                   <Text className="text-gray-500 text-[10px] uppercase font-bold tracking-wide">Address</Text>
-                  {/* TODO: Wire to Firestore users/{uid}.address */}
                   <TextInput
                     value={address}
                     onChangeText={setAddress}
                     className="text-white text-sm mt-0.5 p-0"
                     style={{ margin: 0, padding: 0 }}
                     placeholderTextColor="#5A7D8A"
+                    placeholder="Add address"
                     multiline
                   />
                 </View>
@@ -272,10 +269,8 @@ function EditModal({
             <View className="bg-[#111E27] rounded-2xl px-4"
               style={{ borderWidth: 1, borderColor: '#1E3347' }}
             >
-              {/* Notification Sound */}
               <View className="flex-row items-center justify-between py-4">
                 <Text className="text-white text-sm font-medium">Notification Sound</Text>
-                {/* TODO: Save notifSound to Firestore users/{uid}.notificationSound */}
                 <Switch
                   value={notifSound}
                   onValueChange={setNotifSound}
@@ -284,10 +279,8 @@ function EditModal({
                 />
               </View>
               <View className="h-px bg-[#1E3347]" />
-              {/* Alert Radius */}
               <View className="flex-row items-center justify-between py-4">
                 <Text className="text-white text-sm font-medium">Alert Radius</Text>
-                {/* TODO: Save alertRadius to Firestore users/{uid}.alertRadius */}
                 <Text className="text-[#4CC2D1] text-sm font-semibold">{alertRadius}</Text>
               </View>
             </View>
@@ -295,12 +288,20 @@ function EditModal({
 
           {/* Action Buttons */}
           <View className="px-5 flex-row gap-3">
-            {/* TODO: onPress → handleSave() which calls Firebase updateDoc */}
-            <Pressable className="flex-1 bg-[#4CC2D1] py-4 rounded-2xl items-center active:opacity-80">
-              <Text className="text-[#071318] font-bold text-base">Save</Text>
+            <Pressable
+              onPress={handleSave}
+              disabled={saving}
+              className="flex-1 py-4 rounded-2xl items-center active:opacity-80"
+              style={{ backgroundColor: saving ? 'rgba(76,194,209,0.4)' : '#4CC2D1' }}
+            >
+              {saving
+                ? <ActivityIndicator color="#071318" />
+                : <Text className="text-[#071318] font-bold text-base">Save</Text>
+              }
             </Pressable>
             <Pressable
               onPress={onClose}
+              disabled={saving}
               className="flex-1 py-4 rounded-2xl items-center active:opacity-70"
               style={{ borderWidth: 1, borderColor: '#2D4F5C' }}
             >
@@ -315,21 +316,167 @@ function EditModal({
 }
 
 // ─────────────────────────────────────────────
+// Logout Confirmation Modal
+// ─────────────────────────────────────────────
+function LogoutModal({
+  visible,
+  onCancel,
+  onConfirm,
+  loggingOut,
+}: {
+  visible: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+  loggingOut: boolean;
+}) {
+  const scaleAnim   = useRef(new Animated.Value(0.85)).current;
+  const opacityAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (visible) {
+      // Animate in — spring scale up + fade in
+      Animated.parallel([
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          useNativeDriver: true,
+          tension: 120,
+          friction: 8,
+        }),
+        Animated.timing(opacityAnim, {
+          toValue: 1,
+          duration: 180,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      // Reset for next open
+      scaleAnim.setValue(0.85);
+      opacityAnim.setValue(0);
+    }
+  }, [visible]);
+
+  const handleCancel = () => {
+    // Animate out before closing
+    Animated.parallel([
+      Animated.spring(scaleAnim, {
+        toValue: 0.85,
+        useNativeDriver: true,
+        tension: 150,
+        friction: 10,
+      }),
+      Animated.timing(opacityAnim, {
+        toValue: 0,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+    ]).start(() => onCancel());
+  };
+
+  return (
+    <Modal visible={visible} transparent animationType="none">
+      {/* Backdrop */}
+      <Animated.View
+        style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center', paddingHorizontal: 32, opacity: opacityAnim }}
+      >
+        {/* Card */}
+        <Animated.View
+          style={{
+            width: '100%',
+            backgroundColor: '#111E27',
+            borderRadius: 24,
+            padding: 28,
+            alignItems: 'center',
+            borderWidth: 1,
+            borderColor: '#1E3347',
+            transform: [{ scale: scaleAnim }],
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 12 },
+            shadowOpacity: 0.5,
+            shadowRadius: 24,
+            elevation: 20,
+          }}
+        >
+          {/* Icon */}
+          <View className="w-16 h-16 rounded-full items-center justify-center mb-5"
+            style={{ backgroundColor: '#3D1515' }}
+          >
+            <Ionicons name="log-out-outline" size={32} color="#E05C5C" />
+          </View>
+
+          {/* Text */}
+          <Text className="text-white text-xl font-bold text-center mb-2">
+            Log Out?
+          </Text>
+          <Text className="text-gray-400 text-sm text-center leading-5 mb-8">
+            Are you sure you want to log out of your AlertZone account?
+          </Text>
+
+          {/* Buttons */}
+          <Pressable
+            onPress={onConfirm}
+            disabled={loggingOut}
+            className="w-full py-4 rounded-2xl items-center mb-3 active:opacity-80"
+            style={{ backgroundColor: loggingOut ? 'rgba(224,92,92,0.4)' : '#E05C5C' }}
+          >
+            {loggingOut ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <Text className="text-white font-bold text-base">Confirm Logout</Text>
+            )}
+          </Pressable>
+
+          <Pressable
+            onPress={handleCancel}
+            disabled={loggingOut}
+            className="w-full py-4 rounded-2xl items-center active:opacity-70"
+            style={{ borderWidth: 1, borderColor: '#2D4F5C' }}
+          >
+            <Text className="text-gray-300 font-semibold text-base">Cancel</Text>
+          </Pressable>
+        </Animated.View>
+      </Animated.View>
+    </Modal>
+  );
+}
+
+// ─────────────────────────────────────────────
 // Main Profile Screen
 // ─────────────────────────────────────────────
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const { onScroll } = useScrollContext();
-  const [editVisible, setEditVisible] = useState(false);
+  const { profile, logout } = useAuth();
+  const [editVisible, setEditVisible]       = useState(false);
+  const [logoutVisible, setLogoutVisible]   = useState(false);
+  const [loggingOut, setLoggingOut]         = useState(false);
 
-  // TODO: Replace MOCK_USER with real Firebase data
-  // const [user] = useAuthState(auth);
-  // const [userData, setUserData] = useState(null);
-  // useEffect(() => { fetchUserData(user.uid).then(setUserData) }, [user]);
-  const userData = MOCK_USER;
+  // ── Show logout confirmation modal ──
+  const handleLogoutPress = () => setLogoutVisible(true);
 
-  // TODO: handleLogout → signOut(auth) then router.replace('/(auth)/loginScreen')
-  const handleLogout = () => {};
+  // ── Confirmed logout ──
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    try {
+      await logout();
+      Toast.show({ type: 'success', text1: 'See you soon!', text2: 'You have been successfully logged out from AlertZone account.' });
+    } catch (e) {
+      setLoggingOut(false);
+      setLogoutVisible(false);
+      Toast.show({ type: 'error', text1: 'Logout Failed', text2: 'Please try again.' });
+    }
+  };
+
+  // Show spinner while profile is loading
+  if (!profile) {
+    return (
+      <LinearGradient colors={['#0D1F2D', '#0A1820', '#071318']} style={{ flex: 1 }}>
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator color="#4CC2D1" size="large" />
+          <Text className="text-gray-500 mt-4 text-sm">Loading profile...</Text>
+        </View>
+      </LinearGradient>
+    );
+  }
 
   return (
     <LinearGradient colors={['#0D1F2D', '#0A1820', '#071318']} style={{ flex: 1 }}>
@@ -337,10 +484,7 @@ export default function ProfileScreen() {
         onScroll={onScroll}
         scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{
-          paddingTop: insets.top + 8,
-          paddingBottom: 120,
-        }}
+        contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 120 }}
       >
 
         {/* ── 1. Top Nav ── */}
@@ -368,9 +512,12 @@ export default function ProfileScreen() {
         {/* ── 2. Avatar + Name ── */}
         <View className="items-center mb-6 px-5">
           <Pressable onPress={() => setEditVisible(true)} className="active:opacity-80">
-            {/* TODO: Replace uri with Firebase Storage avatar URL from userData.avatarUrl */}
             <Image
-              source={{ uri: userData.avatar }}
+              source={
+                profile.avatarUrl
+                  ? { uri: profile.avatarUrl }
+                  : require('../../assets/images/iconAlerZone-Bg-none.png')
+              }
               className="w-24 h-24 rounded-full"
               style={{ borderWidth: 3, borderColor: '#4CC2D1' }}
             />
@@ -381,25 +528,24 @@ export default function ProfileScreen() {
             </View>
           </Pressable>
 
-          {/* TODO: Replace with userData.fullName from Firestore */}
-          <Text className="text-white text-2xl font-bold mt-3">{userData.name}</Text>
-          {/* TODO: userData.role and userData.level from Firestore */}
-          <Text className="text-gray-400 text-sm mt-1">{userData.role} • Level {userData.level}</Text>
+          {/* ✅ Real data from Firestore via AuthContext */}
+          <Text className="text-white text-2xl font-bold mt-3">{profile.fullName}</Text>
+          <Text className="text-gray-400 text-sm mt-1">
+            {profile.role === 'citizen' ? 'Safety Contributor' : profile.role} • Level {profile.level ?? 1}
+          </Text>
         </View>
 
         {/* ── 3. Stats ── */}
         <View className="px-5 flex-row gap-3 mb-6">
-          {/* TODO: Replace values with userData.contributionPoints and userData.reportsValidated */}
           <StatCard
             label="Contribution Points"
-            value={userData.contributionPoints.toLocaleString()}
-            trend={userData.pointsTrend}
+            value={(profile.contributionPoints ?? 0).toLocaleString()}
+            trend={profile.contributionPoints ? '+15% this month' : undefined}
             icon="star-outline"
           />
           <StatCard
             label="Reports Validated"
-            value={userData.reportsValidated}
-            trend={userData.reportsLabel}
+            value={profile.reportsValidated ?? 0}
             icon="checkmark-circle-outline"
           />
         </View>
@@ -412,7 +558,7 @@ export default function ProfileScreen() {
               <Text className="text-[#4CC2D1] text-sm font-semibold">View All</Text>
             </Pressable>
           </View>
-          {/* TODO: Replace BADGES with userData.badges fetched from Firestore */}
+          {/* TODO: Replace BADGES with profile.badges from Firestore once you add that field */}
           <View className="flex-row gap-3">
             {BADGES.map((badge) => (
               <BadgeChip key={badge.id} badge={badge} />
@@ -444,14 +590,13 @@ export default function ProfileScreen() {
               onPress={() => setEditVisible(true)}
             />
             <View className="h-px bg-[#1E3347]" />
-            {/* TODO: handleLogout → signOut(auth) */}
             <SettingsRow
               icon="log-out-outline"
               iconBg="#3D1515"
               iconColor="#E05C5C"
               label="Logout"
               subtitle="Sign out of your account"
-              onPress={handleLogout}
+              onPress={handleLogoutPress}
               danger
             />
           </View>
@@ -459,11 +604,15 @@ export default function ProfileScreen() {
 
       </ScrollView>
 
-      {/* Edit Profile Modal */}
-      <EditModal
-        visible={editVisible}
-        onClose={() => setEditVisible(false)}
-        user={userData}
+      {/* Edit Modal */}
+      <EditModal visible={editVisible} onClose={() => setEditVisible(false)} />
+
+      {/* Logout Confirmation Modal */}
+      <LogoutModal
+        visible={logoutVisible}
+        onCancel={() => setLogoutVisible(false)}
+        onConfirm={handleLogout}
+        loggingOut={loggingOut}
       />
     </LinearGradient>
   );
