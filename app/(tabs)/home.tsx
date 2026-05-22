@@ -36,14 +36,7 @@ interface ReportPin {
   distance?: number;
 }
 
-const CATEGORIES = [
-  { id: '1', label: 'Hazard',   icon: 'warning-outline'      },
-  { id: '2', label: 'Lighting', icon: 'bulb-outline'         },
-  { id: '3', label: 'Waste',    icon: 'trash-outline'        },
-  { id: '4', label: 'Roads',    icon: 'construct-outline'    },
-  { id: '5', label: 'Water',    icon: 'water-outline'        },
-  { id: '6', label: 'Safety',   icon: 'shield-outline'       },
-];
+
 
 const STATUS_COLOR: Record<string, string> = {
   PENDING: '#F59E0B',
@@ -100,24 +93,7 @@ function SectionHeader({ title, actionLabel, onAction }: { title: string; action
   );
 }
 
-function CategoryChip({ label, icon }: { label: string; icon: string }) {
-  const [pressed, setPressed] = useState(false);
-  return (
-    <Pressable
-      onPressIn={() => setPressed(true)}
-      onPressOut={() => setPressed(false)}
-      className="items-center"
-      style={{ width: 72 }}
-    >
-      <View className={`w-14 h-14 rounded-2xl items-center justify-center mb-1.5 ${pressed ? 'bg-[#30A89C]/30' : 'bg-[#1E3A44]'}`}
-        style={{ borderWidth: 1, borderColor: pressed ? '#30A89C' : '#2D4F5C' }}
-      >
-        <Ionicons name={icon as any} size={24} color={pressed ? '#4CC2D1' : '#5A7D8A'} />
-      </View>
-      <Text className="text-gray-400 text-[11px] text-center">{label}</Text>
-    </Pressable>
-  );
-}
+
 
 function NearbyCard({ item, onPress }: { item: ReportPin; onPress: () => void }) {
   return (
@@ -271,7 +247,7 @@ export default function HomeScreen() {
           longitude: data.location?.longitude,
           status: data.status ?? 'PENDING',
           address: data.location?.address ?? '',
-          image: data.images && data.images.length > 0 ? data.images[0] : undefined,
+          image: data.imageUrls && data.imageUrls.length > 0 ? data.imageUrls[0] : undefined,
           createdAt: data.createdAt,
         } as ReportPin;
       }).filter(p => p.latitude && p.longitude);
@@ -347,15 +323,15 @@ export default function HomeScreen() {
             <Text className="text-white text-xl font-bold tracking-tight">AlertZone</Text>
           </View>
 
-          <Pressable className="active:opacity-70" onPress={() => router.push('/(tabs)/profile')}>
-            <View className="w-10 h-10 rounded-full bg-[#1E3A44] items-center justify-center overflow-hidden"
+          {/* Notification bell with badge */}
+          <Pressable className="active:opacity-70">
+            <View className="w-10 h-10 rounded-full bg-[#1E3A44] items-center justify-center"
               style={{ borderWidth: 1, borderColor: '#2D4F5C' }}
             >
-              {profile?.photoURL ? (
-                <Image source={{ uri: profile.photoURL }} style={{ width: '100%', height: '100%' }} />
-              ) : (
-                <Ionicons name="person" size={20} color="#5A7D8A" />
-              )}
+              <Ionicons name="notifications-outline" size={20} color="#5A7D8A" />
+            </View>
+            <View className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[#E05C5C] items-center justify-center">
+              <Text className="text-white text-[10px] font-bold">10</Text>
             </View>
           </Pressable>
         </View>
@@ -372,9 +348,12 @@ export default function HomeScreen() {
                 <Text className="text-white text-xl font-bold leading-7">
                   Hello {firstName},{'\n'}Your Voice Matters.
                 </Text>
-                <Text className="text-[#4CC2D1] text-xs mt-2 font-medium">
-                  {radiusKm}km Alert Radius Active
-                </Text>
+                <Pressable onPress={() => router.push('/(tabs)/profile')} className="flex-row items-center mt-2 active:opacity-70">
+                  <Ionicons name="options-outline" size={14} color="#4CC2D1" style={{ marginRight: 4 }} />
+                  <Text className="text-[#4CC2D1] text-xs font-bold tracking-wide">
+                    {radiusKm}KM ALERT RADIUS (EDIT)
+                  </Text>
+                </Pressable>
 
                 <Pressable
                   className="mt-4 bg-[#4CC2D1] rounded-xl flex-row items-center px-3 py-2.5 active:opacity-80"
@@ -400,15 +379,7 @@ export default function HomeScreen() {
           </LinearGradient>
         </View>
 
-        {/* ── 3. Browse Categories ── */}
-        <View className="px-5 mb-7">
-          <SectionHeader title="Browse Categories" />
-          <View className="flex-row flex-wrap gap-y-3" style={{ gap: 8 }}>
-            {CATEGORIES.map((cat) => (
-              <CategoryChip key={cat.id} label={cat.label} icon={cat.icon} />
-            ))}
-          </View>
-        </View>
+
 
         {/* ── 4. Nearby Issues ── */}
         <View className="mb-7">
