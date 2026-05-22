@@ -829,9 +829,49 @@ function EditModal({
                 />
               </View>
               <View className="h-px bg-[#1E3347]" />
-              <View className="flex-row items-center justify-between py-4">
-                <Text className="text-white text-sm font-medium">Alert Radius</Text>
-                <Text className="text-[#4CC2D1] text-sm font-semibold">{alertRadius}</Text>
+              <View className="flex-row items-center justify-between py-3">
+                <Text className="text-white text-sm font-medium">Alert Radius (km)</Text>
+                <View className="flex-row items-center gap-3">
+                  <Pressable 
+                    onPress={() => {
+                      const current = parseInt(alertRadius.replace(/[^0-9]/g, '')) || 5;
+                      const next = Math.max(1, current - 1);
+                      setAlertRadius(`${next} Km`);
+                    }}
+                    className="w-8 h-8 rounded-lg bg-[#1E3347] items-center justify-center active:opacity-70"
+                  >
+                    <Ionicons name="remove" size={16} color="#4CC2D1" />
+                  </Pressable>
+                  <TextInput
+                    value={alertRadius.replace(/[^0-9]/g, '')}
+                    onChangeText={(val) => {
+                      const num = parseInt(val.replace(/[^0-9]/g, ''));
+                      if (!isNaN(num)) {
+                        const capped = Math.min(15, num);
+                        setAlertRadius(`${capped} Km`);
+                      } else {
+                        setAlertRadius(` Km`);
+                      }
+                    }}
+                    onBlur={() => {
+                      const num = parseInt(alertRadius.replace(/[^0-9]/g, ''));
+                      if (isNaN(num) || num < 1) setAlertRadius('1 Km');
+                    }}
+                    keyboardType="numeric"
+                    maxLength={2}
+                    className="text-[#4CC2D1] text-base font-semibold w-8 text-center p-0 m-0"
+                  />
+                  <Pressable 
+                    onPress={() => {
+                      const current = parseInt(alertRadius.replace(/[^0-9]/g, '')) || 5;
+                      const next = Math.min(15, current + 1);
+                      setAlertRadius(`${next} Km`);
+                    }}
+                    className="w-8 h-8 rounded-lg bg-[#1E3347] items-center justify-center active:opacity-70"
+                  >
+                    <Ionicons name="add" size={16} color="#4CC2D1" />
+                  </Pressable>
+                </View>
               </View>
             </View>
           </View>
