@@ -10,6 +10,10 @@ export interface UserProfile {
   email: string;
   phoneNumber: string;
   address?: string;
+  province?: string;
+  district?: string;
+  localGovernmentArea?: string;
+  nic?: string;
   role: 'citizen' | 'admin';
   status: 'active' | 'suspended';
   isVerified: boolean;
@@ -19,7 +23,11 @@ export interface UserProfile {
   notificationSound?: boolean;
   alertRadius?: string;
   createdAt: string;
-  level:number
+  level:number;
+  homeLocation?: {
+    latitude: number;
+    longitude: number;
+  } | null;
 }
 
 interface AuthContextType {
