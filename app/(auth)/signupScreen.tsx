@@ -500,7 +500,7 @@ const validatePassword = (password:string) => {
         visible={districtModalVisible}
         onClose={() => setDistrictModalVisible(false)}
         title="Select District"
-        options={province ? Object.keys(sriLankaGeographics[province]) : []}
+        options={province && sriLankaGeographics[province] ? Object.keys(sriLankaGeographics[province]) : []}
         onSelect={(selectedDistrict) => {
           setDistrict(selectedDistrict);
           setLga('');
@@ -512,7 +512,7 @@ const validatePassword = (password:string) => {
         visible={lgaModalVisible}
         onClose={() => setLgaModalVisible(false)}
         title="Select Local Government"
-        options={province && district ? sriLankaGeographics[province][district] : []}
+        options={province && district && sriLankaGeographics[province]?.[district] ? sriLankaGeographics[province][district] : []}
         onSelect={(selectedLga) => {
           setLga(selectedLga);
         }}

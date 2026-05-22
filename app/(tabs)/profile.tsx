@@ -16,6 +16,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import * as Location from 'expo-location';
 import { useAuth } from '../../config/authConfig';
 import { useScrollContext } from '../../config/tabBarScrollContext';
 import { db } from '../../services/firebase';
@@ -27,6 +29,20 @@ const BADGES = [
   { id: '2', label: 'Early\nBird',      icon: 'sunny',   color: '#F59E0B', bg: '#3D2E0A' },
   { id: '3', label: 'Community\nHero',  icon: 'people',  color: '#A78BFA', bg: '#2D1F4A' },
   { id: '4', label: 'Mapper',           icon: 'map',     color: '#30A89C', bg: '#0D3D35' },
+];
+
+const DEFAULT_COORDS = { latitude: 6.9271, longitude: 79.8612 }; // Colombo default
+
+const DARK_MAP_STYLE = [
+  { elementType: 'geometry',                                 stylers: [{ color: '#0d1f2d' }] },
+  { elementType: 'labels.text.fill',                         stylers: [{ color: '#4CC2D1' }] },
+  { elementType: 'labels.text.stroke',                       stylers: [{ color: '#0a1820' }] },
+  { featureType: 'road',        elementType: 'geometry',     stylers: [{ color: '#1E3A44' }] },
+  { featureType: 'road',        elementType: 'geometry.stroke', stylers: [{ color: '#071318' }] },
+  { featureType: 'water',       elementType: 'geometry',     stylers: [{ color: '#071318' }] },
+  { featureType: 'poi',         elementType: 'geometry',     stylers: [{ color: '#0a1820' }] },
+  { featureType: 'transit',     elementType: 'geometry',     stylers: [{ color: '#1E3A44' }] },
+  { featureType: 'administrative', elementType: 'geometry',  stylers: [{ color: '#1E3A44' }] },
 ];
 
 // ─────────────────────────────────────────────
@@ -108,6 +124,16 @@ function EditModal({
   const [district, setDistrict]       = useState(profile?.district ?? '');
   const [lga, setLga]                 = useState(profile?.localGovernmentArea ?? '');
 
+  // Map & autocomplete states
+  const [homeLocation, setHomeLocation] = useState<{ latitude: number; longitude: number } | null>(profile?.homeLocation ?? null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [isSuggesting, setIsSuggesting] = useState(false);
+  const [gpsGranted, setGpsGranted] = useState(false);
+  const [locLoading, setLocLoading] = useState(false);
+
+  const mapRef = useRef<MapView>(null);
+
   // Selectors visibility
   const [provinceModalVisible, setProvinceModalVisible] = useState(false);
   const [districtModalVisible, setDistrictModalVisible] = useState(false);
@@ -124,8 +150,137 @@ function EditModal({
       setProvince(profile.province ?? '');
       setDistrict(profile.district ?? '');
       setLga(profile.localGovernmentArea ?? '');
+      setHomeLocation(profile.homeLocation ?? null);
     }
   }, [profile]);
+
+  // Check GPS and center map on mount/visible
+  useEffect(() => {
+    if (visible) {
+      (async () => {
+        const { status } = await Location.getForegroundPermissionsAsync();
+        setGpsGranted(status === 'granted');
+      })();
+
+      if (homeLocation) {
+        setTimeout(() => {
+          mapRef.current?.animateToRegion(
+            {
+              ...homeLocation,
+              latitudeDelta: 0.005,
+              longitudeDelta: 0.005,
+            },
+            600
+          );
+        }, 300);
+      }
+    }
+  }, [visible]);
+
+  // ── Fetch suggestions (Photon API) ──
+  useEffect(() => {
+    if (searchQuery.length < 3) {
+      setSuggestions([]);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsSuggesting(true);
+      try {
+        const res = await fetch(
+          `https://photon.komoot.io/api/?q=${encodeURIComponent(searchQuery)}&limit=5&lang=en&lat=6.9271&lon=79.8612`
+        );
+        const data = await res.json();
+        setSuggestions(data.features || []);
+      } catch (err) {
+        console.error('❌ Suggestion error:', err);
+      } finally {
+        setIsSuggesting(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // ── Reverse geocode coordinates ──
+  const reverseGeocode = async (lat: number, lng: number) => {
+    try {
+      const results = await Location.reverseGeocodeAsync({ latitude: lat, longitude: lng });
+      if (results.length > 0) {
+        const r = results[0];
+        const parts = [r.name, r.street, r.city, r.region].filter(Boolean);
+        setAddress(parts.join(', ') || `${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+      }
+    } catch (e) {
+      console.error('❌ Reverse geocode error:', e);
+      setAddress(`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+    }
+  };
+
+  const selectSuggestion = async (feature: any) => {
+    const [lng, lat] = feature.geometry.coordinates;
+    const name = feature.properties.name || '';
+    const city = feature.properties.city || '';
+    const street = feature.properties.street || '';
+    const fullAddress = [name, street, city].filter(Boolean).join(', ');
+
+    const newCoords = { latitude: lat, longitude: lng };
+    setHomeLocation(newCoords);
+    setSearchQuery('');
+    setSuggestions([]);
+
+    mapRef.current?.animateToRegion(
+      { ...newCoords, latitudeDelta: 0.005, longitudeDelta: 0.005 },
+      600
+    );
+    await reverseGeocode(lat, lng);
+  };
+
+  const handleMarkerDragEnd = async (coordinate: { latitude: number; longitude: number }) => {
+    const { latitude, longitude } = coordinate;
+    const newCoords = { latitude, longitude };
+    setHomeLocation(newCoords);
+    setAddress('Updating address…');
+    await reverseGeocode(latitude, longitude);
+  };
+
+  const handleMapPress = async (coordinate: { latitude: number; longitude: number }) => {
+    const { latitude, longitude } = coordinate;
+    const newCoords = { latitude, longitude };
+    setHomeLocation(newCoords);
+    setAddress('Updating address…');
+    await reverseGeocode(latitude, longitude);
+    mapRef.current?.animateToRegion(
+      { ...newCoords, latitudeDelta: 0.005, longitudeDelta: 0.005 },
+      600
+    );
+  };
+
+  const recenter = async () => {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      setGpsGranted(false);
+      Toast.show({ type: 'info', text1: 'Permission Denied', text2: 'Location permission is required.' });
+      return;
+    }
+    setGpsGranted(true);
+    try {
+      setLocLoading(true);
+      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      const { latitude, longitude } = loc.coords;
+      const newCoords = { latitude, longitude };
+      setHomeLocation(newCoords);
+      mapRef.current?.animateToRegion(
+        { ...newCoords, latitudeDelta: 0.005, longitudeDelta: 0.005 },
+        600
+      );
+      await reverseGeocode(latitude, longitude);
+    } catch (e) {
+      Toast.show({ type: 'error', text1: 'Location Error', text2: 'Could not get current position.' });
+    } finally {
+      setLocLoading(false);
+    }
+  };
 
   // ── Save to Firestore ──
   const handleSave = async () => {
@@ -154,6 +309,7 @@ function EditModal({
         province,
         district,
         localGovernmentArea: lga,
+        homeLocation,
       });
       await refreshProfile(); // re-fetch so profile screen updates immediately
       Toast.show({ type: 'success', text1: 'Profile Updated!', text2: 'Your changes have been saved.' });
@@ -380,6 +536,100 @@ function EditModal({
                 </View>
                 <Ionicons name="chevron-forward" size={16} color="#2D4F5C" />
               </Pressable>
+            </View>
+          </View>
+
+          {/* Home Location Map */}
+          <View className="px-5 mb-5">
+            <View className="flex-row justify-between items-center mb-3">
+              <Text className="text-white font-bold text-base">Home Location</Text>
+              <View className="flex-row items-center gap-1.5">
+                {locLoading ? (
+                  <ActivityIndicator size="small" color="#30A89C" />
+                ) : (
+                  <>
+                    <View className="w-2 h-2 rounded-full" style={{ backgroundColor: gpsGranted ? '#30A89C' : '#E05C5C' }} />
+                    <Text className="text-xs font-semibold" style={{ color: gpsGranted ? '#30A89C' : '#E05C5C' }}>
+                      {gpsGranted ? 'GPS Active' : 'GPS Inactive'}
+                    </Text>
+                  </>
+                )}
+              </View>
+            </View>
+
+            {/* Location Search Bar */}
+            <View style={{ zIndex: 10 }}>
+              <View className="flex-row gap-2 mb-1">
+                <View className="flex-1 bg-[#111E27] rounded-xl px-4 py-2 flex-row items-center border border-[#1E3347]">
+                  <Ionicons name="search" size={16} color="#3A6070" />
+                  <TextInput
+                    placeholder="Search home location..."
+                    placeholderTextColor="#3A6070"
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                    className="flex-1 text-white text-sm ml-2 py-2"
+                  />
+                  {isSuggesting && <ActivityIndicator size="small" color="#4CC2D1" />}
+                </View>
+              </View>
+
+              {/* Suggestions Dropdown overlay */}
+              {suggestions.length > 0 && (
+                <View className="bg-[#111E27] rounded-xl overflow-hidden border border-[#1E3347] mt-1 shadow-2xl absolute top-12 left-0 right-0 z-50">
+                  {suggestions.map((item, idx) => (
+                    <Pressable
+                      key={idx}
+                      onPress={() => selectSuggestion(item)}
+                      className="flex-row items-center p-3 active:bg-[#1E3347] border-b border-[#1E3347]"
+                    >
+                      <Ionicons name="location-outline" size={16} color="#5A7D8A" className="mr-3" />
+                      <View className="flex-1">
+                        <Text className="text-white text-sm font-medium" numberOfLines={1}>{item.properties.name}</Text>
+                        <Text className="text-gray-500 text-[10px]" numberOfLines={1}>
+                          {[item.properties.city, item.properties.country].filter(Boolean).join(', ')}
+                        </Text>
+                      </View>
+                    </Pressable>
+                  ))}
+                </View>
+              )}
+            </View>
+
+            {/* Interactive MapView */}
+            <View className="rounded-2xl overflow-hidden my-3" style={{ height: 220, borderWidth: 1, borderColor: '#1E3347' }}>
+              <MapView
+                ref={mapRef}
+                provider={PROVIDER_GOOGLE}
+                style={{ flex: 1 }}
+                initialRegion={{
+                  latitude: homeLocation?.latitude ?? DEFAULT_COORDS.latitude,
+                  longitude: homeLocation?.longitude ?? DEFAULT_COORDS.longitude,
+                  latitudeDelta: 0.005,
+                  longitudeDelta: 0.005,
+                }}
+                onPress={(e) => handleMapPress(e.nativeEvent.coordinate)}
+                customMapStyle={DARK_MAP_STYLE}
+                showsUserLocation={gpsGranted}
+                showsMyLocationButton={false}
+              >
+                <Marker
+                  coordinate={homeLocation ?? DEFAULT_COORDS}
+                  draggable
+                  onDragEnd={(e) => handleMarkerDragEnd(e.nativeEvent.coordinate)}
+                  pinColor="#c50000a7"
+                />
+              </MapView>
+
+              {/* Recenter button */}
+              <View className="absolute bottom-3 right-3">
+                <Pressable
+                  onPress={recenter}
+                  style={{ backgroundColor: '#111E27', borderRadius: 8, padding: 8, borderWidth: 1, borderColor: '#1E3347' }}
+                  className="active:opacity-80"
+                >
+                  <Ionicons name="locate" size={20} color="#4CC2D1" />
+                </Pressable>
+              </View>
             </View>
           </View>
 

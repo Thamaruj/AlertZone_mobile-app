@@ -23,7 +23,11 @@ export interface UserProfile {
   notificationSound?: boolean;
   alertRadius?: string;
   createdAt: string;
-  level:number
+  level:number;
+  homeLocation?: {
+    latitude: number;
+    longitude: number;
+  } | null;
 }
 
 interface AuthContextType {
