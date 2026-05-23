@@ -577,17 +577,21 @@ export default function ReportScreen() {
 
     for (const uri of selectedUris) {
       let currentUri = uri;
-      const isUnderLimit = await isUnderSizeLimit(currentUri, 2);
+      // Allow up to 5MB before compression
+      const isUnderLimit = await isUnderSizeLimit(currentUri, 5);
 
       if (!isUnderLimit) {
-        console.log('📦 Image too large, compressing:', currentUri);
-        currentUri = await compressImage(currentUri);
-        const stillTooLarge = !(await isUnderSizeLimit(currentUri, 2));
-        if (stillTooLarge) {
-          Toast.show({ type: 'error', text1: 'Image too large', text2: 'Even after compression, the image exceeds 2MB.' });
-          continue;
-        }
+        Toast.show({
+          type: 'error',
+          text1: 'File Too Large',
+          text2: 'Maximum photo size allowed is 5MB.',
+        });
+        continue;
       }
+
+      // Always compress to target ≤2MB
+      console.log('📦 Compressing image:', currentUri);
+      currentUri = await compressImage(currentUri);
       processedUris.push(currentUri);
     }
 
