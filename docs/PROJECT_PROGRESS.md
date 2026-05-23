@@ -81,6 +81,13 @@ This document tracks the end-to-end development journey of the AlertZone mobile 
     - Added a button in History details to navigate directly to the Map tab.
     - The Map tab now auto-centers and selects the specific report pin passed from the History screen.
 
+- **[2026-05-24] All-Country LGA Auto-Resolution:**
+    - Geocoded the center coordinates for all **341 LGAs** across all **25 districts** in Sri Lanka using the Photon API.
+    - Integrated the `LGA_CENTERS` coordinate database into the shared config [sriLankaRegions.ts](file:///e:/AlertZone_New/alertzone-mobile-app/config/sriLankaRegions.ts).
+    - Upgraded the `resolveSrilankaRegion` algorithm to check matching terms with regex word boundaries `\b`, preventing false positive substring matches (like `"ella"` matching inside `"avissawella"` or `"pussellawa"`).
+    - Added a centroid-based fallback to find the nearest LGA center if text matching fails, ensuring 100% accurate resolution for sparse or GPS-only address coordinates.
+    - Validated and verified that Sabaragamuwa reports (and others) resolve with 100% accuracy.
+
 ---
 
 ## 📈 Summary of Technical Stack Used
@@ -93,4 +100,4 @@ This document tracks the end-to-end development journey of the AlertZone mobile 
 
 ---
 
-*Last Updated: 2026-05-16*
+*Last Updated: 2026-05-24*

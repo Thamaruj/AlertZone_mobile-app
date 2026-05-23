@@ -34,6 +34,7 @@ import { db } from '../../services/firebase';
 import { compressImage, isUnderSizeLimit, uploadFile } from '../../services/storage.service';
 import BlurLoadingOverlay from '../../components/BlurLoadingOverlay';
 import PhotoSourceModal from '../../components/PhotoSourceModal';
+import { resolveSrilankaRegion } from '../../config/sriLankaRegions';
 
 // ─────────────────────────────────────────────
 // Constants
@@ -330,6 +331,10 @@ export default function ReportScreen() {
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [isSuggesting, setIsSuggesting] = useState(false);
 
+  const [resolvedProvince, setResolvedProvince] = useState('Unknown Province');
+  const [resolvedDistrict, setResolvedDistrict] = useState('Unknown District');
+  const [resolvedLGA, setResolvedLGA] = useState('Unknown Area');
+
   // ── Fetch suggestions (Photon API) ──
   useEffect(() => {
     if (searchQuery.length < 3) {
@@ -394,8 +399,15 @@ export default function ReportScreen() {
         const r = results[0];
         setCurrentCountry(r.country);
         const parts = [r.name, r.street, r.city, r.region].filter(Boolean);
-        setLocationAddress(parts.join(', ') || `${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+        const fullAddress = parts.join(', ');
+        setLocationAddress(fullAddress || `${lat.toFixed(5)}, ${lng.toFixed(5)}`);
         
+        // Resolve Sri Lankan region details using r, fullAddress, and coordinates
+        const resolved = resolveSrilankaRegion(r, fullAddress, lat, lng);
+        setResolvedProvince(resolved.province);
+        setResolvedDistrict(resolved.district);
+        setResolvedLGA(resolved.localGovernmentArea);
+
         // Immediate warning if not in SL
         if (r.country && r.country !== 'Sri Lanka') {
            Toast.show({
@@ -406,8 +418,12 @@ export default function ReportScreen() {
           });
         }
       }
-    } catch {
+    } catch (e) {
+      console.error('❌ Reverse geocode error:', e);
       setLocationAddress(`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+      setResolvedProvince('Unknown Province');
+      setResolvedDistrict('Unknown District');
+      setResolvedLGA('Unknown Area');
     }
   }, []);
 
@@ -674,6 +690,9 @@ export default function ReportScreen() {
           latitude: coords.latitude,
           longitude: coords.longitude,
           area: locationAddress.split(',').slice(-2).join(',').trim(),
+          province: resolvedProvince,
+          district: resolvedDistrict,
+          localGovernmentArea: resolvedLGA,
         },
         imageUrls,
         videoUrl: null,
