@@ -1,8 +1,12 @@
 import { useEffect, useRef } from 'react';
-import * as Notifications from 'expo-notifications';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../config/authConfig';
 import { registerForPushNotificationsAsync } from '../services/notification.service';
+import { isRunningInExpoGo } from 'expo';
+
+import { addNotificationReceivedListener, addNotificationResponseReceivedListener } from 'expo-notifications/build/NotificationsEmitter';
+
+const isExpoGo = isRunningInExpoGo();
 
 /**
  * Hook to manage notification setup, registration, and action handling.
@@ -16,21 +20,26 @@ export function useNotifications() {
   const responseListener = useRef<any>(null);
 
   useEffect(() => {
-    // 1. If user is authenticated, register push token
+    // Bypasses OS push notification setup when running inside Expo Go client
+    if (isExpoGo) {
+      console.log('ℹ️ Running in Expo Go. OS push notification listeners are skipped.');
+      return;
+    }
+
     if (user?.uid) {
       registerForPushNotificationsAsync(user.uid);
     }
 
     // 2. Listen for notifications that are received while the app is open
-    notificationListener.current = Notifications.addNotificationReceivedListener(
-      (notification) => {
+    notificationListener.current = addNotificationReceivedListener(
+      (notification: any) => {
         console.log('📬 Foreground Notification Received:', notification);
       }
     );
 
     // 3. Listen for when user taps on or interacts with a notification
-    responseListener.current = Notifications.addNotificationResponseReceivedListener(
-      (response) => {
+    responseListener.current = addNotificationResponseReceivedListener(
+      (response: any) => {
         const data = response.notification.request.content.data;
         console.log('🖱️ Notification Action Response Tapped:', data);
 
