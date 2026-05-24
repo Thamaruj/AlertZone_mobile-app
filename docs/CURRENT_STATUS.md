@@ -91,6 +91,9 @@
 - [x] GPS Status tag fix ("GPS Inactive") ✅
 - [x] Visual Feedback — active state for all pressables ✅
 - [x] Submit saves real Firestore document with images ✅
+- [x] Auto-resolves Province, District, and Local Government Area (LGA) on submission using the updated `resolveSrilankaRegion` utility ✅
+- [x] All-country LGA centers fallback: resolves to the nearest LGA center coordinates when text matches are unavailable or sparse ✅
+- [x] Regex-based boundary matches prevent incorrect subword overlaps (e.g. "ella" matching inside "avissawella" or "pussellawa") ✅
 - [x] Reference ID — real Firestore document ID ✅
 - [x] Contribution points +10 on submit ✅
 - [x] Category selection modal ✅

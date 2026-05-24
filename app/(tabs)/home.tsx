@@ -208,7 +208,7 @@ export default function HomeScreen() {
   const [userLocation, setUserLocation] = useState<{ latitude: number, longitude: number } | null>(null);
 
   const radiusKm = profile?.alertRadius ? parseInt(profile.alertRadius.replace(/[^0-9]/g, '')) || 5 : 5;
-  const firstName = profile?.name ? profile.name.split(' ')[0] : 'Citizen';
+  const firstName = profile?.fullName ? profile.fullName.split(' ')[0] : 'Citizen';
 
   // 1. Fetch location
   useEffect(() => {

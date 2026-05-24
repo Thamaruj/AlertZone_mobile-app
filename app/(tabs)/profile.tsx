@@ -331,8 +331,11 @@ function EditModal({
     if (!user) return;
     setUploadLoading(true);
     try {
+      // Compress avatar before upload
       const compressedUri = await compressImage(uri);
+      // Use reports/{uid}/ path — same as incident images, which is known to be authorized
       const path = `reports/${user.uid}/avatar_${Date.now()}.jpg`;
+      console.log('⬆️ Uploading avatar to path:', path);
       const downloadUrl = await uploadFile(compressedUri, path);
       
       await updateDoc(doc(db, 'users', user.uid), {
@@ -346,12 +349,12 @@ function EditModal({
         text1: 'Photo Uploaded!',
         text2: 'Your profile picture has been updated.',
       });
-    } catch (e) {
-      console.error('❌ Upload avatar error:', e);
+    } catch (e: any) {
+      console.error('❌ Upload avatar error:', e?.code, e?.message, e);
       Toast.show({
         type: 'error',
         text1: 'Upload Failed',
-        text2: 'Could not upload profile picture. Try again.',
+        text2: e?.message ?? 'Could not upload profile picture. Try again.',
       });
     } finally {
       setUploadLoading(false);
@@ -469,10 +472,18 @@ function EditModal({
       const currentUrl = profile.avatarUrl;
       if (currentUrl.includes('firebasestorage.googleapis.com')) {
         try {
-          const fileRef = storageRef(storage, currentUrl);
-          await deleteObject(fileRef);
-        } catch (storageErr) {
-          console.warn('Storage deletion warning/error:', storageErr);
+          // Extract the storage path from the download URL
+          // Download URLs look like: .../o/avatars%2F<uid>%2Favatarfile.jpg?alt=media&token=...
+          const match = currentUrl.match(/\/o\/(.+?)\?/);
+          if (match) {
+            const storagePath = decodeURIComponent(match[1]);
+            console.log('🗑️ Deleting storage file at path:', storagePath);
+            const fileRef = storageRef(storage, storagePath);
+            await deleteObject(fileRef);
+          }
+        } catch (storageErr: any) {
+          // Non-fatal: storage file may have already been deleted
+          console.warn('Storage deletion warning:', storageErr?.code, storageErr?.message);
         }
       }
       
@@ -487,8 +498,8 @@ function EditModal({
         text1: 'Photo Removed',
         text2: 'Your profile picture has been deleted.',
       });
-    } catch (e) {
-      console.error('❌ Delete avatar error:', e);
+    } catch (e: any) {
+      console.error('❌ Delete avatar error:', e?.code, e?.message);
       Toast.show({
         type: 'error',
         text1: 'Deletion Failed',
