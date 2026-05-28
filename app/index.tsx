@@ -19,45 +19,34 @@ export default function Index() {
   const { user, loading } = useAuth();
 
   // ── Animation values ──────────────────────────────────────────────────────
-  const logoOpacity  = useRef(new Animated.Value(0)).current;
-  const logoScale    = useRef(new Animated.Value(0.6)).current;
-  const pulseScale   = useRef(new Animated.Value(1)).current;
-  const pulseOpacity = useRef(new Animated.Value(0.6)).current;
-  const textOpacity  = useRef(new Animated.Value(0)).current;
+  const logoOpacity    = useRef(new Animated.Value(0)).current;
+  const logoScale      = useRef(new Animated.Value(0.6)).current;
+  const pulseScale     = useRef(new Animated.Value(1)).current;
+  const pulseOpacity   = useRef(new Animated.Value(0.6)).current;
+  const textOpacity    = useRef(new Animated.Value(0)).current;
   const taglineOpacity = useRef(new Animated.Value(0)).current;
 
-  // ── Routing logic ──────────────────────────────────────────────────────────
+  // ── Routing state (refs avoid stale closure issues) ───────────────────────
   const minTimeElapsed = useRef(false);
-  const navigated = useRef(false);
+  const navigated      = useRef(false);
+  // Mirror latest values in refs so timer callbacks always read current state
+  const loadingRef     = useRef(loading);
+  const userRef        = useRef(user);
 
-  // After minimum display time, mark it and attempt navigation
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      minTimeElapsed.current = true;
-      tryNavigate();
-    }, 2200);
-    return () => clearTimeout(timer);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  useEffect(() => { loadingRef.current = loading; }, [loading]);
+  useEffect(() => { userRef.current    = user;    }, [user]);
 
-  // Whenever auth state resolves, attempt navigation
-  useEffect(() => {
-    if (!loading) {
-      tryNavigate();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading]);
-
+  // ── Navigation ────────────────────────────────────────────────────────────
   const tryNavigate = async () => {
-    // Only navigate once both conditions are met
-    if (navigated.current || loading || !minTimeElapsed.current) return;
+    // Both conditions must be met: auth resolved + min display time elapsed
+    if (navigated.current || loadingRef.current || !minTimeElapsed.current) return;
     navigated.current = true;
 
     try {
       const seen = await AsyncStorage.getItem('hasSeenOnboarding');
       if (!seen) {
         router.replace('/onboarding');
-      } else if (!user) {
+      } else if (!userRef.current) {
         router.replace('/(auth)/loginScreen');
       } else {
         router.replace('/(tabs)/home');
@@ -67,9 +56,26 @@ export default function Index() {
     }
   };
 
+  // After minimum display time → attempt navigation
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      minTimeElapsed.current = true;
+      tryNavigate();
+    }, 2200);
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Whenever auth state resolves → attempt navigation
+  useEffect(() => {
+    if (!loading) {
+      tryNavigate();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading]);
+
   // ── Animations ────────────────────────────────────────────────────────────
   useEffect(() => {
-    // Hide native splash and kick off our custom animation
     SplashScreen.hideAsync();
 
     // Logo fade + scale in
@@ -88,7 +94,7 @@ export default function Index() {
       }),
     ]).start();
 
-    // Text fades in after logo
+    // "AlertZone" text fades in after logo
     Animated.sequence([
       Animated.delay(600),
       Animated.timing(textOpacity, {
@@ -146,22 +152,16 @@ export default function Index() {
       <Animated.View
         style={[
           styles.pulseRing,
-          {
-            transform: [{ scale: pulseScale }],
-            opacity: pulseOpacity,
-          },
+          { transform: [{ scale: pulseScale }], opacity: pulseOpacity },
         ]}
       />
 
-      {/* Second pulse ring — offset timing */}
+      {/* Second pulse ring */}
       <Animated.View
         style={[
           styles.pulseRing,
           styles.pulseRing2,
-          {
-            transform: [{ scale: pulseScale }],
-            opacity: pulseOpacity,
-          },
+          { transform: [{ scale: pulseScale }], opacity: pulseOpacity },
         ]}
       />
 
@@ -191,7 +191,7 @@ export default function Index() {
         Stay Aware. Stay Safe.
       </Animated.Text>
 
-      {/* Loading dots at the bottom */}
+      {/* Loading dots */}
       <Animated.View style={[styles.dotsContainer, { opacity: taglineOpacity }]}>
         <LoadingDots />
       </Animated.View>
@@ -210,16 +210,8 @@ function LoadingDots() {
       Animated.loop(
         Animated.sequence([
           Animated.delay(delay),
-          Animated.timing(dot, {
-            toValue: 1,
-            duration: 400,
-            useNativeDriver: true,
-          }),
-          Animated.timing(dot, {
-            toValue: 0.3,
-            duration: 400,
-            useNativeDriver: true,
-          }),
+          Animated.timing(dot, { toValue: 1, duration: 400, useNativeDriver: true }),
+          Animated.timing(dot, { toValue: 0.3, duration: 400, useNativeDriver: true }),
           Animated.delay(600),
         ])
       ).start();
