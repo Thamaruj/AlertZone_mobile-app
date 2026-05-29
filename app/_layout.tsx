@@ -6,6 +6,7 @@ import Toast from "react-native-toast-message"; // <-- import Toast
 import { toastConfig } from "../config/toastConfig"; // make sure this matches the exported name
 import "../global.css";
 import { useNotifications } from "../hooks/useNotifications";
+import NetworkStatusGate from "../components/NetworkStatusGate";
 
 function AppContent() {
   const insets = useSafeAreaInsets();
@@ -14,6 +15,7 @@ function AppContent() {
   return (
     <>
       <Stack screenOptions={{ headerShown: false }} />
+      <NetworkStatusGate />
       <Toast
         config={toastConfig}
         topOffset={
