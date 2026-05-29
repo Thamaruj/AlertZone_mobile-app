@@ -17,7 +17,10 @@ import {
   Text,
   TextInput,
   View,
+  Alert,
 } from 'react-native';
+import * as LocalAuthentication from 'expo-local-authentication';
+import * as SecureStore from 'expo-secure-store';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
@@ -120,8 +123,13 @@ function EditModal({
   const [address, setAddress] = useState(profile?.address ?? '');
   const [notifSound, setNotifSound] = useState(profile?.notificationSound ?? true);
   const [alertRadius, setAlertRadius] = useState(profile?.alertRadius ?? '10 Km');
-  const [saving, setSaving] = useState(false);
+  const [saving, setSaving]           = useState(false);
   const [showImageOptions, setShowImageOptions] = useState(false);
+  
+  const [biometricsEnabled, setBiometricsEnabled] = useState(false);
+  const [biometricSupported, setBiometricSupported] = useState(false);
+  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
+  const [confirmPasswordText, setConfirmPasswordText] = useState('');
 
   const [nic, setNic] = useState(profile?.nic ?? '');
   const [province, setProvince] = useState(profile?.province ?? '');
@@ -165,6 +173,15 @@ function EditModal({
       (async () => {
         const { status } = await Location.getForegroundPermissionsAsync();
         setGpsGranted(status === 'granted');
+      })();
+
+      (async () => {
+        const compatible = await LocalAuthentication.hasHardwareAsync();
+        const enrolled = await LocalAuthentication.isEnrolledAsync();
+        setBiometricSupported(compatible && enrolled);
+
+        const stored = await SecureStore.getItemAsync('biometricCredentials');
+        setBiometricsEnabled(!!stored);
       })();
 
       if (homeLocation) {
@@ -284,6 +301,53 @@ function EditModal({
       Toast.show({ type: 'error', text1: 'Location Error', text2: 'Could not get current position.' });
     } finally {
       setLocLoading(false);
+    }
+  };
+
+  const handleBiometricsToggle = async (value: boolean) => {
+    if (!value) {
+      await SecureStore.deleteItemAsync('biometricCredentials');
+      setBiometricsEnabled(false);
+      Toast.show({
+        type: 'success',
+        text1: 'Biometrics Disabled',
+        text2: 'Fingerprint / Face ID login has been turned off.',
+      });
+    } else {
+      setConfirmPasswordText('');
+      setShowPasswordConfirm(true);
+    }
+  };
+
+  const handleConfirmPassword = async () => {
+    if (!user || !user.email) return;
+    if (!confirmPasswordText.trim()) {
+      Toast.show({ type: 'error', text1: 'Required', text2: 'Please enter your password.' });
+      return;
+    }
+    
+    try {
+      const { signInWithEmailAndPassword } = require('firebase/auth');
+      const { auth: firebaseAuth } = require('../../services/firebase');
+      await signInWithEmailAndPassword(firebaseAuth, user.email, confirmPasswordText);
+
+      await SecureStore.setItemAsync(
+        'biometricCredentials',
+        JSON.stringify({ email: user.email, password: confirmPasswordText })
+      );
+      setBiometricsEnabled(true);
+      setShowPasswordConfirm(false);
+      Toast.show({
+        type: 'success',
+        text1: 'Biometrics Enabled!',
+        text2: 'You can now log in using Fingerprint / Face ID.',
+      });
+    } catch (err) {
+      Toast.show({
+        type: 'error',
+        text1: 'Incorrect Password',
+        text2: 'Please enter your correct current password.',
+      });
     }
   };
 
@@ -839,6 +903,20 @@ function EditModal({
                   thumbColor="white"
                 />
               </View>
+              {biometricSupported && (
+                <>
+                  <View className="h-px bg-[#1E3347]" />
+                  <View className="flex-row items-center justify-between py-4">
+                    <Text className="text-white text-sm font-medium">Biometric Login (Face ID/Fingerprint)</Text>
+                    <Switch
+                      value={biometricsEnabled}
+                      onValueChange={handleBiometricsToggle}
+                      trackColor={{ false: '#1E3347', true: '#4CC2D1' }}
+                      thumbColor="white"
+                    />
+                  </View>
+                </>
+              )}
               <View className="h-px bg-[#1E3347]" />
               <View className="flex-row items-center justify-between py-3">
                 <Text className="text-white text-sm font-medium">Alert Radius (km)</Text>
@@ -978,6 +1056,44 @@ function EditModal({
             </View>
           </View>
         )}
+        {/* Password Confirmation Modal for Biometric Setup */}
+        <Modal visible={showPasswordConfirm} transparent animationType="fade">
+          <View className="flex-1 items-center justify-center bg-black/75 px-6">
+            <View className="bg-[#111E27] w-full max-w-sm rounded-3xl p-6 border border-[#2D4F5C] items-center"
+              style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.5, shadowRadius: 15, elevation: 20 }}
+            >
+              <View className="w-12 h-12 rounded-full bg-[#1E3A44] items-center justify-center mb-4 border border-[#4CC2D1]/30">
+                <Ionicons name="key-outline" size={24} color="#4CC2D1" />
+              </View>
+              <Text className="text-white text-lg font-bold text-center mb-2">Verify Password</Text>
+              <Text className="text-gray-400 text-xs text-center leading-4 mb-5">
+                Confirm your password to securely link your credentials for fingerprint and Face ID login.
+              </Text>
+              <TextInput
+                secureTextEntry
+                placeholder="Enter current password"
+                placeholderTextColor="#5A7D8A"
+                value={confirmPasswordText}
+                onChangeText={setConfirmPasswordText}
+                className="w-full bg-[#1E3A44] border border-[#2D4F5C] rounded-xl px-4 py-3 text-white text-sm mb-5 text-center"
+              />
+              <View className="w-full flex-row gap-3">
+                <Pressable
+                  onPress={() => setShowPasswordConfirm(false)}
+                  className="flex-1 py-3 bg-[#1E3A44] border border-[#2D4F5C] rounded-xl items-center active:opacity-75"
+                >
+                  <Text className="text-gray-400 font-semibold text-sm">Cancel</Text>
+                </Pressable>
+                <Pressable
+                  onPress={handleConfirmPassword}
+                  className="flex-1 py-3 bg-[#4CC2D1] rounded-xl items-center active:opacity-75"
+                >
+                  <Text className="text-[#071318] font-bold text-sm">Confirm</Text>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </Modal>
       </LinearGradient>
     </Modal>
   );

@@ -12,6 +12,9 @@
       "supportsTablet": true,
       "config": {
         "googleMapsApiKey": "AIzaSyC43kjBIm6oio6od630NQbjVw9x-f2xp5Q"
+      },
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "Allow AlertZone to use Face ID for fast login."
       }
     },
     "android": {
@@ -74,7 +77,8 @@
           }
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true,

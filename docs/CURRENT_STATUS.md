@@ -32,13 +32,15 @@
 - [x] Auth state persistence with AsyncStorage
 - [x] Auth context provider (`useAuth` hook) with user + profile
 - [x] Auto-redirect to login if not authenticated (tab guard)
-- [x] Remember Me (saves email to AsyncStorage)
+- [x] Remember Me (saves email to AsyncStorage, securely purges raw passwords) ✅
+- [x] Biometric authentication (Fingerprint & Face ID login with SecureStore encryption) ✅
 - [x] Logout functionality with confirmation modal
 - [x] Password validation (min 8 chars, uppercase, number)
 
 ### Profile (Partially Functional)
 - [x] Profile screen reads real data from Firestore via `useAuth`
 - [x] Edit profile modal — saves phone, address, notification prefs to Firestore
+- [x] Biometric login settings toggle with secure password verification overlay modal ✅
 - [x] Display contribution points and reports validated from Firestore
 - [x] User level display
 

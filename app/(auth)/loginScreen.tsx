@@ -4,8 +4,10 @@ import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Image,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -19,6 +21,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../../services/firebase';
+import * as LocalAuthentication from 'expo-local-authentication';
+import * as SecureStore from 'expo-secure-store';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -31,26 +35,138 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [isPasswordFromStorage, setIsPasswordFromStorage] = useState(false);
 
+  const [isBiometricSupported, setIsBiometricSupported] = useState(false);
+  const [isBiometricEnrolled, setIsBiometricEnrolled] = useState(false);
+  const [hasBiometricSetup, setHasBiometricSetup] = useState(false);
+  const [showBiometricPrompt, setShowBiometricPrompt] = useState(false);
+  const [pendingCredentials, setPendingCredentials] = useState<{ email: string; password: string } | null>(null);
+
   const passwordRef = useRef<TextInput>(null);
 
-  // Pre-fill email/password if Remember Me was previously saved
+  // Pre-fill email if Remember Me was previously saved & securely purge legacy password data
   useEffect(() => {
+    // Purge old format containing passwords if present
     AsyncStorage.getItem('rememberMeData').then((json) => {
       if (json) {
         try {
           const data = JSON.parse(json);
-          setEmail(data.email || '');
-          setPassword(data.password || '');
-          setRememberMe(true);
-          if (data.password) setIsPasswordFromStorage(true);
+          if (data.email) {
+            setEmail(data.email);
+            setRememberMe(true);
+            AsyncStorage.setItem('rememberMeEmail', data.email);
+          }
         } catch (e) {
-          // Fallback if it was just a string (old format)
           setEmail(json);
           setRememberMe(true);
+          AsyncStorage.setItem('rememberMeEmail', json);
         }
+        AsyncStorage.removeItem('rememberMeData');
+      }
+    });
+
+    // Load new secure format
+    AsyncStorage.getItem('rememberMeEmail').then((val) => {
+      if (val) {
+        setEmail(val);
+        setRememberMe(true);
       }
     });
   }, []);
+
+  // Biometrics availability check
+  useEffect(() => {
+    (async () => {
+      const compatible = await LocalAuthentication.hasHardwareAsync();
+      setIsBiometricSupported(compatible);
+      if (compatible) {
+        const enrolled = await LocalAuthentication.isEnrolledAsync();
+        setIsBiometricEnrolled(enrolled);
+      }
+      
+      const storedCreds = await SecureStore.getItemAsync('biometricCredentials');
+      if (storedCreds) {
+        setHasBiometricSetup(true);
+        // Automatically prompt biometrics if it was previously configured
+        setTimeout(() => {
+          handleBiometricAuth();
+        }, 800);
+      }
+    })();
+  }, []);
+
+  // Securely request biometric validation and sign in
+  const handleBiometricAuth = async () => {
+    try {
+      const compatible = await LocalAuthentication.hasHardwareAsync();
+      const enrolled = await LocalAuthentication.isEnrolledAsync();
+      if (!compatible || !enrolled) return;
+
+      const storedCreds = await SecureStore.getItemAsync('biometricCredentials');
+      if (!storedCreds) return;
+
+      const { email: savedEmail, password: savedPassword } = JSON.parse(storedCreds);
+
+      const result = await LocalAuthentication.authenticateAsync({
+        promptMessage: 'Log in to AlertZone',
+        fallbackLabel: 'Use password',
+        disableDeviceFallback: false,
+      });
+
+      if (result.success) {
+        setLoading(true);
+        setEmail(savedEmail);
+        setPassword(savedPassword);
+
+        const userCredential = await signInWithEmailAndPassword(auth, savedEmail, savedPassword);
+        const uid = userCredential.user.uid;
+        const userDoc = await getDoc(doc(db, 'users', uid));
+
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          Toast.show({
+            type: 'success',
+            text1: 'Login Successful',
+            text2: `Welcome back, ${userData.fullName}!`,
+          });
+        } else {
+          Toast.show({
+            type: 'success',
+            text1: 'Login Successful',
+            text2: 'Welcome back!',
+          });
+        }
+        setTimeout(() => {
+          router.replace('/(tabs)/home');
+        }, 1000);
+      }
+    } catch (error: any) {
+      console.error('❌ Biometrics auth error:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Biometrics Failed',
+        text2: 'Could not log in using biometrics. Please enter password.',
+      });
+      setLoading(false);
+    }
+  };
+
+  // Check and prompt to enable biometric login
+  const navigateToHomeWithBiometrics = async () => {
+    try {
+      const compatible = await LocalAuthentication.hasHardwareAsync();
+      const enrolled = await LocalAuthentication.isEnrolledAsync();
+      const storedCreds = await SecureStore.getItemAsync('biometricCredentials');
+
+      if (compatible && enrolled && !storedCreds) {
+        setPendingCredentials({ email, password });
+        setShowBiometricPrompt(true);
+      } else {
+        router.replace('/(tabs)/home');
+      }
+    } catch {
+      router.replace('/(tabs)/home');
+    }
+  };
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -69,11 +185,11 @@ export default function LoginScreen() {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const uid = userCredential.user.uid;
 
-       // 2. Save or clear Remember Me
+       // 2. Save or clear Remember Me (only storing email for security)
       if (rememberMe) {
-        await AsyncStorage.setItem('rememberMeData', JSON.stringify({ email, password }));
+        await AsyncStorage.setItem('rememberMeEmail', email);
       } else {
-        await AsyncStorage.removeItem('rememberMeData');
+        await AsyncStorage.removeItem('rememberMeEmail');
       }
 
       // 3. Fetch user profile from Firestore to get their name for the welcome toast
@@ -88,10 +204,8 @@ export default function LoginScreen() {
           text2: `Welcome back, ${userData.fullName}! 👋`,
         });
 
-       // 5. Navigate to home after a short delay so user sees the toast
-
         setTimeout(() => {
-          router.replace('/(tabs)/home');
+          navigateToHomeWithBiometrics();
         }, 1000);
 
       } else {
@@ -102,7 +216,7 @@ export default function LoginScreen() {
           text2: 'Welcome back!',
         });
         setTimeout(() => {
-          router.replace('/(tabs)/home');
+          navigateToHomeWithBiometrics();
         }, 1000);
       }
 
@@ -265,17 +379,28 @@ export default function LoginScreen() {
 
             {/* 4. Action Buttons */}
             <View className="mt-8">
-              <Pressable 
-                className={`p-4 rounded-full shadow-lg items-center active:opacity-70 ${loading ? 'bg-[#4CC2D1]/50' : 'bg-[#4CC2D1]'}`}
-                onPress={handleLogin}
-                disabled={loading}
-              >
-                {loading ? (
-                  <ActivityIndicator color="#122D36" />
-                ) : (
-                  <Text className="text-[#122D36] text-center font-bold text-lg">Log In</Text>
+              <View className="flex-row gap-3 items-center">
+                <Pressable 
+                  className={`flex-1 p-4 rounded-full shadow-lg items-center active:opacity-70 ${loading ? 'bg-[#4CC2D1]/50' : 'bg-[#4CC2D1]'}`}
+                  onPress={handleLogin}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <ActivityIndicator color="#122D36" />
+                  ) : (
+                    <Text className="text-[#122D36] text-center font-bold text-lg">Log In</Text>
+                  )}
+                </Pressable>
+
+                {isBiometricSupported && isBiometricEnrolled && hasBiometricSetup && (
+                  <Pressable
+                    onPress={handleBiometricAuth}
+                    className="w-14 h-14 rounded-full bg-[#1E3A44] border border-[#2D4F5C] items-center justify-center active:opacity-80"
+                  >
+                    <Ionicons name="finger-print" size={26} color="#4CC2D1" />
+                  </Pressable>
                 )}
-              </Pressable>
+              </View>
 
               <Text className="text-gray-500 text-center my-6">or Log in with</Text>
 
@@ -296,6 +421,57 @@ export default function LoginScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Visual Custom Biometric Prompt Dialog */}
+      <Modal visible={showBiometricPrompt} transparent animationType="fade">
+        <View className="flex-1 items-center justify-center bg-black/75 px-6">
+          <View className="bg-[#111E27] w-full max-w-sm rounded-3xl p-6 border border-[#2D4F5C] items-center"
+            style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.5, shadowRadius: 15, elevation: 20 }}
+          >
+            <View className="w-16 h-16 rounded-full bg-[#1E3A44] items-center justify-center mb-4 border border-[#4CC2D1]/30">
+              <Ionicons name="finger-print" size={32} color="#4CC2D1" />
+            </View>
+            <Text className="text-white text-xl font-bold text-center mb-2">Enable Biometrics</Text>
+            <Text className="text-gray-400 text-sm text-center leading-5 mb-6">
+              Would you like to log in quickly using Face ID or Fingerprint next time?
+            </Text>
+            <View className="w-full flex-row gap-3">
+              <Pressable
+                onPress={() => {
+                  setShowBiometricPrompt(false);
+                  router.replace('/(tabs)/home');
+                }}
+                className="flex-1 py-3.5 bg-[#1E3A44] border border-[#2D4F5C] rounded-xl items-center active:opacity-75"
+              >
+                <Text className="text-gray-400 font-semibold text-sm">Maybe Later</Text>
+              </Pressable>
+              <Pressable
+                onPress={async () => {
+                  if (pendingCredentials) {
+                    await SecureStore.setItemAsync(
+                      'biometricCredentials',
+                      JSON.stringify(pendingCredentials)
+                    );
+                    setHasBiometricSetup(true);
+                  }
+                  setShowBiometricPrompt(false);
+                  Toast.show({
+                    type: 'success',
+                    text1: 'Biometrics Enabled!',
+                    text2: 'Fingerprint / Face ID setup complete.',
+                  });
+                  setTimeout(() => {
+                    router.replace('/(tabs)/home');
+                  }, 800);
+                }}
+                className="flex-1 py-3.5 bg-[#4CC2D1] rounded-xl items-center active:opacity-75"
+              >
+                <Text className="text-[#071318] font-bold text-sm">Enable</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </LinearGradient>
   );
 }
