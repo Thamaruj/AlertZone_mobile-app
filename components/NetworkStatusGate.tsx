@@ -7,17 +7,47 @@ import {
   StyleSheet,
   Dimensions,
   BackHandler,
+  Pressable,
 } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 import { Ionicons } from '@expo/vector-icons';
+import Toast from 'react-native-toast-message';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
-const SHEET_HEIGHT = 220;
+const SHEET_HEIGHT = 240;
 
 export default function NetworkStatusGate() {
   const [isConnected, setIsConnected] = useState<boolean | null>(true);
   const [wasOffline, setWasOffline] = useState(false);
   const [visible, setVisible] = useState(false);
+  const [checking, setChecking] = useState(false);
+
+  const handleManualCheck = async () => {
+    if (checking) return;
+    setChecking(true);
+    try {
+      const state = await NetInfo.fetch();
+      const connected = state.isConnected ?? false;
+      setIsConnected(connected);
+      if (connected) {
+        Toast.show({
+          type: 'success',
+          text1: 'Connected',
+          text2: 'Internet connection detected successfully.',
+        });
+      } else {
+        Toast.show({
+          type: 'error',
+          text1: 'Still Offline',
+          text2: 'Could not connect. Please check your network settings.',
+        });
+      }
+    } catch (err) {
+      console.error('Network check error:', err);
+    } finally {
+      setChecking(false);
+    }
+  };
 
   // Animations
   const backdropOpacity = useRef(new Animated.Value(0)).current;
@@ -175,6 +205,19 @@ export default function NetworkStatusGate() {
               <Text style={[styles.subtitle, { color: subtitleColor }]}>
                 Your internet connection dropped. Reconnecting to AlertZone...
               </Text>
+              <Pressable
+                onPress={handleManualCheck}
+                disabled={checking}
+                style={({ pressed }) => [
+                  styles.retryButton,
+                  pressed && { opacity: 0.8 }
+                ]}
+              >
+                <Ionicons name="refresh" size={14} color="#7F1D1D" style={{ marginRight: 6 }} />
+                <Text style={styles.retryButtonText}>
+                  {checking ? 'Checking...' : 'Check Connection'}
+                </Text>
+              </Pressable>
             </>
           ) : (
             // Reconnected State (Green Theme)
@@ -259,5 +302,26 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 18,
     maxWidth: '85%',
+  },
+  retryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 24,
+    marginTop: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  retryButtonText: {
+    color: '#7F1D1D',
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
 });
