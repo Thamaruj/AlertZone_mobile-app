@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,8 @@ import {
   Pressable,
   ActivityIndicator,
   Platform,
+  Animated,
+  Easing,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,7 +23,6 @@ import {
   updateDoc,
   deleteDoc,
   writeBatch,
-  getDocs,
 } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { useAuth } from '../config/authConfig';
@@ -77,7 +78,46 @@ export default function NotificationsScreen() {
 
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeFilter, setActiveFilter] = useState<'all' | NotificationType>('all');
+  const [activeFilter, setActiveFilter] = useState<'unread' | 'all' | NotificationType>('unread');
+
+  // Staggered exit animation state for "Clear All"
+  const [clearingAll, setClearingAll] = useState(false);
+  const [clearedCount, setClearedCount] = useState(0);
+  const [clearingIds, setClearingIds] = useState<string[]>([]);
+
+  const handleClearAll = () => {
+    if (filteredNotifications.length === 0 || clearingAll) return;
+    const idsToClear = filteredNotifications.map((n) => n.id);
+    setClearingIds(idsToClear);
+    setClearedCount(0);
+    setClearingAll(true);
+  };
+
+  const handleItemAnimationComplete = () => {
+    setClearedCount((prev) => {
+      const next = prev + 1;
+      if (next >= clearingIds.length) {
+        executeClearAll(clearingIds);
+      }
+      return next;
+    });
+  };
+
+  const executeClearAll = async (ids: string[]) => {
+    try {
+      const batch = writeBatch(db);
+      ids.forEach((id) => {
+        batch.delete(doc(db, 'notifications', id));
+      });
+      await batch.commit();
+    } catch (e) {
+      console.error('❌ Error clearing all notifications:', e);
+    } finally {
+      setClearingAll(false);
+      setClearingIds([]);
+      setClearedCount(0);
+    }
+  };
 
   // 1. Subscribe to real-time notifications
   useEffect(() => {
@@ -124,8 +164,10 @@ export default function NotificationsScreen() {
 
   // Actions
   const handleMarkAsRead = async (id: string) => {
+    console.log('🔔 handleMarkAsRead triggered for notification ID:', id);
     try {
       await updateDoc(doc(db, 'notifications', id), { isRead: true });
+      console.log('✅ Firestore updated successfully for notification ID:', id);
     } catch (e) {
       console.error('❌ Error marking notification as read:', e);
     }
@@ -183,6 +225,7 @@ export default function NotificationsScreen() {
 
   // Filter list
   const filteredNotifications = notifications.filter((notif) => {
+    if (activeFilter === 'unread') return !notif.isRead;
     if (activeFilter === 'all') return true;
     return notif.type === activeFilter;
   });
@@ -216,15 +259,29 @@ export default function NotificationsScreen() {
           </View>
         </View>
 
-        {unreadCount > 0 && (
-          <Pressable
-            onPress={handleMarkAllAsRead}
-            className="flex-row items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1E3A44] border border-[#2D4F5C] active:opacity-75"
-          >
-            <Ionicons name="checkmark-done" size={16} color="#4CC2D1" />
-            <Text className="text-[#4CC2D1] text-xs font-bold">Read All</Text>
-          </Pressable>
-        )}
+        <View className="flex-row items-center gap-2">
+          {unreadCount > 0 && (
+            <Pressable
+              onPress={handleMarkAllAsRead}
+              disabled={clearingAll}
+              className="flex-row items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1A302B] border border-[#2D5A4E]/50 active:opacity-75"
+            >
+              <Ionicons name="checkmark-done" size={14} color="#30A89C" />
+              <Text className="text-[#30A89C] text-xs font-bold">Read All</Text>
+            </Pressable>
+          )}
+
+          {filteredNotifications.length > 0 && (
+            <Pressable
+              onPress={handleClearAll}
+              disabled={clearingAll}
+              className="flex-row items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#2D1F20] border border-[#5A2D30]/50 active:opacity-75"
+            >
+              <Ionicons name="trash-outline" size={14} color="#E05C5C" />
+              <Text className="text-[#E05C5C] text-xs font-bold">Clear All</Text>
+            </Pressable>
+          )}
+        </View>
       </View>
 
       {/* Filter Tabs */}
@@ -233,6 +290,7 @@ export default function NotificationsScreen() {
           horizontal
           showsHorizontalScrollIndicator={false}
           data={[
+            { id: 'unread', label: 'Unread' },
             { id: 'all', label: 'All' },
             { id: 'status_change', label: 'Reports' },
             { id: 'upvote', label: 'Upvotes' },
@@ -245,6 +303,7 @@ export default function NotificationsScreen() {
             return (
               <Pressable
                 onPress={() => setActiveFilter(item.id as any)}
+                disabled={clearingAll}
                 className="mr-2 active:opacity-80"
                 style={{
                   paddingHorizontal: 16,
@@ -290,78 +349,175 @@ export default function NotificationsScreen() {
           data={filteredNotifications}
           keyExtractor={(item) => item.id}
           contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 }}
-          renderItem={({ item }) => {
-            const meta = TYPE_META[item.type] || TYPE_META.system;
+          renderItem={({ item, index }) => {
+            const isItemClearing = clearingIds.includes(item.id);
+            const clearDelay = Math.min(index * 60, 600);
+
             return (
-              <Pressable
-                onPress={() => handleNotificationPress(item)}
-                className="mb-3 rounded-2xl bg-[#111E27] border border-[#1E3347] active:opacity-90 overflow-hidden relative"
-                style={{
-                  borderLeftWidth: item.isRead ? 1 : 4,
-                  borderLeftColor: item.isRead ? '#1E3347' : meta.color,
-                }}
-              >
-                {/* Glow/Dot indicator */}
-                {!item.isRead && (
-                  <View className="absolute top-4 right-4 w-2 h-2 rounded-full bg-[#E05C5C]" />
-                )}
-
-                <View className="p-4 flex-row items-start gap-3">
-                  <View
-                    className="w-10 h-10 rounded-xl items-center justify-center flex-shrink-0"
-                    style={{ backgroundColor: meta.bg }}
-                  >
-                    <Ionicons name={meta.icon as any} size={20} color={meta.color} />
-                  </View>
-
-                  <View className="flex-1 pr-4">
-                    <Text className="text-white font-bold text-sm" numberOfLines={1}>
-                      {item.title}
-                    </Text>
-                    <Text className="text-gray-400 text-xs mt-1 leading-5">
-                      {item.body}
-                    </Text>
-                    <Text className="text-gray-500 text-[10px] mt-2 font-medium">
-                      {timeAgo(item.createdAt)}
-                    </Text>
-                  </View>
-                </View>
-
-                {/* Actions Panel */}
-                <View className="px-4 py-2 border-t border-[#1E3347] flex-row justify-end items-center gap-3 bg-[#0D1F2D]/30">
-                  {item.reportId && (
-                    <Pressable
-                      onPress={() => handleNotificationPress(item)}
-                      className="flex-row items-center gap-1 py-1 px-2.5 rounded bg-[#1E3A44]/50 border border-[#2D4F5C]/50 active:opacity-75"
-                    >
-                      <Ionicons name="map-outline" size={12} color="#4CC2D1" />
-                      <Text className="text-[#4CC2D1] text-[10px] font-bold">View on Map</Text>
-                    </Pressable>
-                  )}
-                  
-                  {!item.isRead && (
-                    <Pressable
-                      onPress={() => handleMarkAsRead(item.id)}
-                      className="flex-row items-center gap-1 py-1 px-2.5 rounded bg-[#1A302B] border border-[#2D5A4E]/50 active:opacity-75"
-                    >
-                      <Ionicons name="checkmark" size={12} color="#30A89C" />
-                      <Text className="text-[#30A89C] text-[10px] font-bold">Mark Read</Text>
-                    </Pressable>
-                  )}
-
-                  <Pressable
-                    onPress={() => handleDelete(item.id)}
-                    className="flex-row items-center gap-1 py-1 px-2.5 rounded bg-[#2D1F20] border border-[#5A2D30]/50 active:opacity-75"
-                  >
-                    <Ionicons name="trash-outline" size={12} color="#E05C5C" />
-                    <Text className="text-[#E05C5C] text-[10px] font-bold">Delete</Text>
-                  </Pressable>
-                </View>
-              </Pressable>
+              <NotificationCard
+                item={item}
+                isClearingAll={isItemClearing}
+                clearDelay={clearDelay}
+                onAnimationComplete={handleItemAnimationComplete}
+                onPress={handleNotificationPress}
+                onMarkAsRead={handleMarkAsRead}
+                onDelete={handleDelete}
+              />
             );
           }}
         />
       )}
     </LinearGradient>
+  );
+}
+
+// ─────────────────────────────────────────────
+// Notification Card Component with Exit Animations
+// ─────────────────────────────────────────────
+interface NotificationCardProps {
+  item: AppNotification;
+  isClearingAll: boolean;
+  clearDelay: number;
+  onAnimationComplete: () => void;
+  onPress: (item: AppNotification) => void;
+  onMarkAsRead: (id: string) => void;
+  onDelete: (id: string) => void;
+}
+
+function NotificationCard({
+  item,
+  isClearingAll,
+  clearDelay,
+  onAnimationComplete,
+  onPress,
+  onMarkAsRead,
+  onDelete,
+}: NotificationCardProps) {
+  const meta = TYPE_META[item.type] || TYPE_META.system;
+  const animValue = useRef(new Animated.Value(1)).current;
+  const [isDeletingLocal, setIsDeletingLocal] = useState(false);
+
+  useEffect(() => {
+    if (isClearingAll) {
+      Animated.timing(animValue, {
+        toValue: 0,
+        duration: 300,
+        delay: clearDelay,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: false,
+      }).start(() => {
+        onAnimationComplete();
+      });
+    }
+  }, [isClearingAll]);
+
+  const handleDeletePress = () => {
+    if (isDeletingLocal) return;
+    setIsDeletingLocal(true);
+    Animated.timing(animValue, {
+      toValue: 0,
+      duration: 300,
+      easing: Easing.out(Easing.ease),
+      useNativeDriver: false,
+    }).start(() => {
+      onDelete(item.id);
+    });
+  };
+
+  const scale = animValue;
+  const opacity = animValue;
+  const translateX = animValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: [400, 0],
+  });
+
+  const maxHeight = animValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 200],
+  });
+
+  const marginBottom = animValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 12],
+  });
+
+  return (
+    <Animated.View
+      style={{
+        opacity,
+        maxHeight,
+        marginBottom,
+        overflow: 'hidden',
+        transform: [{ scale }, { translateX }],
+      }}
+    >
+      <View
+        className="rounded-2xl bg-[#111E27] border border-[#1E3347] overflow-hidden relative"
+        style={{
+          borderLeftWidth: item.isRead ? 1 : 4,
+          borderLeftColor: item.isRead ? '#1E3347' : meta.color,
+        }}
+      >
+        {/* Glow/Dot indicator */}
+        {!item.isRead && (
+          <View className="absolute top-4 right-4 w-2 h-2 rounded-full bg-[#E05C5C]" />
+        )}
+
+        <Pressable
+          onPress={() => onPress(item)}
+          className="p-4 flex-row items-start gap-3 active:opacity-90"
+        >
+          <View
+            className="w-10 h-10 rounded-xl items-center justify-center flex-shrink-0"
+            style={{ backgroundColor: meta.bg }}
+          >
+            <Ionicons name={meta.icon as any} size={20} color={meta.color} />
+          </View>
+
+          <View className="flex-1 pr-4">
+            <Text className="text-white font-bold text-sm" numberOfLines={1}>
+              {item.title}
+            </Text>
+            <Text className="text-gray-400 text-xs mt-1 leading-5">
+              {item.body}
+            </Text>
+            <Text className="text-gray-500 text-[10px] mt-2 font-medium">
+              {timeAgo(item.createdAt)}
+            </Text>
+          </View>
+        </Pressable>
+
+        {/* Actions Panel */}
+        <View className="px-4 py-2 border-t border-[#1E3347] flex-row justify-end items-center gap-3 bg-[#0D1F2D]/30">
+          {item.reportId && (
+            <Pressable
+              onPress={() => onPress(item)}
+              className="flex-row items-center gap-1 py-1 px-2.5 rounded bg-[#1E3A44]/50 border border-[#2D4F5C]/50 active:opacity-75"
+            >
+              <Ionicons name="map-outline" size={12} color="#4CC2D1" />
+              <Text className="text-[#4CC2D1] text-[10px] font-bold">View on Map</Text>
+            </Pressable>
+          )}
+
+          {!item.isRead && (
+            <Pressable
+              onPress={() => onMarkAsRead(item.id)}
+              className="flex-row items-center gap-1 py-1 px-2.5 rounded bg-[#1A302B] border border-[#2D5A4E]/50 active:opacity-75"
+            >
+              <Ionicons name="checkmark" size={12} color="#30A89C" />
+              <Text className="text-[#30A89C] text-[10px] font-bold">Mark as read</Text>
+            </Pressable>
+          )}
+
+          <Pressable
+            onPress={handleDeletePress}
+            className="flex-row items-center gap-1 py-1 px-2.5 rounded bg-[#2D1F20] border border-[#5A2D30]/50 active:opacity-75"
+          >
+            <Ionicons name="trash-outline" size={12} color="#E05C5C" />
+            <Text className="text-[#E05C5C] text-[10px] font-bold">Delete</Text>
+          </Pressable>
+        </View>
+      </View>
+    </Animated.View>
   );
 }
