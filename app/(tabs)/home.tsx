@@ -374,13 +374,23 @@ export default function HomeScreen() {
                   </Text>
                 </Pressable>
 
-                <Pressable
-                  className="mt-4 bg-[#4CC2D1] rounded-xl flex-row items-center px-3 py-2.5 active:opacity-80"
-                  onPress={() => router.push('/(tabs)/report')}
-                >
-                  <Ionicons name="camera" size={16} color="#071318" />
-                  <Text className="text-[#071318] font-bold text-sm ml-1.5">New Report</Text>
-                </Pressable>
+                <View className="flex-row gap-2 mt-4">
+                  <Pressable
+                    className="flex-1 bg-[#4CC2D1] rounded-xl flex-row items-center justify-center py-2.5 active:opacity-80"
+                    onPress={() => router.push('/(tabs)/report')}
+                  >
+                    <Ionicons name="camera" size={16} color="#071318" />
+                    <Text className="text-[#071318] font-bold text-sm ml-1.5">New Report</Text>
+                  </Pressable>
+
+                  <Pressable
+                    className="flex-1 border border-[#4CC2D1] rounded-xl flex-row items-center justify-center py-2.5 active:opacity-80"
+                    onPress={() => router.push('/onboarding' as any)}
+                  >
+                    <Ionicons name="help-circle-outline" size={16} color="#4CC2D1" />
+                    <Text className="text-[#4CC2D1] font-bold text-sm ml-1.5">Test Intro</Text>
+                  </Pressable>
+                </View>
               </View>
 
               <View

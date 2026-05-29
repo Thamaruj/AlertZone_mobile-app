@@ -2,6 +2,7 @@ import { onAuthStateChanged, signOut, User } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { auth, db } from '../services/firebase';
+import NetInfo from '@react-native-community/netinfo';
 
 // ── Types ──
 export interface UserProfile {
@@ -49,9 +50,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Fetch Firestore profile for a given uid
   const fetchProfile = async (uid: string) => {
     try {
+      // 1. Check network connection first
+      const netState = await NetInfo.fetch();
+      if (!netState.isConnected) {
+        console.warn('⚠️ Device is offline. Skipping Firestore profile fetch.');
+        return;
+      }
+
+      // 2. Race the document fetch against a generous 8-second timeout
       const getDocPromise = getDoc(doc(db, 'users', uid));
       const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('Firestore profile fetch timeout')), 2500)
+        setTimeout(() => reject(new Error('Firestore profile fetch timeout')), 8000)
       );
 
       const snap = await Promise.race([getDocPromise, timeoutPromise]);
@@ -61,7 +70,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.warn('⚠️ No user document found in Firestore for uid:', uid);
       }
     } catch (e) {
-      console.error('❌ fetchProfile error or timeout:', e);
+      const netState = await NetInfo.fetch().catch(() => ({ isConnected: true }));
+      if (!netState.isConnected) {
+        console.warn('⚠️ profile fetch aborted: device is offline.');
+      } else {
+        console.error('❌ fetchProfile error or timeout:', e);
+      }
     }
   };
 
