@@ -4,7 +4,7 @@
     "slug": "alertzone",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/iconAlerZone.png",
+    "icon": "./assets/images/iconAlerZone-Bg-none.png",
     "scheme": "mobileapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -17,7 +17,7 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#0D1E2C",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "foregroundImage": "./assets/images/iconAlerZone-Bg-none.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
