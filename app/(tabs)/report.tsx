@@ -158,17 +158,35 @@ function FullScreenMapModal({
   onSelectSuggestion: (feat: any) => void;
   isSuggesting: boolean;
 }) {
+  const fullMapRef = useRef<MapView>(null);
+
+  // Smoothly animate map when coordinates change
+  useEffect(() => {
+    if (visible && coords) {
+      fullMapRef.current?.animateToRegion(
+        {
+          ...coords,
+          latitudeDelta: 0.005,
+          longitudeDelta: 0.005,
+        },
+        400
+      );
+    }
+  }, [coords, visible]);
+
   return (
     <Modal visible={visible} animationType="fade" transparent={false}>
       <View style={{ flex: 1, backgroundColor: '#071318' }}>
         <MapView
+          ref={fullMapRef}
           provider={PROVIDER_GOOGLE}
           style={{ flex: 1 }}
-          region={{
+          initialRegion={{
             ...coords,
             latitudeDelta: 0.005,
             longitudeDelta: 0.005,
           }}
+          onLongPress={(e) => onCoordsChange(e.nativeEvent.coordinate)}
           customMapStyle={DARK_MAP_STYLE}
         >
           <Marker
@@ -224,12 +242,15 @@ function FullScreenMapModal({
         <View style={{ position: 'absolute', bottom: 40, left: 20, right: 20 }}>
           <View className="bg-[#111E27] p-4 rounded-2xl border border-[#1E3347] shadow-xl">
             <Text className="text-white font-bold mb-1">Adjust Location</Text>
-            <Text className="text-[#4CC2D1] text-xs font-semibold" numberOfLines={1}>
+            <Text className="text-[#4CC2D1] text-xs font-semibold mb-2" numberOfLines={1}>
               <Ionicons name="location" size={12} /> {locationAddress}
+            </Text>
+            <Text className="text-gray-500 text-[10px] mb-3">
+              Hold/long-press anywhere on the map to drop the pin there.
             </Text>
             <Pressable
               onPress={onClose}
-              className="mt-4 bg-[#4CC2D1] py-3 rounded-xl items-center active:opacity-80"
+              className="bg-[#4CC2D1] py-3 rounded-xl items-center active:opacity-80"
             >
               <Text className="text-[#071318] font-bold">Confirm Position</Text>
             </Pressable>
@@ -458,8 +479,9 @@ export default function ReportScreen() {
     (async () => {
       setLocLoading(true);
       const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        setLocationAddress('Location permission denied');
+      const servicesEnabled = await Location.hasServicesEnabledAsync();
+      if (status !== 'granted' || !servicesEnabled) {
+        setLocationAddress(status !== 'granted' ? 'Location permission denied' : 'Location services disabled');
         setGpsGranted(false);
         setLocLoading(false);
         return;
@@ -482,12 +504,24 @@ export default function ReportScreen() {
     })();
   }, [reverseGeocode]);
 
-  // ── When marker is dragged to a new position ──
+  // ── When marker is dragged or dropped to a new position ──
   const handleMarkerDragEnd = useCallback(
     async (coordinate: { latitude: number; longitude: number }) => {
       const { latitude, longitude } = coordinate;
       setCoords({ latitude, longitude });
       setLocationAddress('Updating address…');
+      
+      // Smoothly animate map to new location
+      mapRef.current?.animateToRegion(
+        {
+          latitude,
+          longitude,
+          latitudeDelta: 0.005,
+          longitudeDelta: 0.005,
+        },
+        450
+      );
+
       await reverseGeocode(latitude, longitude);
     },
     [reverseGeocode],
@@ -496,9 +530,14 @@ export default function ReportScreen() {
   // ── Recenter to device GPS ──
   const recenter = useCallback(async () => {
     const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== 'granted') {
+    const servicesEnabled = await Location.hasServicesEnabledAsync();
+    if (status !== 'granted' || !servicesEnabled) {
       setGpsGranted(false);
-      Toast.show({ type: 'info', text1: 'Permission Denied', text2: 'Location permission is required.' });
+      Toast.show({
+        type: 'info',
+        text1: status !== 'granted' ? 'Permission Denied' : 'GPS Inactive',
+        text2: status !== 'granted' ? 'Location permission is required.' : 'Please enable location services on your device.',
+      });
       return;
     }
     setGpsGranted(true);
@@ -858,6 +897,7 @@ export default function ReportScreen() {
                   latitudeDelta: 0.005,
                   longitudeDelta: 0.005,
                 }}
+                onLongPress={(e) => handleMarkerDragEnd(e.nativeEvent.coordinate)}
                 customMapStyle={DARK_MAP_STYLE}
                 showsUserLocation={gpsGranted}
                 showsMyLocationButton={false}
@@ -895,6 +935,9 @@ export default function ReportScreen() {
               <Ionicons name="location" size={16} color="#4CC2D1" />
               <Text className="text-gray-300 text-sm flex-1" numberOfLines={2}>{locationAddress}</Text>
             </View>
+            <Text className="text-gray-500 text-[10px] mt-2 ml-1">
+              * Hold/long-press anywhere on the map to drop the pin there.
+            </Text>
           </View>
 
           {/* ── 2. Category ── */}

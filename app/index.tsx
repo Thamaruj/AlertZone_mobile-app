@@ -1,6 +1,6 @@
 import * as SplashScreen from 'expo-splash-screen';
 import { router } from 'expo-router';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Easing,
@@ -8,15 +8,20 @@ import {
   StyleSheet,
   Text,
   View,
+  Pressable,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../config/authConfig';
+import NetInfo from '@react-native-community/netinfo';
+import { Ionicons } from '@expo/vector-icons';
+import Toast from 'react-native-toast-message';
 
 // Keep the native splash visible while we set up
 SplashScreen.preventAutoHideAsync();
 
 export default function Index() {
   const { user, loading } = useAuth();
+  const [isOffline, setIsOffline] = useState(false);
 
   // ── Animation values ──────────────────────────────────────────────────────
   const logoOpacity    = useRef(new Animated.Value(0)).current;
@@ -73,6 +78,32 @@ export default function Index() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading]);
+
+  // Listen to network status on startup
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener(state => {
+      const offline = state.isConnected === false;
+      setIsOffline(offline);
+      if (state.isConnected === true) {
+        tryNavigate();
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const retryConnection = async () => {
+    const state = await NetInfo.fetch();
+    if (state.isConnected) {
+      setIsOffline(false);
+      tryNavigate();
+    } else {
+      Toast.show({
+        type: 'error',
+        text1: 'Still Offline',
+        text2: 'Please check your internet connection and try again.',
+      });
+    }
+  };
 
   // ── Animations ────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -191,10 +222,21 @@ export default function Index() {
         Stay Aware. Stay Safe.
       </Animated.Text>
 
-      {/* Loading dots */}
-      <Animated.View style={[styles.dotsContainer, { opacity: taglineOpacity }]}>
-        <LoadingDots />
-      </Animated.View>
+      {isOffline ? (
+        <Animated.View style={[styles.offlineContainer, { opacity: taglineOpacity }]}>
+          <Ionicons name="cloud-offline-outline" size={28} color="#E05C5C" />
+          <Text style={styles.offlineText}>No internet connection detected.</Text>
+          <Pressable onPress={retryConnection} style={styles.retryButton} className="active:opacity-80">
+            <Ionicons name="refresh" size={14} color="#071318" style={{ marginRight: 6 }} />
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </Pressable>
+        </Animated.View>
+      ) : (
+        /* Loading dots */
+        <Animated.View style={[styles.dotsContainer, { opacity: taglineOpacity }]}>
+          <LoadingDots />
+        </Animated.View>
+      )}
     </View>
   );
 }
@@ -275,8 +317,8 @@ const styles = StyleSheet.create({
     borderRadius: 100,
   },
   logo: {
-    width: 150,
-    height: 150,
+    width: 120,
+    height: 120,
   },
   titleWhite: {
     color: '#FFFFFF',
@@ -292,10 +334,10 @@ const styles = StyleSheet.create({
   },
   tagline: {
     color: '#7BA8B5',
-    fontSize: 15,
+    fontSize: 12,
     fontWeight: '300',
-    letterSpacing: 2.5,
-    marginTop: 8,
+    letterSpacing: 1,
+    marginTop: 5,
     textTransform: 'uppercase',
   },
   dotsContainer: {
@@ -307,5 +349,38 @@ const styles = StyleSheet.create({
     height: 7,
     borderRadius: 4,
     backgroundColor: '#30A89C',
+  },
+  offlineContainer: {
+    position: 'absolute',
+    bottom: 60,
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    width: '100%',
+  },
+  offlineText: {
+    color: '#7BA8B5',
+    fontSize: 13,
+    marginTop: 6,
+    marginBottom: 12,
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+  retryButton: {
+    backgroundColor: '#4CC2D1',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    shadowColor: '#4CC2D1',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 6,
+  },
+  retryButtonText: {
+    color: '#071318',
+    fontSize: 12,
+    fontWeight: '700',
   },
 });

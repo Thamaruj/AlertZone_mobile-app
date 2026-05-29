@@ -1,7 +1,7 @@
 # Current Status — AlertZone Mobile App
 > **Full Log:** [PROJECT_PROGRESS.md](./PROJECT_PROGRESS.md)
 
-> **Last Updated:** 2026-05-29
+> **Last Updated:** 2026-05-29 (Pull-to-Refresh · Auto-Archive · Archive Screen)
 >
 > This document tracks what is done, what is broken, and what remains. Agents MUST read this before starting work.
 
@@ -12,16 +12,27 @@
 | Phase | Status | Notes |
 |---|---|---------|
 | Phase 0: Architecture Cleanup | 🔴 Not Started | Planned next |
-| Phase 1: Core Firebase Integration | 🟡 In Progress | Auth ✅, Report submit ✅, Map live ✅, History live ✅ |
+| Phase 1: Core Firebase Integration | 🟢 Done | Auth, Live Database, Storage, and Push Notifications integrated |
 | Phase 2: Report System | 🟢 Done | Submit + track + images + location search working ✅ |
-| Phase 3: Community Features | 🔴 Not Started | Upvoting UI exists but not functional |
+| Phase 3: Community Features | 🟢 Done | Upvotes confirmation flow, community comments list, user detail modals, and dashboard linking ✅ |
 | Phase 4: Notifications | 🟢 Done | expo-notifications plugin ✅, push tokens ✅, foreground listeners ✅, in-app Notification Center ✅ |
 | Phase 5: Badge System | 🔴 Not Started | Static badges shown in profile |
-| Phase 6: Polish & Launch | 🟡 In Progress | Animated splash gate ✅, smart first-launch routing ✅, onboarding seen flag ✅ |
+| Phase 6: Polish & Launch | 🟢 Done | Animated splash gate, onboarding seen flag, and 7 critical/medium APK readiness fixes ✅ |
 
 ---
 
 ## What IS Working ✅
+
+### Upvotes & Community Comments (Fully Functional)
+- [x] Vibrantly redesigned, fully pressable upvote banner block (`#0f93f2ff`)
+- [x] Custom interactive confirmation modal for upvoting with optional commenting support
+- [x] Custom retract confirmation modal when removing an upvote
+- [x] Fully keyboard-avoiding flex layout for the community comments input bar
+- [x] Avatar and user name resolution for comments made by current user, highlighted with `(You)` label and teal border
+- [x] Limit initial comment feed to 5 entries with a custom "View All" toggle button
+- [x] Custom Toast notifications rendered inside the native modal wrapper to prevent rendering behind modal windows
+- [x] Admin console live subscriptions to comments and upvotes
+- [x] Admin console user profiles linkage from comments/upvotes avatars to open the user details controls
 
 ### Authentication (Fully Functional)
 - [x] Email/password registration with Firebase Auth
@@ -32,13 +43,17 @@
 - [x] Auth state persistence with AsyncStorage
 - [x] Auth context provider (`useAuth` hook) with user + profile
 - [x] Auto-redirect to login if not authenticated (tab guard)
-- [x] Remember Me (saves email to AsyncStorage)
+- [x] Remember Me (saves email to AsyncStorage, securely purges raw passwords) ✅
+- [x] Biometric authentication (Fingerprint & Face ID login with SecureStore encryption) ✅
+- [x] Resolved startup connection loading hang with a Firestore query timeout race ✅
+- [x] Global network status gate (`NetworkStatusGate`) with bottom sheet and manual "Check Connection" retry controls ✅
 - [x] Logout functionality with confirmation modal
 - [x] Password validation (min 8 chars, uppercase, number)
 
 ### Profile (Partially Functional)
 - [x] Profile screen reads real data from Firestore via `useAuth`
 - [x] Edit profile modal — saves phone, address, notification prefs to Firestore
+- [x] Biometric login settings toggle with secure password verification overlay modal ✅
 - [x] Display contribution points and reports validated from Firestore
 - [x] User level display
 
@@ -65,9 +80,10 @@
 
 ### Home Screen (`home.tsx`)
 - [ ] Browse Categories — hardcoded array, not from Firestore
-- [ ] Nearby Issues — hardcoded `NEARBY_ISSUES` array with stock images
-- [ ] Latest Updates — hardcoded `LATEST_UPDATES` array
+- [x] Nearby Issues — live Firestore subscription filtered to user's alert radius ✅
+- [x] Latest Updates — live Firestore subscription ✅
 - [x] Notification bell badge — wired to real Firestore unread count ✅
+- [x] **Pull-to-Refresh** — re-fetches GPS location and refreshes nearby issues + updates ✅
 
 ### Map Screen (`map.tsx`) ✅ LIVE
 - [x] Issue pins — live Firestore subscription (`onSnapshot`) ✅
@@ -111,10 +127,21 @@
 - [x] Status timeline with ASSIGNED stage ✅
 - [x] Real-time updates — modal reflects status changes instantly ✅
 - [x] Human-readable date formatting ✅
+- [x] **Auto-Archive** — RESOLVED reports older than 24h are automatically set to `isArchived: true` in Firestore via batch write ✅
+- [x] Archived reports excluded from all tab filters and counts ✅
+- [x] **Archive button** in header — navigates to the dedicated Archive screen ✅
+
+### Archive Screen (`archive.tsx`) ✅ NEW
+- [x] Live Firestore subscription filtered to `isArchived == true` for the current user ✅
+- [x] **Category filter chips** — All Categories + 6 specific categories ✅
+- [x] **Date filter chips** — All Time / Today / Last 7 Days / Last 30 Days / Custom Range ✅
+- [x] **Custom date range** — pure React Native calendar modal, no third-party date picker ✅
+- [x] Report detail modal with status timeline and resolution notes ✅
+- [x] Informative empty state explaining the auto-archive behaviour ✅
 
 ### Profile Screen (`profile.tsx`)
 - [ ] Badges — hardcoded `BADGES` array, not computed from user activity
-- [ ] Avatar upload — camera button exists but `expo-image-picker` not wired
+- [x] Avatar upload — camera button wired, supports photo/gallery, compression, and Storage upload ✅
 - [ ] "View All" badges link — not functional
 - [x] Notification sound preference and alert radius edit settings saved to Firestore ✅
 - [x] Stats use real Firestore data ✅
@@ -127,7 +154,7 @@
 
 ### Firebase Services
 - [ ] `report.service.ts` — Firestore CRUD for reports
-- [ ] `storage.service.ts` — Image/video upload to Firebase Storage
+- [x] `storage.service.ts` — Image upload to Firebase Storage with local URI fix for APK builds ✅
 - [x] `notification.service.ts` — Expo push token registration, Android channel setup (`alertzone-alerts`), Firestore token save/clear ✅
 - [ ] `user.service.ts` — Separated user operations
 
@@ -141,9 +168,9 @@
 - [ ] `useUserBadges` — badge calculation logic
 
 ### Features
-- [ ] Real report submission to Firestore
-- [ ] Image/video upload to Firebase Storage
-- [ ] Community upvoting system
+- [x] Real report submission to Firestore ✅
+- [x] Image/video upload to Firebase Storage ✅
+- [x] Community upvoting system with comment integration ✅
 - [x] Push notifications (Expo Push API) ✅
 - [ ] Badge calculation and display from real data
 - [ ] Area-based report filtering

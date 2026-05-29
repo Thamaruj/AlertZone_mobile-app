@@ -4,7 +4,7 @@
     "slug": "alertzone",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/iconAlerZone.png",
+    "icon": "./assets/images/iconAlerZone-Bg-none.png",
     "scheme": "mobileapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -12,12 +12,15 @@
       "supportsTablet": true,
       "config": {
         "googleMapsApiKey": "AIzaSyC43kjBIm6oio6od630NQbjVw9x-f2xp5Q"
+      },
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "Allow AlertZone to use Face ID for fast login."
       }
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#0D1E2C",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "foregroundImage": "./assets/images/iconAlerZone-Bg-none.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
@@ -74,7 +77,8 @@
           }
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true,
