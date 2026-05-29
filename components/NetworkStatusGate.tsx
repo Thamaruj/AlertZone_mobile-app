@@ -8,6 +8,7 @@ import {
   Dimensions,
   BackHandler,
   Pressable,
+  DeviceEventEmitter,
 } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 import { Ionicons } from '@expo/vector-icons';
@@ -55,14 +56,23 @@ export default function NetworkStatusGate() {
   const spinValue = useRef(new Animated.Value(0)).current;
   const spinAnimation = useRef<Animated.CompositeAnimation | null>(null);
 
-  // Monitor Network
+  // Monitor Network & Listen to test triggers
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener((state) => {
       const connected = state.isConnected ?? true;
       setIsConnected(connected);
     });
 
-    return () => unsubscribe();
+    const testSubscription = DeviceEventEmitter.addListener('testOfflineGate', () => {
+      setIsConnected(false);
+      setWasOffline(true);
+      setVisible(true);
+    });
+
+    return () => {
+      unsubscribe();
+      testSubscription.remove();
+    };
   }, []);
 
   // Handle Visibility and Transitions based on connection state
