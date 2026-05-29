@@ -34,6 +34,8 @@
 - [x] Auto-redirect to login if not authenticated (tab guard)
 - [x] Remember Me (saves email to AsyncStorage, securely purges raw passwords) ✅
 - [x] Biometric authentication (Fingerprint & Face ID login with SecureStore encryption) ✅
+- [x] Resolved startup connection loading hang with a Firestore query timeout race ✅
+- [x] Global network status gate (`NetworkStatusGate`) with bottom sheet and manual "Check Connection" retry controls ✅
 - [x] Logout functionality with confirmation modal
 - [x] Password validation (min 8 chars, uppercase, number)
 

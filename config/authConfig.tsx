@@ -47,18 +47,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);  // start true — checking auth
 
   // Fetch Firestore profile for a given uid
-    const fetchProfile = async (uid: string) => {
+  const fetchProfile = async (uid: string) => {
     try {
-        const snap = await getDoc(doc(db, 'users', uid));
-        if (snap.exists()) {
+      const getDocPromise = getDoc(doc(db, 'users', uid));
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Firestore profile fetch timeout')), 2500)
+      );
+
+      const snap = await Promise.race([getDocPromise, timeoutPromise]);
+      if (snap.exists()) {
         setProfile(snap.data() as UserProfile);
-        } else {
+      } else {
         console.warn('⚠️ No user document found in Firestore for uid:', uid);
-        }
+      }
     } catch (e) {
-        console.error('❌ fetchProfile error:', e);
+      console.error('❌ fetchProfile error or timeout:', e);
     }
-    };
+  };
 
   // Re-fetch profile (call this after editing profile)
   const refreshProfile = async () => {
