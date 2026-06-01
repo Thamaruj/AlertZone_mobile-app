@@ -203,6 +203,60 @@ This document tracks the end-to-end development journey of the AlertZone mobile 
 - **Image Processing:** Expo Image Manipulator
 - **Push Notifications:** Expo Notifications + Expo Push Service (FCM)
 
+
 ---
 
-*Last Updated: 2026-05-29 — Upvotes & Comments Integration · APK Bug-Fixes*
+## 🎮 Phase 5: Gamification System
+**Date:** 2026-06-01
+
+- **[2026-06-01] Points System:**
+    - Removed submission-time points (`report.tsx`) — points are no longer given when a report is submitted.
+    - Points are now awarded **only when a report reaches `ASSIGNED` status** (i.e., accepted by the admin), giving citizens **+10 contribution points** per accepted report.
+    - Rejected reports earn **zero points**.
+    - Each report document receives a `pointsAwarded: true` flag after awarding to prevent double-awarding across reconnections or app restarts.
+
+- **[2026-06-01] Badge System (`services/gamification.service.ts`):**
+    - Created a centralised `gamification.service.ts` with full badge definitions, point award functions, and badge sync logic.
+    - **12 badges across 4 tiers:**
+        - 🟤 Bronze: First Responder, Early Bird, Night Watch
+        - ⚪ Silver: Trusted Reporter (5 accepted), Problem Solver (5 resolved), Community Champion (500 pts)
+        - 🟡 Gold: Veteran Reporter (25 accepted), Resolution Hero (20 resolved), City Guardian (2K pts)
+        - 💎 Diamond: Legend (100 accepted), Master Resolver (50 resolved), AlertZone Elite (5K pts)
+    - Badge checking and awarding happens entirely client-side — no Cloud Functions required.
+    - New `reportsAccepted` and `reportsResolved` fields added to `users` Firestore documents.
+    - New `resolvedCounted` flag on report documents to prevent double-counting resolved stats.
+
+- **[2026-06-01] History Screen Gamification (`history.tsx`):**
+    - Extended `onSnapshot` handler with full gamification pipeline:
+        1. Detect newly ASSIGNED reports (no `pointsAwarded` flag) → call `awardAcceptedPoints()`
+        2. Detect newly RESOLVED reports (no `resolvedCounted` flag) → call `incrementResolvedCount()`
+        3. Compute badge eligibility from updated counters
+        4. Sync newly earned badges to Firestore with `arrayUnion`
+        5. Show "Points Earned 🎉" and "Badge Unlocked 🏅" Toast notifications
+        6. Call `refreshProfile()` to update UI everywhere
+    - A `gamificationBusy` ref prevents parallel gamification runs.
+
+- **[2026-06-01] Profile Screen (`profile.tsx`):**
+    - Replaced static `BADGES` mock array with real `profile.badges` data mapped through `BADGE_DEFINITIONS`.
+    - Shows up to 4 most recently earned badges in the profile card.
+    - Displays an empty-state placeholder ("get reports accepted to earn your first one!") when no badges earned.
+    - "View All" button now navigates to the new `/badges` screen.
+
+- **[2026-06-01] Badge Showcase Screen (`app/badges.tsx`):**
+    - New screen at route `/badges` (Expo Router file-based routing — no layout changes needed).
+    - **Earned badge grid** — 3-column with glowing icon shadows.
+    - **Collection progress bar** — shows X/12 badges earned.
+    - **"How to Earn" section** — all 12 badges grouped by tier with divider headers, lock/unlock state, and earn descriptions.
+    - Info footnote explaining the 10-pts-per-accepted-report system.
+
+- **[2026-06-01] Admin Dashboard (`Reportsmanagement.tsx`):**
+    - Corrected status feedback message — previously said "rewarded +10 points" on RESOLVED; now correctly says citizen "will automatically receive +10 contribution points" on ASSIGNED.
+
+- **[2026-06-01] Documentation:**
+    - Updated `CURRENT_STATUS.md` — Phase 5 marked Done, profile/history/services sections updated.
+    - Updated `FIRESTORE_DATA_MODEL.md` (both mobile and dashboard) — new gamification fields documented on `users` and `reports` collections, badge definitions updated.
+    - Updated dashboard `FIRESTORE_DATA_MODEL.md` — admin warned not to manually modify gamification fields.
+
+---
+
+*Last Updated: 2026-06-01 — Gamification System (Points · Badges · Badge Showcase Screen)*
