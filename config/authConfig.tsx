@@ -20,6 +20,9 @@ export interface UserProfile {
   isVerified: boolean;
   avatarUrl?: string;
   contributionPoints?: number;
+  reportsAccepted?: number;          // count of non-rejected accepted reports
+  reportsResolved?: number;          // count of fully resolved reports
+  badges?: string[];                 // array of earned badge IDs
   reportsValidated?: number;
   notificationSound?: boolean;
   alertRadius?: string;
