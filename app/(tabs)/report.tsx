@@ -755,17 +755,7 @@ export default function ReportScreen() {
         ],
       });
 
-      // 3. Update user points
-      try {
-        setUploadStatusText('Updating rewards...');
-        await updateDoc(doc(db, 'users', user.uid), {
-          contributionPoints: increment(10),
-        });
-      } catch (err) {
-        console.error('❌ Points update failed:', err);
-      }
-
-      // 4. Create admin notification log
+      // 3. Create admin notification log
       try {
         await addDoc(collection(db, 'notifications'), {
           recipientUid: 'admin',

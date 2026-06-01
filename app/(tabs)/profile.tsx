@@ -6,6 +6,7 @@ import { useRouter } from 'expo-router';
 import { doc, updateDoc, collection, query, where, onSnapshot } from 'firebase/firestore';
 import { deleteObject, ref as storageRef } from 'firebase/storage';
 import React, { useEffect, useRef, useState } from 'react';
+import { BADGE_DEFINITIONS } from '../../services/gamification.service';
 import {
   ActivityIndicator,
   Animated,
@@ -30,13 +31,6 @@ import { sriLankaGeographics } from '../../config/sriLankaRegions';
 import { useScrollContext } from '../../config/tabBarScrollContext';
 import { db, storage } from '../../services/firebase';
 import { compressImage, isUnderSizeLimit, uploadFile } from '../../services/storage.service';
-
-const BADGES = [
-  { id: '1', label: 'First\nResponder', icon: 'shield', color: '#4CC2D1', bg: '#0D2A35' },
-  { id: '2', label: 'Early\nBird', icon: 'sunny', color: '#F59E0B', bg: '#3D2E0A' },
-  { id: '3', label: 'Community\nHero', icon: 'people', color: '#A78BFA', bg: '#2D1F4A' },
-  { id: '4', label: 'Mapper', icon: 'map', color: '#30A89C', bg: '#0D3D35' },
-];
 
 const DEFAULT_COORDS = { latitude: 6.9271, longitude: 79.8612 }; // Colombo default
 
@@ -73,15 +67,26 @@ function StatCard({ label, value, trend, icon }: { label: string; value: string 
   );
 }
 
-function BadgeChip({ badge }: { badge: typeof BADGES[0] }) {
+function BadgeChip({ badge, earned = true }: { badge: typeof BADGE_DEFINITIONS[0]; earned?: boolean }) {
   return (
     <View className="items-center" style={{ width: 76 }}>
-      <View className="w-14 h-14 rounded-2xl items-center justify-center mb-1.5"
-        style={{ backgroundColor: badge.bg, borderWidth: 1, borderColor: badge.color + '40' }}
+      <View
+        className="w-14 h-14 rounded-2xl items-center justify-center mb-1.5"
+        style={{
+          backgroundColor: earned ? badge.bg : '#0A1420',
+          borderWidth: 1,
+          borderColor: earned ? badge.color + '50' : '#1E3347',
+          opacity: earned ? 1 : 0.4,
+        }}
       >
-        <Ionicons name={badge.icon as any} size={26} color={badge.color} />
+        <Ionicons name={badge.icon as any} size={26} color={earned ? badge.color : '#2D4F5C'} />
       </View>
-      <Text className="text-gray-400 text-[10px] text-center leading-3">{badge.label}</Text>
+      <Text
+        className="text-gray-400 text-[10px] text-center leading-3"
+        style={{ color: earned ? '#9CA3AF' : '#3A5060' }}
+      >
+        {badge.name}
+      </Text>
     </View>
   );
 }
@@ -1367,16 +1372,34 @@ export default function ProfileScreen() {
         <View className="px-5 mb-6">
           <View className="flex-row justify-between items-center mb-3">
             <Text className="text-white text-lg font-bold">Earned Badges</Text>
-            <Pressable className="active:opacity-70">
+            <Pressable onPress={() => router.push('/badges' as any)} className="active:opacity-70">
               <Text className="text-[#4CC2D1] text-sm font-semibold">View All</Text>
             </Pressable>
           </View>
-          {/* TODO: Replace BADGES with profile.badges from Firestore once you add that field */}
-          <View className="flex-row gap-3">
-            {BADGES.map((badge) => (
-              <BadgeChip key={badge.id} badge={badge} />
-            ))}
-          </View>
+          {(() => {
+            const earnedIds = profile.badges ?? [];
+            const earnedBadges = BADGE_DEFINITIONS.filter(b => earnedIds.includes(b.id)).slice(0, 4);
+            if (earnedBadges.length === 0) {
+              return (
+                <View
+                  className="rounded-2xl items-center py-5"
+                  style={{ backgroundColor: '#0A1420', borderWidth: 1, borderColor: '#1E3347' }}
+                >
+                  <Ionicons name="ribbon-outline" size={28} color="#2D4F5C" />
+                  <Text className="text-gray-600 text-xs mt-2 text-center">
+                    No badges yet — get reports accepted to earn your first one!
+                  </Text>
+                </View>
+              );
+            }
+            return (
+              <View className="flex-row gap-3">
+                {earnedBadges.map((badge) => (
+                  <BadgeChip key={badge.id} badge={badge} earned />
+                ))}
+              </View>
+            );
+          })()}
         </View>
 
         {/* ── 5. Account Settings ── */}

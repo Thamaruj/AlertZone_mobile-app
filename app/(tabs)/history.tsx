@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Toast from 'react-native-toast-message';
 import { useScrollContext } from '../../config/tabBarScrollContext';
 import { useAuth } from '../../config/authConfig';
 import { db } from '../../services/firebase';
@@ -25,6 +26,12 @@ import {
   doc,
 } from 'firebase/firestore';
 import { Image } from 'react-native';
+import {
+  awardAcceptedPoints,
+  computeEarnedBadgeIds,
+  incrementResolvedCount,
+  syncBadgesToFirestore,
+} from '../../services/gamification.service';
 
 // ─────────────────────────────────────────────
 // Types
@@ -48,6 +55,9 @@ interface Report {
   updatedAt?: any;
   isArchived?: boolean;
   statusHistory: Array<{ status: string; changedAt: any; changedBy: string; note?: string }>;
+  // gamification flags — written by client to prevent double-awarding
+  pointsAwarded?: boolean;
+  resolvedCounted?: boolean;
 }
 
 // ─────────────────────────────────────────────
@@ -351,7 +361,9 @@ export default function HistoryScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { onScroll } = useScrollContext();
-  const { user } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
+  // Track whether gamification processing is already in flight to avoid parallel runs
+  const gamificationBusy = useRef(false);
 
   const [reports, setReports]           = useState<Report[]>([]);
   const [firestoreLoading, setFirestoreLoading] = useState(true);
@@ -370,13 +382,87 @@ export default function HistoryScreen() {
 
     const unsub = onSnapshot(
       q,
-      (snap) => {
+      async (snap) => {
         const data: Report[] = snap.docs.map((d) => ({
           id: d.id,
           ...(d.data() as Omit<Report, 'id'>),
         }));
         setReports(data);
         setFirestoreLoading(false);
+
+        // ── Gamification: award points & badges ─────────────────
+        if (!user || !profile || gamificationBusy.current) return;
+        gamificationBusy.current = true;
+        try {
+          // Reports newly ASSIGNED (accepted) that haven't been awarded points yet
+          const newlyAccepted = data.filter(
+            (r) => r.status === 'ASSIGNED' && !r.pointsAwarded,
+          );
+          // Reports newly RESOLVED that haven't been counted yet
+          const newlyResolved = data.filter(
+            (r) => r.status === 'RESOLVED' && !r.resolvedCounted,
+          );
+
+          // Award 10 pts for each newly accepted report
+          for (const r of newlyAccepted) {
+            await awardAcceptedPoints(user.uid, r.id);
+          }
+          // Increment resolved counter
+          for (const r of newlyResolved) {
+            await incrementResolvedCount(user.uid, r.id);
+          }
+
+          if (newlyAccepted.length > 0) {
+            const totalPts = newlyAccepted.length * 10;
+            Toast.show({
+              type: 'success',
+              text1: `+${totalPts} Points Earned! 🎉`,
+              text2: `${newlyAccepted.length} report${newlyAccepted.length > 1 ? 's' : ''} accepted by authorities.`,
+            });
+          }
+
+          // Compute updated totals for badge evaluation
+          const updatedAccepted = (profile.reportsAccepted ?? 0) + newlyAccepted.length;
+          const updatedResolved = (profile.reportsResolved ?? 0) + newlyResolved.length;
+          const updatedPoints   = (profile.contributionPoints ?? 0) + newlyAccepted.length * 10;
+
+          // Timestamps for early_bird / night_watch badges
+          const timestamps = data.map((r) =>
+            r.createdAt?.toDate ? r.createdAt.toDate() : new Date(r.createdAt),
+          );
+
+          const earnedIds = computeEarnedBadgeIds({
+            totalReports: data.length,
+            reportsAccepted: updatedAccepted,
+            reportsResolved: updatedResolved,
+            contributionPoints: updatedPoints,
+            reportTimestamps: timestamps,
+          });
+
+          const newBadges = await syncBadgesToFirestore(
+            user.uid,
+            earnedIds,
+            profile.badges ?? [],
+          );
+
+          if (newBadges.length > 0) {
+            Toast.show({
+              type: 'success',
+              text1: `🏅 New Badge${newBadges.length > 1 ? 's' : ''} Unlocked!`,
+              text2: `Check your profile to see your rewards.`,
+            });
+          }
+
+          // Refresh profile so stats & badges update everywhere
+          if (newlyAccepted.length > 0 || newlyResolved.length > 0 || newBadges.length > 0) {
+            await refreshProfile();
+          }
+        } catch (e) {
+          console.error('❌ Gamification processing error:', e);
+        } finally {
+          gamificationBusy.current = false;
+        }
+        // ────────────────────────────────────────────────────────
       },
       (err) => {
         console.error('❌ History Firestore error:', err);
@@ -385,7 +471,7 @@ export default function HistoryScreen() {
     );
 
     return unsub;
-  }, [user]);
+  }, [user, profile]);
 
   // Update selected report when real-time data changes
   useEffect(() => {
