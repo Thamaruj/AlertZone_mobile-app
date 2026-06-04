@@ -1,7 +1,7 @@
 # Current Status — AlertZone Mobile App
 > **Full Log:** [PROJECT_PROGRESS.md](./PROJECT_PROGRESS.md)
 
-> **Last Updated:** 2026-05-29 (Pull-to-Refresh · Auto-Archive · Archive Screen)
+> **Last Updated:** 2026-06-01 (Gamification System — Points, Badges, Badge Showcase Screen)
 >
 > This document tracks what is done, what is broken, and what remains. Agents MUST read this before starting work.
 
@@ -16,7 +16,7 @@
 | Phase 2: Report System | 🟢 Done | Submit + track + images + location search working ✅ |
 | Phase 3: Community Features | 🟢 Done | Upvotes confirmation flow, community comments list, user detail modals, and dashboard linking ✅ |
 | Phase 4: Notifications | 🟢 Done | expo-notifications plugin ✅, push tokens ✅, foreground listeners ✅, in-app Notification Center ✅ |
-| Phase 5: Badge System | 🔴 Not Started | Static badges shown in profile |
+| Phase 5: Badge System | 🟢 Done | Points awarded on ASSIGNED (+10 pts), 12 real badges, badge showcase screen ✅ |
 | Phase 6: Polish & Launch | 🟢 Done | Animated splash gate, onboarding seen flag, and 7 critical/medium APK readiness fixes ✅ |
 
 ---
@@ -114,10 +114,8 @@
 - [x] All-country LGA centers fallback: resolves to the nearest LGA center coordinates when text matches are unavailable or sparse ✅
 - [x] Regex-based boundary matches prevent incorrect subword overlaps (e.g. "ella" matching inside "avissawella" or "pussellawa") ✅
 - [x] Reference ID — real Firestore document ID ✅
-- [x] Contribution points +10 on submit ✅
-- [x] Category selection modal ✅
-- [x] Description input with character count ✅
-- [x] Success screen with real ref ID ✅
+- [x] Contribution points +10 on report **ASSIGNED** (accepted) ✅ (moved from submission to acceptance)
+- [x] Points NOT awarded for rejected reports ✅
 
 ### History Screen (`history.tsx`) ✅ LIVE
 - [x] Report list — live Firestore subscription for current user ✅
@@ -130,6 +128,7 @@
 - [x] **Auto-Archive** — RESOLVED reports older than 24h are automatically set to `isArchived: true` in Firestore via batch write ✅
 - [x] Archived reports excluded from all tab filters and counts ✅
 - [x] **Archive button** in header — navigates to the dedicated Archive screen ✅
+- [x] **Gamification** — detects newly ASSIGNED reports, awards +10 pts each, increments `reportsAccepted`, checks and syncs badges, shows points/badge Toast ✅
 
 ### Archive Screen (`archive.tsx`) ✅ NEW
 - [x] Live Firestore subscription filtered to `isArchived == true` for the current user ✅
@@ -139,14 +138,23 @@
 - [x] Report detail modal with status timeline and resolution notes ✅
 - [x] Informative empty state explaining the auto-archive behaviour ✅
 
-### Profile Screen (`profile.tsx`)
-- [ ] Badges — hardcoded `BADGES` array, not computed from user activity
+### Profile Screen (`profile.tsx`) ✅
+- [x] Badges — real data from `profile.badges` mapped through `BADGE_DEFINITIONS` ✅
+- [x] "View All" badges → navigates to `/badges` screen ✅
+- [x] Empty state when no badges earned yet ✅
 - [x] Avatar upload — camera button wired, supports photo/gallery, compression, and Storage upload ✅
-- [ ] "View All" badges link — not functional
 - [x] Notification sound preference and alert radius edit settings saved to Firestore ✅
 - [x] Stats use real Firestore data ✅
 - [x] Edit profile saves to Firestore ✅
 - [x] Logout fully functional ✅
+
+### Badge Showcase Screen (`app/badges.tsx`) ✅ NEW
+- [x] Earned badge grid (3-column, glowing icons) ✅
+- [x] Collection progress bar ✅
+- [x] All 12 badges listed grouped by tier (Bronze / Silver / Gold / Diamond) ✅
+- [x] Lock/unlock state per badge ✅
+- [x] "How to earn" descriptions for all badges ✅
+- [x] Info note explaining the 10-pt/accepted-report system ✅
 
 ---
 
@@ -156,6 +164,7 @@
 - [ ] `report.service.ts` — Firestore CRUD for reports
 - [x] `storage.service.ts` — Image upload to Firebase Storage with local URI fix for APK builds ✅
 - [x] `notification.service.ts` — Expo push token registration, Android channel setup (`alertzone-alerts`), Firestore token save/clear ✅
+- [x] `gamification.service.ts` — Badge definitions (12 badges, 4 tiers), point award logic, badge sync to Firestore ✅
 - [ ] `user.service.ts` — Separated user operations
 
 ### Hooks
@@ -172,7 +181,8 @@
 - [x] Image/video upload to Firebase Storage ✅
 - [x] Community upvoting system with comment integration ✅
 - [x] Push notifications (Expo Push API) ✅
-- [ ] Badge calculation and display from real data
+- [x] Badge calculation and display from real data ✅
+- [x] Gamification — points awarded on ASSIGNED, badge showcase screen ✅
 - [ ] Area-based report filtering
 - [ ] Google Sign-In (planned for later phase)
 - [ ] Report search functionality

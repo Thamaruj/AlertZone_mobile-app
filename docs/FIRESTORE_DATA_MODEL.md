@@ -45,10 +45,12 @@ The `userId` matches the Firebase Auth UID.
 | `status` | `string` | ✅ | `"active"` | `"active"` or `"suspended"` |
 | `isVerified` | `boolean` | ✅ | `false` | Whether email is verified |
 | `avatarUrl` | `string` | ❌ | `null` | Profile picture URL (Firebase Storage) |
-| `contributionPoints` | `number` | ❌ | `0` | Accumulated contribution score |
-| `reportsValidated` | `number` | ❌ | `0` | Count of resolved reports |
+| `contributionPoints` | `number` | ❌ | `0` | Accumulated contribution score (+10 per accepted report) |
+| `reportsAccepted` | `number` | ❌ | `0` | Count of reports that reached ASSIGNED (not rejected) |
+| `reportsResolved` | `number` | ❌ | `0` | Count of fully resolved reports |
+| `reportsValidated` | `number` | ❌ | `0` | Legacy alias for reportsResolved |
+| `badges` | `string[]` | ❌ | `[]` | Array of earned badge IDs (see gamification.service.ts) |
 | `level` | `number` | ❌ | `1` | User level (calculated from points) |
-| `badges` | `string[]` | ❌ | `[]` | Array of earned badge IDs |
 | `notificationSound` | `boolean` | ❌ | `true` | Notification sound preference |
 | `alertRadius` | `string` | ❌ | `"10 Km"` | Alert radius preference |
 | `fcmToken` | `string` | ❌ | `null` | Firebase Cloud Messaging device token |
@@ -122,7 +124,9 @@ Fields like `contributionPoints`, `reportsValidated`, `level`, `badges`, `area`,
 | `assignedTo` | `string` | ❌ | `null` | Admin/team member assigned (set by admin) |
 | `resolutionNote` | `string` | ❌ | `null` | Note when resolved or rejected (set by admin) |
 | `upvoteCount` | `number` | ✅ | `0` | Total upvotes (denormalized count) |
-| `isArchived` | `boolean` | ❌ | `false` | Soft-delete flag (set by admin) |
+| `isArchived` | `boolean` | ❌ | `false` | Soft-delete flag (set by mobile app after 24h resolution) |
+| `pointsAwarded` | `boolean` | ❌ | `false` | **Gamification flag** — set to `true` after +10 pts awarded on ASSIGNED. Prevents double-awarding. |
+| `resolvedCounted` | `boolean` | ❌ | `false` | **Gamification flag** — set to `true` after `reportsResolved` incremented. |
 | `createdAt` | `timestamp` | ✅ | — | Report submission time |
 | `updatedAt` | `timestamp` | ❌ | — | Last status update time |
 | `statusHistory` | `array` | ❌ | `[]` | Array of status change events |
@@ -276,17 +280,24 @@ Stores system-level configuration that can be changed without app updates.
 ```json
 {
   "badges": [
-    {
-      "id": "first_responder",
-      "label": "First Responder",
-      "icon": "shield",
-      "color": "#4CC2D1",
-      "criteria": "Submit your first report",
-      "pointsAwarded": 50
-    }
+    { "id": "first_report",  "name": "First Responder",     "icon": "shield",                 "tier": "bronze",  "description": "Submit your very first report" },
+    { "id": "early_bird",   "name": "Early Bird",           "icon": "sunny",                  "tier": "bronze",  "description": "Report before 7:00 AM" },
+    { "id": "night_watch",  "name": "Night Watch",          "icon": "moon",                   "tier": "bronze",  "description": "Report after 10:00 PM" },
+    { "id": "accepted_5",   "name": "Trusted Reporter",     "icon": "ribbon",                 "tier": "silver",  "description": "5 reports accepted" },
+    { "id": "resolved_5",   "name": "Problem Solver",       "icon": "checkmark-done-circle",  "tier": "silver",  "description": "5 reports resolved" },
+    { "id": "points_500",   "name": "Community Champion",   "icon": "people",                 "tier": "silver",  "description": "500 contribution points" },
+    { "id": "accepted_25",  "name": "Veteran Reporter",     "icon": "star-half",              "tier": "gold",    "description": "25 reports accepted" },
+    { "id": "resolved_20",  "name": "Resolution Hero",      "icon": "trophy",                 "tier": "gold",    "description": "20 reports resolved" },
+    { "id": "points_2000",  "name": "City Guardian",        "icon": "shield-checkmark",       "tier": "gold",    "description": "2,000 contribution points" },
+    { "id": "accepted_100", "name": "Legend",               "icon": "medal",                  "tier": "diamond", "description": "100 reports accepted" },
+    { "id": "resolved_50",  "name": "Master Resolver",      "icon": "infinite",               "tier": "diamond", "description": "50 reports resolved" },
+    { "id": "points_5000",  "name": "AlertZone Elite",      "icon": "diamond",                "tier": "diamond", "description": "5,000 contribution points" }
   ]
 }
 ```
+
+> [!NOTE]
+> Badge logic lives entirely in `services/gamification.service.ts` — the mobile app evaluates and awards badges client-side after each status update snapshot. No Cloud Functions required.
 
 ### `app_config/levels`
 ```json
