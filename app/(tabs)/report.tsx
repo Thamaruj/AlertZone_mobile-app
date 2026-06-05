@@ -800,7 +800,7 @@ export default function ReportScreen() {
           recipientUid: 'admin',
           type: 'status_change',
           title: 'New Issue Received',
-          body: `A new ${selectedCategory.label} Incident has been reported by ${profile.fullName} in ${locationAddress.split(',').slice(-2).join(',').trim() || 'unknown region'}.`,
+          body: `A new ${selectedCategory.label} Incident (Ref: ${customReportId}) has been reported by ${profile.fullName} in ${locationAddress.split(',').slice(-2).join(',').trim() || 'unknown region'}.`,
           reportId: customReportId,
           isRead: false,
           createdAt: serverTimestamp(),

@@ -51,7 +51,14 @@ interface Report {
   status: ReportStatus;
   upvoteCount: number;
   imageUrls: string[];
-  location: { address: string; latitude: number; longitude: number };
+  location: {
+    address: string;
+    latitude: number;
+    longitude: number;
+    province?: string;
+    district?: string;
+    localGovernmentArea?: string;
+  };
   resolutionNote?: string;
   createdAt: any;
   statusHistory?: Array<{ status: string; changedAt: any; changedBy: string; note?: string }>;
@@ -276,7 +283,7 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
           recipientUid: 'admin',
           type: 'upvote',
           title: 'Report Upvoted',
-          body: `${profile?.fullName || 'A citizen'} upvoted the report "${report.title}".`,
+          body: `${profile?.fullName || 'A citizen'} upvoted the report "${report.title}" (Ref: ${report.id}).`,
           reportId: report.id,
           isRead: false,
           createdAt: serverTimestamp(),
@@ -289,7 +296,7 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
             recipientUid: report.uid,
             type: 'upvote',
             title: 'Your Report Was Upvoted!',
-            body: `${profile?.fullName || 'A citizen'} upvoted your report "${report.title}".`,
+            body: `${profile?.fullName || 'A citizen'} upvoted your report "${report.title}" (Ref: ${report.id}).`,
             reportId: report.id,
             isRead: false,
             createdAt: serverTimestamp(),
@@ -312,7 +319,7 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
             recipientUid: 'admin',
             type: 'comment',
             title: 'New Report Comment',
-            body: `${profile?.fullName || 'A citizen'} commented on report "${report.title}": "${commentText.trim()}"`,
+            body: `${profile?.fullName || 'A citizen'} commented on report "${report.title}" (Ref: ${report.id}): "${commentText.trim()}"`,
             reportId: report.id,
             isRead: false,
             createdAt: serverTimestamp(),
@@ -325,7 +332,7 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
               recipientUid: report.uid,
               type: 'comment',
               title: 'New Comment on Your Report',
-              body: `${profile?.fullName || 'A citizen'} commented on your report: "${commentText.trim()}"`,
+              body: `${profile?.fullName || 'A citizen'} commented on your report (Ref: ${report.id}): "${commentText.trim()}"`,
               reportId: report.id,
               isRead: false,
               createdAt: serverTimestamp(),
@@ -380,7 +387,7 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
         recipientUid: 'admin',
         type: 'comment',
         title: 'New Report Comment',
-        body: `${profile?.fullName || 'A citizen'} commented on report "${report.title}": "${commentBody}"`,
+        body: `${profile?.fullName || 'A citizen'} commented on report "${report.title}" (Ref: ${report.id}): "${commentBody}"`,
         reportId: report.id,
         isRead: false,
         createdAt: serverTimestamp(),
@@ -393,7 +400,7 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
           recipientUid: report.uid,
           type: 'comment',
           title: 'New Comment on Your Report',
-          body: `${profile?.fullName || 'A citizen'} commented on your report: "${commentBody}"`,
+          body: `${profile?.fullName || 'A citizen'} commented on your report (Ref: ${report.id}): "${commentBody}"`,
           reportId: report.id,
           isRead: false,
           createdAt: serverTimestamp(),
@@ -664,6 +671,25 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
                     <View style={{ flex: 1 }}>
                       <Text style={{ color: '#5A7D8A', fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>Location</Text>
                       <Text style={{ color: 'white', fontSize: 13, lineHeight: 18 }}>{report.location?.address ?? 'Unknown'}</Text>
+                      {(report.location?.province || report.location?.district || report.location?.localGovernmentArea) && (
+                        <View style={{ marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: '#1E3347', gap: 4 }}>
+                          {report.location?.province && (
+                            <Text style={{ color: '#CBD5E1', fontSize: 12 }}>
+                              <Text style={{ color: '#5A7D8A', fontWeight: '600' }}>Province: </Text>{report.location.province}
+                            </Text>
+                          )}
+                          {report.location?.district && (
+                            <Text style={{ color: '#CBD5E1', fontSize: 12 }}>
+                              <Text style={{ color: '#5A7D8A', fontWeight: '600' }}>District: </Text>{report.location.district}
+                            </Text>
+                          )}
+                          {report.location?.localGovernmentArea && (
+                            <Text style={{ color: '#CBD5E1', fontSize: 12 }}>
+                              <Text style={{ color: '#5A7D8A', fontWeight: '600' }}>LGA: </Text>{report.location.localGovernmentArea}
+                            </Text>
+                          )}
+                        </View>
+                      )}
                     </View>
                   </View>
 

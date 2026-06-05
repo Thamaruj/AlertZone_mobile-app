@@ -39,7 +39,14 @@ interface Report {
   status: ReportStatus;
   upvoteCount: number;
   imageUrls: string[];
-  location: { address: string; latitude: number; longitude: number };
+  location: {
+    address: string;
+    latitude: number;
+    longitude: number;
+    province?: string;
+    district?: string;
+    localGovernmentArea?: string;
+  };
   resolutionNote?: string;
   createdAt: any;
   updatedAt?: any;
@@ -377,6 +384,25 @@ function ReportDetailModal({ report, onClose }: { report: Report | null; onClose
               <View className="flex-1">
                 <Text className="text-gray-500 text-[10px] uppercase font-bold tracking-wide mb-1">Location</Text>
                 <Text className="text-white text-sm leading-5">{report.location?.address ?? 'Unknown'}</Text>
+                {(report.location?.province || report.location?.district || report.location?.localGovernmentArea) && (
+                  <View className="mt-2 pt-2 border-t border-[#1E3347] gap-1">
+                    {report.location?.province && (
+                      <Text className="text-[#CBD5E1] text-xs">
+                        <Text className="text-gray-500 font-semibold">Province: </Text>{report.location.province}
+                      </Text>
+                    )}
+                    {report.location?.district && (
+                      <Text className="text-[#CBD5E1] text-xs">
+                        <Text className="text-gray-500 font-semibold">District: </Text>{report.location.district}
+                      </Text>
+                    )}
+                    {report.location?.localGovernmentArea && (
+                      <Text className="text-[#CBD5E1] text-xs">
+                        <Text className="text-gray-500 font-semibold">LGA: </Text>{report.location.localGovernmentArea}
+                      </Text>
+                    )}
+                  </View>
+                )}
               </View>
             </View>
 

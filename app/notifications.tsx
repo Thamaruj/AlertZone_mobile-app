@@ -483,6 +483,11 @@ function NotificationCard({
             <Text className="text-gray-400 text-xs mt-1 leading-5">
               {item.body}
             </Text>
+            {item.reportId && (
+              <Text className="text-[#4CC2D1] text-[11px] font-semibold mt-1">
+                Ref: {item.reportId}
+              </Text>
+            )}
             <Text className="text-gray-500 text-[10px] mt-2 font-medium">
               {timeAgo(item.createdAt)}
             </Text>
