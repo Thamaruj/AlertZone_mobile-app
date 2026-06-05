@@ -309,3 +309,24 @@ This document tracks the end-to-end development journey of the AlertZone mobile 
 ---
 
 *Last Updated: 2026-06-06 — LGA Resolution Accuracy Fixes*
+
+---
+
+## 📋 Session: Pagination & Date Filtering for My Reports / Archive
+**Date:** 2026-06-06
+
+- **[2026-06-06] Date Filters in My Reports (`history.tsx`):**
+    - Added a "Date Filter" horizontal chip row beneath the existing Status filter row: **All Time**, **Today**, **Last 7 Days**, **Last 30 Days**, **Custom Range**.
+    - Custom Range shows a Start/End date picker using the shared `CalendarModal` component (ported from `archive.tsx`).
+    - Status and date filters are combined client-side; pagination resets to 15 whenever any filter changes.
+
+- **[2026-06-06] Pagination — My Reports & Archive (both screens):**
+    - Initial render is limited to **15 reports** to avoid overwhelming the list.
+    - A teal **"Load More (N more)"** button appears below the list when more results exist, loading **20 additional** reports per tap.
+    - A "Showing X of Y reports" results-count label appears above the list.
+    - An **"All X reports shown"** end indicator renders after the last report when the user has paged through everything.
+    - Both `history.tsx` and `archive.tsx` share identical Load More button design and constants (`INITIAL_PAGE_SIZE = 15`, `LOAD_MORE_SIZE = 20`).
+
+---
+
+*Last Updated: 2026-06-06 — Pagination & Date Filtering*
