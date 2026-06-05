@@ -1,8 +1,10 @@
 import { onAuthStateChanged, signOut, User } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { auth, db } from '../services/firebase';
 import NetInfo from '@react-native-community/netinfo';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Toast from 'react-native-toast-message';
 
 // ── Types ──
 export interface UserProfile {
@@ -25,6 +27,7 @@ export interface UserProfile {
   badges?: string[];                 // array of earned badge IDs
   reportsValidated?: number;
   notificationSound?: boolean;
+  notificationsEnabled?: boolean;
   alertRadius?: string;
   createdAt: string;
   level:number;
@@ -40,6 +43,7 @@ interface AuthContextType {
   loading: boolean;                // true while checking auth state
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  isProfileComplete: boolean;
 }
 
 
@@ -49,6 +53,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser]       = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);  // start true — checking auth
+
+  const isProfileComplete = !!(
+    profile &&
+    profile.fullName &&
+    profile.phoneNumber &&
+    profile.nic &&
+    profile.province &&
+    profile.district &&
+    profile.localGovernmentArea
+  );
 
   // Fetch Firestore profile for a given uid
   const fetchProfile = async (uid: string) => {
@@ -95,23 +109,65 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Listen to Firebase auth state changes
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
-
-      if (firebaseUser) {
-        await fetchProfile(firebaseUser.uid);
-      } else {
+      if (!firebaseUser) {
         setProfile(null);
+        setLoading(false);
       }
-
-      setLoading(false); // done checking
     });
 
-    return unsubscribe; // cleanup on unmount
+    return unsubscribe;
   }, []);
 
+  // Listen to profile changes in Firestore and verify password sync
+  useEffect(() => {
+    if (!user) return;
+
+    setLoading(true);
+    const docRef = doc(db, 'users', user.uid);
+    const unsubscribe = onSnapshot(docRef, async (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data() as UserProfile & { lastPasswordChange?: string };
+        setProfile(data);
+
+        try {
+          const localVal = await AsyncStorage.getItem('lastPasswordChangeLocal');
+          if (data.lastPasswordChange) {
+            if (!localVal) {
+              await AsyncStorage.setItem('lastPasswordChangeLocal', data.lastPasswordChange);
+            } else if (localVal !== data.lastPasswordChange) {
+              console.log('🔄 Session expired: password changed on another device.');
+              await AsyncStorage.removeItem('lastPasswordChangeLocal');
+              await signOut(auth);
+              setProfile(null);
+              Toast.show({
+                type: 'error',
+                text1: 'Session Expired',
+                text2: 'Password was changed from another device. Please log in again.',
+              });
+            }
+          } else if (localVal) {
+            await AsyncStorage.removeItem('lastPasswordChangeLocal');
+          }
+        } catch (err) {
+          console.error('Error handling local password change sync:', err);
+        }
+      } else {
+        console.warn('⚠️ No user document found in Firestore for uid:', user.uid);
+        setProfile(null);
+      }
+      setLoading(false);
+    }, (error) => {
+      console.error('Firestore snapshot listener error:', error);
+      setLoading(false);
+    });
+
+    return unsubscribe;
+  }, [user]);
+
   return (
-    <AuthContext.Provider value={{ user, profile, loading, logout, refreshProfile }}>
+    <AuthContext.Provider value={{ user, profile, loading, logout, refreshProfile, isProfileComplete }}>
       {children}
     </AuthContext.Provider>
   );

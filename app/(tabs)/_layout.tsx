@@ -114,7 +114,7 @@ function CustomTabBar() {
 // Root Layout
 // ─────────────────────────────────────────────
 export default function TabLayout() {
-    const { user, loading } = useAuth();
+    const { user, loading, isProfileComplete } = useAuth();
 
     // Still checking auth state — show spinner
   if (loading) {
@@ -128,6 +128,11 @@ export default function TabLayout() {
   // Not logged in → redirect to login
   if (!user) {
     return <Redirect href="/(auth)/loginScreen" />;
+  }
+
+  // Logged in but profile is incomplete → redirect to completeProfile
+  if (!isProfileComplete) {
+    return <Redirect href={"/(auth)/completeProfile" as any} />;
   }
 
   return (

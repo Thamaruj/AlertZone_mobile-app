@@ -20,7 +20,7 @@ import Toast from 'react-native-toast-message';
 SplashScreen.preventAutoHideAsync();
 
 export default function Index() {
-  const { user, loading } = useAuth();
+  const { user, loading, isProfileComplete } = useAuth();
   const [isOffline, setIsOffline] = useState(false);
 
   // ── Animation values ──────────────────────────────────────────────────────
@@ -37,9 +37,11 @@ export default function Index() {
   // Mirror latest values in refs so timer callbacks always read current state
   const loadingRef     = useRef(loading);
   const userRef        = useRef(user);
+  const profileCompleteRef = useRef(isProfileComplete);
 
   useEffect(() => { loadingRef.current = loading; }, [loading]);
   useEffect(() => { userRef.current    = user;    }, [user]);
+  useEffect(() => { profileCompleteRef.current = isProfileComplete; }, [isProfileComplete]);
 
   // ── Navigation ────────────────────────────────────────────────────────────
   const tryNavigate = async () => {
@@ -53,6 +55,8 @@ export default function Index() {
         router.replace('/onboarding');
       } else if (!userRef.current) {
         router.replace('/(auth)/loginScreen');
+      } else if (!profileCompleteRef.current) {
+        router.replace('/(auth)/completeProfile' as any);
       } else {
         router.replace('/(tabs)/home');
       }

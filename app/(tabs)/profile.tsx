@@ -9,6 +9,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { BADGE_DEFINITIONS } from '../../services/gamification.service';
 import {
   ActivityIndicator,
+  Alert,
   Animated,
   Image,
   Modal,
@@ -18,19 +19,21 @@ import {
   Text,
   TextInput,
   View,
-  Alert,
 } from 'react-native';
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as SecureStore from 'expo-secure-store';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
+import { toastConfig } from '../../config/toastConfig';
 import SelectionModal from '../../components/SelectionModal';
 import { useAuth } from '../../config/authConfig';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { sriLankaGeographics } from '../../config/sriLankaRegions';
 import { useScrollContext } from '../../config/tabBarScrollContext';
 import { db, storage } from '../../services/firebase';
 import { compressImage, isUnderSizeLimit, uploadFile } from '../../services/storage.service';
+import { registerForPushNotificationsAsync, unregisterPushNotificationsAsync } from '../../services/notification.service';
 
 const DEFAULT_COORDS = { latitude: 6.9271, longitude: 79.8612 }; // Colombo default
 
@@ -112,9 +115,9 @@ function SettingsRow({ icon, iconBg, iconColor, label, subtitle, onPress, danger
 }
 
 // ─────────────────────────────────────────────
-// Edit Modal — fully wired to Firebase
+// Personal Information Modal
 // ─────────────────────────────────────────────
-function EditModal({
+function PersonalInfoModal({
   visible,
   onClose,
 }: {
@@ -126,15 +129,8 @@ function EditModal({
   // Local form state — initialised from real profile data
   const [phone, setPhone] = useState(profile?.phoneNumber ?? '');
   const [address, setAddress] = useState(profile?.address ?? '');
-  const [notifSound, setNotifSound] = useState(profile?.notificationSound ?? true);
-  const [alertRadius, setAlertRadius] = useState(profile?.alertRadius ?? '10 Km');
   const [saving, setSaving]           = useState(false);
   const [showImageOptions, setShowImageOptions] = useState(false);
-  
-  const [biometricsEnabled, setBiometricsEnabled] = useState(false);
-  const [biometricSupported, setBiometricSupported] = useState(false);
-  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
-  const [confirmPasswordText, setConfirmPasswordText] = useState('');
 
   const [nic, setNic] = useState(profile?.nic ?? '');
   const [province, setProvince] = useState(profile?.province ?? '');
@@ -157,13 +153,69 @@ function EditModal({
   const [districtModalVisible, setDistrictModalVisible] = useState(false);
   const [lgaModalVisible, setLgaModalVisible] = useState(false);
 
+  // Reusable Field Editor states
+  const [fieldEditVisible, setFieldEditVisible] = useState(false);
+  const [editingFieldName, setEditingFieldName] = useState('');
+  const [editingFieldKey, setEditingFieldKey] = useState<'phone' | 'nic' | 'address' | ''>('');
+  const [tempFieldValue, setTempFieldValue] = useState('');
+  const [editorError, setEditorError] = useState('');
+
+  const openFieldEditor = (name: string, key: 'phone' | 'nic' | 'address', currentVal: string) => {
+    setEditingFieldName(name);
+    setEditingFieldKey(key);
+    setTempFieldValue(currentVal);
+    setEditorError('');
+    setFieldEditVisible(true);
+  };
+
+  const saveFieldEditor = () => {
+    if (editingFieldKey === 'phone') {
+      const cleaned = tempFieldValue.replace(/\s+/g, '');
+      const regex = /^(?:\+94|0)?7[0-9]{8}$/;
+      if (!cleaned || !regex.test(cleaned)) {
+        setEditorError('Please enter a valid Sri Lankan phone number (e.g. 07XXXXXXXX).');
+        return;
+      }
+      setPhone(tempFieldValue);
+      Toast.show({
+        type: 'success',
+        text1: 'Phone Number Updated',
+        text2: 'Change updated locally.',
+      });
+    } else if (editingFieldKey === 'nic') {
+      const cleaned = tempFieldValue.trim().toUpperCase();
+      const oldFormat = /^[0-9]{9}[vVxX]$/;
+      const newFormat = /^[0-9]{12}$/;
+      if (!cleaned || (!oldFormat.test(cleaned) && !newFormat.test(cleaned))) {
+        setEditorError('Enter a valid Sri Lankan NIC (9 digits + V/X or 12 digits).');
+        return;
+      }
+      setNic(cleaned);
+      Toast.show({
+        type: 'success',
+        text1: 'NIC Number Updated',
+        text2: 'Change updated locally.',
+      });
+    } else if (editingFieldKey === 'address') {
+      if (!tempFieldValue.trim()) {
+        setEditorError('Please enter a valid address.');
+        return;
+      }
+      setAddress(tempFieldValue);
+      Toast.show({
+        type: 'success',
+        text1: 'Address Updated',
+        text2: 'Change updated locally.',
+      });
+    }
+    setFieldEditVisible(false);
+  };
+
   // Sync form fields if profile loads after modal mounts
   useEffect(() => {
     if (profile) {
       setPhone(profile.phoneNumber ?? '');
       setAddress(profile.address ?? '');
-      setNotifSound(profile.notificationSound ?? true);
-      setAlertRadius(profile.alertRadius ?? '10 Km');
       setNic(profile.nic ?? '');
       setProvince(profile.province ?? '');
       setDistrict(profile.district ?? '');
@@ -178,15 +230,6 @@ function EditModal({
       (async () => {
         const { status } = await Location.getForegroundPermissionsAsync();
         setGpsGranted(status === 'granted');
-      })();
-
-      (async () => {
-        const compatible = await LocalAuthentication.hasHardwareAsync();
-        const enrolled = await LocalAuthentication.isEnrolledAsync();
-        setBiometricSupported(compatible && enrolled);
-
-        const stored = await SecureStore.getItemAsync('biometricCredentials');
-        setBiometricsEnabled(!!stored);
       })();
 
       if (homeLocation) {
@@ -309,53 +352,6 @@ function EditModal({
     }
   };
 
-  const handleBiometricsToggle = async (value: boolean) => {
-    if (!value) {
-      await SecureStore.deleteItemAsync('biometricCredentials');
-      setBiometricsEnabled(false);
-      Toast.show({
-        type: 'success',
-        text1: 'Biometrics Disabled',
-        text2: 'Fingerprint / Face ID login has been turned off.',
-      });
-    } else {
-      setConfirmPasswordText('');
-      setShowPasswordConfirm(true);
-    }
-  };
-
-  const handleConfirmPassword = async () => {
-    if (!user || !user.email) return;
-    if (!confirmPasswordText.trim()) {
-      Toast.show({ type: 'error', text1: 'Required', text2: 'Please enter your password.' });
-      return;
-    }
-    
-    try {
-      const { signInWithEmailAndPassword } = require('firebase/auth');
-      const { auth: firebaseAuth } = require('../../services/firebase');
-      await signInWithEmailAndPassword(firebaseAuth, user.email, confirmPasswordText);
-
-      await SecureStore.setItemAsync(
-        'biometricCredentials',
-        JSON.stringify({ email: user.email, password: confirmPasswordText })
-      );
-      setBiometricsEnabled(true);
-      setShowPasswordConfirm(false);
-      Toast.show({
-        type: 'success',
-        text1: 'Biometrics Enabled!',
-        text2: 'You can now log in using Fingerprint / Face ID.',
-      });
-    } catch (err) {
-      Toast.show({
-        type: 'error',
-        text1: 'Incorrect Password',
-        text2: 'Please enter your correct current password.',
-      });
-    }
-  };
-
   // ── Save to Firestore ──
   const handleSave = async () => {
     if (!user) return;
@@ -377,8 +373,6 @@ function EditModal({
       await updateDoc(doc(db, 'users', user.uid), {
         phoneNumber: phone,
         address,
-        notificationSound: notifSound,
-        alertRadius,
         nic,
         province,
         district,
@@ -589,7 +583,7 @@ function EditModal({
         >
           {/* Header */}
           <View className="px-5 pt-14 pb-4 flex-row justify-between items-center">
-            <Text className="text-white text-xl font-bold">Edit Profile</Text>
+            <Text className="text-white text-xl font-bold">Personal Information</Text>
             <Pressable onPress={onClose} className="active:opacity-70">
               <Ionicons name="close" size={24} color="#5A7D8A" />
             </Pressable>
@@ -654,7 +648,7 @@ function EditModal({
             <View className="bg-[#111E27] rounded-2xl px-4 py-1"
               style={{ borderWidth: 1, borderColor: '#1E3347' }}
             >
-              {/* Email — read only (Firebase requires re-auth to change) */}
+              {/* Email — read only */}
               <View className="flex-row items-center py-3">
                 <View className="w-8 h-8 rounded-lg bg-[#1E3347] items-center justify-center mr-3">
                   <Ionicons name="mail-outline" size={16} color="#4CC2D1" />
@@ -671,65 +665,59 @@ function EditModal({
               <View className="h-px bg-[#1E3347]" />
 
               {/* Phone */}
-              <View className="flex-row items-center py-3">
+              <Pressable
+                onPress={() => openFieldEditor('Phone Number', 'phone', phone)}
+                className="flex-row items-center py-3 active:opacity-80"
+              >
                 <View className="w-8 h-8 rounded-lg bg-[#1E3347] items-center justify-center mr-3">
                   <Ionicons name="call-outline" size={16} color="#4CC2D1" />
                 </View>
                 <View className="flex-1">
                   <Text className="text-gray-500 text-[10px] uppercase font-bold tracking-wide">Phone Number</Text>
-                  <TextInput
-                    value={phone}
-                    onChangeText={setPhone}
-                    className="text-white text-sm mt-0.5 p-0"
-                    style={{ margin: 0, padding: 0 }}
-                    placeholderTextColor="#5A7D8A"
-                    placeholder="Add phone number"
-                    keyboardType="phone-pad"
-                  />
+                  <Text className={`text-sm mt-0.5 ${phone ? 'text-white' : 'text-gray-500'}`}>
+                    {phone || 'Add phone number'}
+                  </Text>
                 </View>
-              </View>
+                <Ionicons name="create-outline" size={16} color="#4CC2D1" className="mr-2" />
+              </Pressable>
 
               <View className="h-px bg-[#1E3347]" />
 
               {/* NIC */}
-              <View className="flex-row items-center py-3">
+              <Pressable
+                onPress={() => openFieldEditor('NIC Number', 'nic', nic)}
+                className="flex-row items-center py-3 active:opacity-80"
+              >
                 <View className="w-8 h-8 rounded-lg bg-[#1E3347] items-center justify-center mr-3">
                   <Ionicons name="card-outline" size={16} color="#4CC2D1" />
                 </View>
                 <View className="flex-1">
                   <Text className="text-gray-500 text-[10px] uppercase font-bold tracking-wide">NIC Number</Text>
-                  <TextInput
-                    value={nic}
-                    onChangeText={setNic}
-                    className="text-white text-sm mt-0.5 p-0"
-                    style={{ margin: 0, padding: 0 }}
-                    placeholderTextColor="#5A7D8A"
-                    placeholder="Add NIC number"
-                    autoCapitalize="characters"
-                  />
+                  <Text className={`text-sm mt-0.5 ${nic ? 'text-white' : 'text-gray-500'}`}>
+                    {nic || 'Add NIC number'}
+                  </Text>
                 </View>
-              </View>
+                <Ionicons name="create-outline" size={16} color="#4CC2D1" className="mr-2" />
+              </Pressable>
 
               <View className="h-px bg-[#1E3347]" />
 
               {/* Address */}
-              <View className="flex-row items-center py-3">
+              <Pressable
+                onPress={() => openFieldEditor('Address', 'address', address)}
+                className="flex-row items-center py-3 active:opacity-80"
+              >
                 <View className="w-8 h-8 rounded-lg bg-[#1E3347] items-center justify-center mr-3">
                   <Ionicons name="location-outline" size={16} color="#4CC2D1" />
                 </View>
                 <View className="flex-1">
                   <Text className="text-gray-500 text-[10px] uppercase font-bold tracking-wide">Address</Text>
-                  <TextInput
-                    value={address}
-                    onChangeText={setAddress}
-                    className="text-white text-sm mt-0.5 p-0"
-                    style={{ margin: 0, padding: 0 }}
-                    placeholderTextColor="#5A7D8A"
-                    placeholder="Add address"
-                    multiline
-                  />
+                  <Text className={`text-sm mt-0.5 ${address ? 'text-white' : 'text-gray-500'}`} numberOfLines={2}>
+                    {address || 'Add address'}
+                  </Text>
                 </View>
-              </View>
+                <Ionicons name="create-outline" size={16} color="#4CC2D1" className="mr-2" />
+              </Pressable>
 
               <View className="h-px bg-[#1E3347]" />
 
@@ -893,38 +881,276 @@ function EditModal({
             </View>
           </View>
 
-          {/* Alert Preferences */}
+          {/* Action Buttons */}
+          <View className="px-5 flex-row gap-3">
+            <Pressable
+              onPress={handleSave}
+              disabled={saving}
+              className="flex-1 py-4 rounded-2xl items-center active:opacity-80"
+              style={{ backgroundColor: saving ? 'rgba(76,194,209,0.4)' : '#4CC2D1' }}
+            >
+              {saving
+                ? <ActivityIndicator color="#071318" />
+                : <Text className="text-[#071318] font-bold text-base">Save</Text>
+              }
+            </Pressable>
+            <Pressable
+              onPress={onClose}
+              disabled={saving}
+              className="flex-1 py-4 rounded-2xl items-center active:opacity-70"
+              style={{ borderWidth: 1, borderColor: '#2D4F5C' }}
+            >
+              <Text className="text-gray-300 font-semibold text-base">Cancel</Text>
+            </Pressable>
+          </View>
+
+          {/* Reusable Selector Modals inside PersonalInfoModal */}
+          <SelectionModal
+            visible={provinceModalVisible}
+            onClose={() => setProvinceModalVisible(false)}
+            title="Select Province"
+            options={Object.keys(sriLankaGeographics)}
+            onSelect={(selectedProvince) => {
+              setProvince(selectedProvince);
+              setDistrict('');
+              setLga('');
+            }}
+            selectedValue={province}
+          />
+
+          <SelectionModal
+            visible={districtModalVisible}
+            onClose={() => setDistrictModalVisible(false)}
+            title="Select District"
+            options={province ? Object.keys(sriLankaGeographics[province]) : []}
+            onSelect={(selectedDistrict) => {
+              setDistrict(selectedDistrict);
+              setLga('');
+            }}
+            selectedValue={district}
+          />
+
+          <SelectionModal
+            visible={lgaModalVisible}
+            onClose={() => setLgaModalVisible(false)}
+            title="Select Local Government"
+            options={province && district ? sriLankaGeographics[province][district] : []}
+            onSelect={(selectedLga) => {
+              setLga(selectedLga);
+            }}
+            selectedValue={lga}
+          />
+
+          {/* Reusable Field Editor Modal */}
+          <Modal visible={fieldEditVisible} transparent animationType="fade">
+            <View className="flex-1 items-center justify-center bg-black/75 px-6">
+              <View className="bg-[#111E27] w-full max-w-sm rounded-3xl p-6 border border-[#2D4F5C] items-center"
+                style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.5, shadowRadius: 15, elevation: 20 }}
+              >
+                <View className="w-12 h-12 rounded-full bg-[#1E3A44] items-center justify-center mb-4 border border-[#4CC2D1]/30">
+                  <Ionicons 
+                    name={
+                      editingFieldKey === 'phone' ? 'call-outline' :
+                      editingFieldKey === 'nic' ? 'card-outline' : 'location-outline'
+                    } 
+                    size={24} 
+                    color="#4CC2D1" 
+                  />
+                </View>
+                <Text className="text-white text-lg font-bold text-center mb-2">Edit {editingFieldName}</Text>
+                <Text className="text-gray-400 text-xs text-center leading-4 mb-5">
+                  Update your {editingFieldName.toLowerCase()} below. This will not be saved permanently until you save the main profile.
+                </Text>
+
+                {!!editorError && (
+                  <View className="w-full bg-[#3D1515] border border-[#E05C5C]/30 rounded-xl px-4 py-2.5 mb-4 flex-row items-center gap-2">
+                    <Ionicons name="alert-circle-outline" size={16} color="#E05C5C" />
+                    <Text className="text-[#E05C5C] text-xs font-semibold flex-1 leading-4">
+                      {editorError}
+                    </Text>
+                  </View>
+                )}
+
+                <TextInput
+                  value={tempFieldValue}
+                  onChangeText={(text) => {
+                    setTempFieldValue(text);
+                    if (editorError) setEditorError('');
+                  }}
+                  placeholder={`Enter ${editingFieldName.toLowerCase()}`}
+                  placeholderTextColor="#5A7D8A"
+                  keyboardType={editingFieldKey === 'phone' ? 'phone-pad' : 'default'}
+                  autoCapitalize={editingFieldKey === 'nic' ? 'characters' : 'none'}
+                  multiline={editingFieldKey === 'address'}
+                  numberOfLines={editingFieldKey === 'address' ? 3 : 1}
+                  className="w-full bg-[#1E3A44] border border-[#2D4F5C] rounded-xl px-4 py-3 text-white text-sm mb-5 text-center"
+                  style={editingFieldKey === 'address' ? { textAlign: 'left', minHeight: 80 } : undefined}
+                  autoFocus
+                />
+                <View className="w-full flex-row gap-3">
+                  <Pressable
+                    onPress={() => setFieldEditVisible(false)}
+                    className="flex-1 py-3 bg-[#1E3A44] border border-[#2D4F5C] rounded-xl items-center active:opacity-75"
+                  >
+                    <Text className="text-gray-400 font-semibold text-sm">Cancel</Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={saveFieldEditor}
+                    className="flex-1 py-3 bg-[#4CC2D1] rounded-xl items-center active:opacity-75"
+                  >
+                    <Text className="text-[#071318] font-bold text-sm">Done</Text>
+                  </Pressable>
+                </View>
+              </View>
+            </View>
+          </Modal>
+
+        </ScrollView>
+
+        {/* Loading Overlay */}
+        {(uploadLoading || saving) && (
+          <View
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(7, 19, 24, 0.85)',
+              justifyContent: 'center',
+              alignItems: 'center',
+              zIndex: 9999,
+            }}
+          >
+            <View
+              className="bg-[#1E3A44] border border-[#30A89C] rounded-3xl p-8 items-center shadow-2xl"
+              style={{ width: '80%', maxWidth: 320 }}
+            >
+              <ActivityIndicator size="large" color="#4CC2D1" className="mb-4" />
+              <Text className="text-white text-base font-bold text-center">
+                {uploadLoading ? 'Uploading Photo...' : 'Saving Changes...'}
+              </Text>
+              <Text className="text-gray-400 text-xs text-center mt-2 leading-4">
+                Please wait while we update your AlertZone profile.
+              </Text>
+            </View>
+          </View>
+        )}
+      </LinearGradient>
+    </Modal>
+  );
+}
+
+// ─────────────────────────────────────────────
+// Alert Preferences Modal
+// ─────────────────────────────────────────────
+function AlertPreferencesModal({
+  visible,
+  onClose,
+}: {
+  visible: boolean;
+  onClose: () => void;
+}) {
+  const { user, profile, refreshProfile } = useAuth();
+  const [notificationsEnabled, setNotificationsEnabled] = useState(profile?.notificationsEnabled ?? true);
+  const [alertRadius, setAlertRadius] = useState(profile?.alertRadius ?? '10 Km');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (profile) {
+      setNotificationsEnabled(profile.notificationsEnabled ?? true);
+      setAlertRadius(profile.alertRadius ?? '10 Km');
+    }
+  }, [profile]);
+
+  const handleSave = async () => {
+    if (!user) return;
+    setSaving(true);
+    try {
+      await updateDoc(doc(db, 'users', user.uid), {
+        notificationsEnabled,
+        alertRadius,
+      });
+
+      if (notificationsEnabled) {
+        await registerForPushNotificationsAsync(user.uid);
+      } else {
+        await unregisterPushNotificationsAsync(user.uid);
+      }
+
+      await refreshProfile();
+      Toast.show({
+        type: 'success',
+        text1: 'Preferences Saved!',
+        text2: 'Your alert preferences have been updated.',
+      });
+      onClose();
+    } catch (e) {
+      console.error('Alert preferences update error:', e);
+      Toast.show({
+        type: 'error',
+        text1: 'Save Failed',
+        text2: 'Could not save preferences. Try again.',
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Modal visible={visible} animationType="slide" transparent={false}>
+      <LinearGradient colors={['#0D1F2D', '#0A1820', '#071318']} style={{ flex: 1 }}>
+        <ScrollView
+          contentContainerStyle={{ paddingBottom: 60 }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Header */}
+          <View className="px-5 pt-14 pb-4 flex-row justify-between items-center">
+            <Text className="text-white text-xl font-bold">Alert Preferences</Text>
+            <Pressable onPress={onClose} className="active:opacity-70">
+              <Ionicons name="close" size={24} color="#5A7D8A" />
+            </Pressable>
+          </View>
+
+          {/* Description */}
+          <View className="px-5 mb-6">
+            <Text className="text-gray-400 text-sm leading-5">
+              Customize how and when you want to receive alerts on AlertZone.
+            </Text>
+          </View>
+
+          {/* Alert Preferences Form */}
           <View className="px-5 mb-8">
-            <Text className="text-white font-bold text-base mb-3">Alert Preferences</Text>
             <View className="bg-[#111E27] rounded-2xl px-4"
               style={{ borderWidth: 1, borderColor: '#1E3347' }}
             >
+              {/* Notifications Toggle */}
               <View className="flex-row items-center justify-between py-4">
-                <Text className="text-white text-sm font-medium">Notification Sound</Text>
+                <View className="flex-1 pr-4">
+                  <Text className="text-white text-sm font-semibold">Enable Notifications</Text>
+                  <Text className="text-gray-500 text-xs mt-0.5 leading-4">
+                    Receive real-time push alerts.
+                  </Text>
+                </View>
                 <Switch
-                  value={notifSound}
-                  onValueChange={setNotifSound}
+                  value={notificationsEnabled}
+                  onValueChange={setNotificationsEnabled}
                   trackColor={{ false: '#1E3347', true: '#4CC2D1' }}
                   thumbColor="white"
                 />
               </View>
-              {biometricSupported && (
-                <>
-                  <View className="h-px bg-[#1E3347]" />
-                  <View className="flex-row items-center justify-between py-4">
-                    <Text className="text-white text-sm font-medium">Biometric Login (Face ID/Fingerprint)</Text>
-                    <Switch
-                      value={biometricsEnabled}
-                      onValueChange={handleBiometricsToggle}
-                      trackColor={{ false: '#1E3347', true: '#4CC2D1' }}
-                      thumbColor="white"
-                    />
-                  </View>
-                </>
-              )}
+
               <View className="h-px bg-[#1E3347]" />
-              <View className="flex-row items-center justify-between py-3">
-                <Text className="text-white text-sm font-medium">Alert Radius (km)</Text>
+
+              {/* Alert Radius */}
+              <View className="flex-row items-center justify-between py-4">
+                <View className="flex-1 pr-4">
+                  <Text className="text-white text-sm font-semibold">Alert Radius</Text>
+                  <Text className="text-gray-500 text-xs mt-0.5 leading-4">
+                    Only receive notifications for incidents within this range (1–15 Km).
+                  </Text>
+                </View>
                 <View className="flex-row items-center gap-3">
                   <Pressable
                     onPress={() => {
@@ -980,7 +1206,7 @@ function EditModal({
             >
               {saving
                 ? <ActivityIndicator color="#071318" />
-                : <Text className="text-[#071318] font-bold text-base">Save</Text>
+                : <Text className="text-[#071318] font-bold text-base">Save Preferences</Text>
               }
             </Pressable>
             <Pressable
@@ -992,76 +1218,378 @@ function EditModal({
               <Text className="text-gray-300 font-semibold text-base">Cancel</Text>
             </Pressable>
           </View>
+        </ScrollView>
+        <Toast config={toastConfig} />
+      </LinearGradient>
+    </Modal>
+  );
+}
 
-          {/* Reusable Selector Modals inside EditModal */}
-          <SelectionModal
-            visible={provinceModalVisible}
-            onClose={() => setProvinceModalVisible(false)}
-            title="Select Province"
-            options={Object.keys(sriLankaGeographics)}
-            onSelect={(selectedProvince) => {
-              setProvince(selectedProvince);
-              setDistrict('');
-              setLga('');
-            }}
-            selectedValue={province}
-          />
+// ─────────────────────────────────────────────
+// Security Modal
+// ─────────────────────────────────────────────
+function SecurityModal({
+  visible,
+  onClose,
+}: {
+  visible: boolean;
+  onClose: () => void;
+}) {
+  const { user } = useAuth();
+  
+  // Biometrics States
+  const [biometricsEnabled, setBiometricsEnabled] = useState(false);
+  const [biometricSupported, setBiometricSupported] = useState(false);
+  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
+  const [confirmPasswordText, setConfirmPasswordText] = useState('');
 
-          <SelectionModal
-            visible={districtModalVisible}
-            onClose={() => setDistrictModalVisible(false)}
-            title="Select District"
-            options={province ? Object.keys(sriLankaGeographics[province]) : []}
-            onSelect={(selectedDistrict) => {
-              setDistrict(selectedDistrict);
-              setLga('');
-            }}
-            selectedValue={district}
-          />
+  // Password Reset States
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [passwordResetLoading, setPasswordResetLoading] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState('');
 
-          <SelectionModal
-            visible={lgaModalVisible}
-            onClose={() => setLgaModalVisible(false)}
-            title="Select Local Government"
-            options={province && district ? sriLankaGeographics[province][district] : []}
-            onSelect={(selectedLga) => {
-              setLga(selectedLga);
-            }}
-            selectedValue={lga}
-          />
+  // Forgot Password States
+  const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false);
 
+  // Check if provider is password (email/password login)
+  const isEmailUser = user?.providerData.some(p => p.providerId === 'password');
+
+  useEffect(() => {
+    if (visible) {
+      (async () => {
+        const compatible = await LocalAuthentication.hasHardwareAsync();
+        const enrolled = await LocalAuthentication.isEnrolledAsync();
+        setBiometricSupported(compatible && enrolled);
+
+        const stored = await SecureStore.getItemAsync('biometricCredentials');
+        setBiometricsEnabled(!!stored);
+      })();
+      
+      // Reset validation states
+      setPasswordError('');
+      setPasswordSuccess('');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmNewPassword('');
+    }
+  }, [visible]);
+
+  const handleBiometricsToggle = async (value: boolean) => {
+    if (!value) {
+      await SecureStore.deleteItemAsync('biometricCredentials');
+      setBiometricsEnabled(false);
+      Toast.show({
+        type: 'success',
+        text1: 'Biometrics Disabled',
+        text2: 'Fingerprint / Face ID login has been turned off.',
+      });
+    } else {
+      setConfirmPasswordText('');
+      setShowPasswordConfirm(true);
+    }
+  };
+
+  const handleConfirmPassword = async () => {
+    if (!user || !user.email) return;
+    if (!confirmPasswordText.trim()) {
+      Toast.show({ type: 'error', text1: 'Required', text2: 'Please enter your password.' });
+      return;
+    }
+    
+    try {
+      const { signInWithEmailAndPassword } = require('firebase/auth');
+      const { auth: firebaseAuth } = require('../../services/firebase');
+      await signInWithEmailAndPassword(firebaseAuth, user.email, confirmPasswordText);
+
+      await SecureStore.setItemAsync(
+        'biometricCredentials',
+        JSON.stringify({ email: user.email, password: confirmPasswordText })
+      );
+      setBiometricsEnabled(true);
+      setShowPasswordConfirm(false);
+      Toast.show({
+        type: 'success',
+        text1: 'Biometrics Enabled!',
+        text2: 'You can now log in using Fingerprint / Face ID.',
+      });
+    } catch (err) {
+      Toast.show({
+        type: 'error',
+        text1: 'Incorrect Password',
+        text2: 'Please enter your correct current password.',
+      });
+    }
+  };
+
+  const handlePasswordResetSubmit = async () => {
+    setPasswordError('');
+    setPasswordSuccess('');
+    
+    if (!user || !user.email) return;
+    if (!currentPassword || !newPassword || !confirmNewPassword) {
+      setPasswordError('Please fill in all password fields.');
+      return;
+    }
+    if (newPassword.length < 6) {
+      setPasswordError('New password must be at least 6 characters.');
+      return;
+    }
+    if (newPassword !== confirmNewPassword) {
+      setPasswordError('New passwords do not match.');
+      return;
+    }
+    
+    setPasswordResetLoading(true);
+    try {
+      const { EmailAuthProvider, reauthenticateWithCredential, updatePassword } = require('firebase/auth');
+      const { auth: firebaseAuth } = require('../../services/firebase');
+      
+      const credential = EmailAuthProvider.credential(user.email, currentPassword);
+      await reauthenticateWithCredential(firebaseAuth.currentUser, credential);
+      await updatePassword(firebaseAuth.currentUser, newPassword);
+      
+      // Multi-device sync: update password version in Firestore and AsyncStorage
+      const newTimestamp = new Date().toISOString();
+      await AsyncStorage.setItem('lastPasswordChangeLocal', newTimestamp);
+      await updateDoc(doc(db, 'users', user.uid), {
+        lastPasswordChange: newTimestamp
+      });
+      
+      setPasswordSuccess('Password updated successfully!');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmNewPassword('');
+      Toast.show({
+        type: 'success',
+        text1: 'Password Reset',
+        text2: 'Your password has been changed.',
+      });
+    } catch (err: any) {
+      console.error('Password reset error:', err);
+      if (err.code === 'auth/wrong-password') {
+        setPasswordError('Incorrect current password.');
+      } else {
+        setPasswordError(err.message || 'Could not update password. Try again.');
+      }
+    } finally {
+      setPasswordResetLoading(false);
+    }
+  };
+
+  const handleForgotPassword = () => {
+    setPasswordError('');
+    setPasswordSuccess('');
+    if (!user || !user.email) return;
+    
+    Alert.alert(
+      "Send Reset Link",
+      `Are you sure you want to send a password reset link to ${user.email}?`,
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        {
+          text: "Send Link",
+          style: "default",
+          onPress: async () => {
+            setForgotPasswordLoading(true);
+            try {
+              const { sendPasswordResetEmail } = require('firebase/auth');
+              const { auth: firebaseAuth } = require('../../services/firebase');
+              
+              await sendPasswordResetEmail(firebaseAuth, user.email);
+              setPasswordSuccess('Reset email sent! Please check your inbox.');
+              Toast.show({
+                type: 'success',
+                text1: 'Email Sent',
+                text2: 'Password reset link sent to your email.',
+              });
+            } catch (err: any) {
+              console.error('Forgot password error:', err);
+              setPasswordError(err.message || 'Could not send reset email. Try again.');
+            } finally {
+              setForgotPasswordLoading(false);
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  return (
+    <Modal visible={visible} animationType="slide" transparent={false}>
+      <LinearGradient colors={['#0D1F2D', '#0A1820', '#071318']} style={{ flex: 1 }}>
+        <ScrollView
+          contentContainerStyle={{ paddingBottom: 60 }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Header */}
+          <View className="px-5 pt-14 pb-4 flex-row justify-between items-center">
+            <Text className="text-white text-xl font-bold">Security Settings</Text>
+            <Pressable onPress={onClose} className="active:opacity-70">
+              <Ionicons name="close" size={24} color="#5A7D8A" />
+            </Pressable>
+          </View>
+
+          {/* Biometrics Segment */}
+          {biometricSupported && (
+            <View className="px-5 mb-6">
+              <Text className="text-white font-bold text-base mb-3">Biometrics</Text>
+              <View className="bg-[#111E27] rounded-2xl px-4 py-4 border border-[#1E3347]">
+                <View className="flex-row items-center justify-between">
+                  <View className="flex-1 pr-4">
+                    <Text className="text-white text-sm font-semibold">Biometric Login</Text>
+                    <Text className="text-gray-500 text-xs mt-0.5 leading-4">
+                      Use Fingerprint or Face ID for fast and secure login.
+                    </Text>
+                  </View>
+                  <Switch
+                    value={biometricsEnabled}
+                    onValueChange={handleBiometricsToggle}
+                    trackColor={{ false: '#1E3347', true: '#4CC2D1' }}
+                    thumbColor="white"
+                  />
+                </View>
+              </View>
+            </View>
+          )}
+
+          {/* Password Settings Segment */}
+          <View className="px-5 mb-8">
+            <Text className="text-white font-bold text-base mb-3">Password & Security</Text>
+            
+            {isEmailUser ? (
+              <View className="bg-[#111E27] rounded-2xl p-4 border border-[#1E3347]">
+                {/* Feedback Alerts */}
+                {!!passwordError && (
+                  <View className="w-full bg-[#3D1515] border border-[#E05C5C]/30 rounded-xl px-4 py-2.5 mb-4 flex-row items-center gap-2">
+                    <Ionicons name="alert-circle-outline" size={16} color="#E05C5C" />
+                    <Text className="text-[#E05C5C] text-xs font-semibold flex-1 leading-4">
+                      {passwordError}
+                    </Text>
+                  </View>
+                )}
+
+                {!!passwordSuccess && (
+                  <View className="w-full bg-[#1E3A44]/60 border border-[#30A89C]/30 rounded-xl px-4 py-2.5 mb-4 flex-row items-center gap-2">
+                    <Ionicons name="checkmark-circle-outline" size={16} color="#4CC2D1" />
+                    <Text className="text-[#4CC2D1] text-xs font-semibold flex-1 leading-4">
+                      {passwordSuccess}
+                    </Text>
+                  </View>
+                )}
+
+                <Text className="text-gray-400 text-xs mb-4">
+                  To change your password, please fill in the details below.
+                </Text>
+
+                {/* Current Password */}
+                <View className="mb-4">
+                  <Text className="text-gray-500 text-[10px] uppercase font-bold tracking-wide mb-1.5">Current Password</Text>
+                  <TextInput
+                    secureTextEntry
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    spellCheck={false}
+                    value={currentPassword}
+                    onChangeText={setCurrentPassword}
+                    placeholder="Enter current password"
+                    placeholderTextColor="#5A7D8A"
+                    className="w-full bg-[#1E3A44] border border-[#2D4F5C] rounded-xl px-4 py-3 text-white text-sm"
+                  />
+                </View>
+
+                {/* New Password */}
+                <View className="mb-4">
+                  <Text className="text-gray-500 text-[10px] uppercase font-bold tracking-wide mb-1.5">New Password</Text>
+                  <TextInput
+                    secureTextEntry
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    spellCheck={false}
+                    value={newPassword}
+                    onChangeText={setNewPassword}
+                    placeholder="Min 6 characters"
+                    placeholderTextColor="#5A7D8A"
+                    className="w-full bg-[#1E3A44] border border-[#2D4F5C] rounded-xl px-4 py-3 text-white text-sm"
+                  />
+                </View>
+
+                {/* Confirm New Password */}
+                <View className="mb-5">
+                  <Text className="text-gray-500 text-[10px] uppercase font-bold tracking-wide mb-1.5">Confirm New Password</Text>
+                  <TextInput
+                    secureTextEntry
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    spellCheck={false}
+                    value={confirmNewPassword}
+                    onChangeText={setConfirmNewPassword}
+                    placeholder="Re-enter new password"
+                    placeholderTextColor="#5A7D8A"
+                    className="w-full bg-[#1E3A44] border border-[#2D4F5C] rounded-xl px-4 py-3 text-white text-sm"
+                  />
+                </View>
+
+                <Pressable
+                  onPress={handlePasswordResetSubmit}
+                  disabled={passwordResetLoading}
+                  className="w-full py-3.5 bg-[#4CC2D1] rounded-xl items-center active:opacity-75 mb-3"
+                >
+                  {passwordResetLoading ? (
+                    <ActivityIndicator size="small" color="#071318" />
+                  ) : (
+                    <Text className="text-[#071318] font-bold text-sm">Update Password</Text>
+                  )}
+                </Pressable>
+
+                <View className="h-px bg-[#1E3347] my-3" />
+
+                {/* Forgot Password Action */}
+                <View className="items-center py-2">
+                  <Text className="text-gray-500 text-xs mb-2">Forgot your password?</Text>
+                  <Pressable
+                    onPress={handleForgotPassword}
+                    disabled={forgotPasswordLoading}
+                    className="active:opacity-70"
+                  >
+                    {forgotPasswordLoading ? (
+                      <ActivityIndicator size="small" color="#4CC2D1" />
+                    ) : (
+                      <Text className="text-[#4CC2D1] font-semibold text-sm">Send Password Reset Link</Text>
+                    )}
+                  </Pressable>
+                </View>
+
+              </View>
+            ) : (
+              <View className="bg-[#111E27] rounded-2xl p-4 border border-[#1E3347] items-center">
+                <Ionicons name="logo-google" size={36} color="#4CC2D1" className="mb-2" />
+                <Text className="text-white text-sm font-semibold mb-1 text-center">Google Authentication Linked</Text>
+                <Text className="text-gray-500 text-xs text-center leading-4">
+                  You are logged in with Google. Password configuration and reset operations are managed by Google.
+                </Text>
+              </View>
+            )}
+          </View>
+
+          {/* Close Button */}
+          <View className="px-5">
+            <Pressable
+              onPress={onClose}
+              className="w-full py-4 bg-[#1E3A44] border border-[#2D4F5C] rounded-2xl items-center active:opacity-75"
+            >
+              <Text className="text-gray-300 font-semibold text-base">Close</Text>
+            </Pressable>
+          </View>
         </ScrollView>
 
-        {/* Loading Overlay */}
-        {(uploadLoading || saving) && (
-          <View
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: 'rgba(7, 19, 24, 0.85)',
-              justifyContent: 'center',
-              alignItems: 'center',
-              zIndex: 9999,
-            }}
-          >
-            <View
-              className="bg-[#1E3A44] border border-[#30A89C] rounded-3xl p-8 items-center shadow-2xl"
-              style={{ width: '80%', maxWidth: 320 }}
-            >
-              <ActivityIndicator size="large" color="#4CC2D1" className="mb-4" />
-              <Text className="text-white text-base font-bold text-center">
-                {uploadLoading ? 'Uploading Photo...' : 'Saving Changes...'}
-              </Text>
-              <Text className="text-gray-400 text-xs text-center mt-2 leading-4">
-                Please wait while we update your AlertZone profile.
-              </Text>
-            </View>
-          </View>
-        )}
-        {/* Password Confirmation Modal for Biometric Setup */}
+        {/* Password Confirmation Modal for Biometrics */}
         <Modal visible={showPasswordConfirm} transparent animationType="fade">
           <View className="flex-1 items-center justify-center bg-black/75 px-6">
             <View className="bg-[#111E27] w-full max-w-sm rounded-3xl p-6 border border-[#2D4F5C] items-center"
@@ -1076,6 +1604,9 @@ function EditModal({
               </Text>
               <TextInput
                 secureTextEntry
+                autoCapitalize="none"
+                autoCorrect={false}
+                spellCheck={false}
                 placeholder="Enter current password"
                 placeholderTextColor="#5A7D8A"
                 value={confirmPasswordText}
@@ -1099,6 +1630,7 @@ function EditModal({
             </View>
           </View>
         </Modal>
+        <Toast config={toastConfig} />
       </LinearGradient>
     </Modal>
   );
@@ -1236,7 +1768,9 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const { onScroll } = useScrollContext();
   const { user, profile, logout } = useAuth();
-  const [editVisible, setEditVisible] = useState(false);
+  const [personalInfoVisible, setPersonalInfoVisible] = useState(false);
+  const [alertPreferencesVisible, setAlertPreferencesVisible] = useState(false);
+  const [securityVisible, setSecurityVisible] = useState(false);
   const [logoutVisible, setLogoutVisible] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -1320,7 +1854,7 @@ export default function ProfileScreen() {
 
         {/* ── 2. Avatar + Name ── */}
         <View className="items-center mb-6 px-5">
-          <Pressable onPress={() => setEditVisible(true)} className="active:opacity-80">
+          <Pressable onPress={() => setPersonalInfoVisible(true)} className="active:opacity-80">
             <Image
               source={
                 profile.avatarUrl
@@ -1414,7 +1948,7 @@ export default function ProfileScreen() {
               iconColor="#4CC2D1"
               label="Personal Information"
               subtitle="Email, phone, and address"
-              onPress={() => setEditVisible(true)}
+              onPress={() => setPersonalInfoVisible(true)}
             />
             <View className="h-px bg-[#1E3347]" />
             <SettingsRow
@@ -1422,8 +1956,17 @@ export default function ProfileScreen() {
               iconBg="#1E2D3D"
               iconColor="#4CC2D1"
               label="Alert Preferences"
-              subtitle="Notification sound and radius"
-              onPress={() => setEditVisible(true)}
+              subtitle="Notifications status and radius"
+              onPress={() => setAlertPreferencesVisible(true)}
+            />
+            <View className="h-px bg-[#1E3347]" />
+            <SettingsRow
+              icon="shield-checkmark-outline"
+              iconBg="#182A3A"
+              iconColor="#4CC2D1"
+              label="Security"
+              subtitle="Password management and biometrics"
+              onPress={() => setSecurityVisible(true)}
             />
             <View className="h-px bg-[#1E3347]" />
             <SettingsRow
@@ -1440,8 +1983,14 @@ export default function ProfileScreen() {
 
       </ScrollView>
 
-      {/* Edit Modal */}
-      <EditModal visible={editVisible} onClose={() => setEditVisible(false)} />
+      {/* Personal Info Modal */}
+      <PersonalInfoModal visible={personalInfoVisible} onClose={() => setPersonalInfoVisible(false)} />
+
+      {/* Alert Preferences Modal */}
+      <AlertPreferencesModal visible={alertPreferencesVisible} onClose={() => setAlertPreferencesVisible(false)} />
+
+      {/* Security Modal */}
+      <SecurityModal visible={securityVisible} onClose={() => setSecurityVisible(false)} />
 
       {/* Logout Confirmation Modal */}
       <LogoutModal

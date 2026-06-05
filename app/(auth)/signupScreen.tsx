@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -19,13 +19,23 @@ import { sriLankaGeographics } from '../../config/sriLankaRegions';
 import SelectionModal from '../../components/SelectionModal';
 
 // Firebase Imports
-import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { createUserWithEmailAndPassword, sendEmailVerification, GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../../services/firebase';
+import { useAuth } from '../../config/authConfig';
+
+let GoogleSignin: any = null;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  GoogleSignin = require('@react-native-google-signin/google-signin').GoogleSignin;
+} catch {
+  console.warn('⚠️ Google Sign-In not available in this environment');
+}
 
 
 export default function RegisterScreen() {
   const router = useRouter();
+  const { refreshProfile } = useAuth();
   
   // UI States
   const [showPassword, setShowPassword] = useState(false);
@@ -55,6 +65,16 @@ export default function RegisterScreen() {
   const phoneRef        = useRef<TextInput>(null);
   const passwordRef     = useRef<TextInput>(null);
   const confirmPassRef  = useRef<TextInput>(null);
+
+  // Configure Google Sign-In
+  useEffect(() => {
+    if (GoogleSignin) {
+      GoogleSignin.configure({
+        webClientId: '52846862990-munbgn67do5e6v9ehr20d3edclao5m6g.apps.googleusercontent.com',
+        offlineAccess: true,
+      });
+    }
+  }, []);
 
 const validatePassword = (password:string) => {
   let isValidPassword= true;
@@ -161,6 +181,105 @@ const validatePassword = (password:string) => {
       if (error.code === 'auth/weak-password')         message = "Password should be at least 6 characters.";
 
       Toast.show({ type: 'error', text1: 'Sign Up Failed', text2: message });
+    }
+  };
+
+  const handleGoogleSignUp = async () => {
+    if (!GoogleSignin) {
+      Toast.show({
+        type: 'error',
+        text1: 'Not Supported in Expo Go',
+        text2: 'Please test this on the compiled native APK build.',
+      });
+      return;
+    }
+    setLoading(true);
+    try {
+      await GoogleSignin.hasPlayServices();
+      const response = await GoogleSignin.signIn();
+      const idToken = response.data?.idToken;
+      if (!idToken) {
+        throw new Error('No ID token found from Google Sign-In');
+      }
+
+      const credential = GoogleAuthProvider.credential(idToken);
+      const userCredential = await signInWithCredential(auth, credential);
+      const user = userCredential.user;
+
+      // Fetch user profile from Firestore to see if it is complete
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      
+      let isProfileComplete = false;
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        isProfileComplete = !!(
+          userData.fullName &&
+          userData.phoneNumber &&
+          userData.nic &&
+          userData.province &&
+          userData.district &&
+          userData.localGovernmentArea
+        );
+        Toast.show({
+          type: 'success',
+          text1: 'Login Successful',
+          text2: `Welcome back, ${userData.fullName}! 👋`,
+        });
+      } else {
+        // First-time Google user: initialize a partial user document
+        await setDoc(doc(db, 'users', user.uid), {
+          fullName: user.displayName || '',
+          email: user.email || '',
+          phoneNumber: '',
+          role: 'citizen',
+          createdAt: new Date().toISOString(),
+          uid: user.uid,
+          status: 'active',
+          isVerified: false,
+          nic: '',
+          province: '',
+          district: '',
+          localGovernmentArea: '',
+          level: 1,
+          contributionPoints: 0,
+          reportsValidated: 0,
+        });
+        Toast.show({
+          type: 'success',
+          text1: 'Google Auth Successful',
+          text2: 'Please complete your profile details.',
+        });
+      }
+
+      // Refresh the context profile details
+      await refreshProfile();
+
+      setTimeout(() => {
+        if (isProfileComplete) {
+          router.replace('/(tabs)/home');
+        } else {
+          router.replace('/(auth)/completeProfile' as any);
+        }
+      }, 1000);
+
+    } catch (error: any) {
+      console.error('❌ Google Auth Error:', error);
+      let errorMessage = 'Could not authenticate with Google.';
+      if (error.code === '12501' || error.message?.includes('developer error')) {
+        errorMessage = 'Developer config error. Check SHA-1 / package name.';
+      } else if (error.message?.includes('Sign in cancelled') || error.code === '12502') {
+        errorMessage = 'Sign in was cancelled.';
+      } else if (error.code === '7') {
+        errorMessage = 'Network error. Please try again.';
+      }
+
+      Toast.show({
+        type: 'error',
+        text1: 'Google Sign-In Failed',
+        text2: errorMessage,
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -350,6 +469,9 @@ const validatePassword = (password:string) => {
                     className="text-white text-base p-0 mt-0.5"
                     style={{ paddingLeft: 0, marginLeft: 0 }}
                     secureTextEntry={!showPassword}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    spellCheck={false}
                     returnKeyType="next"
                     onSubmitEditing={() => confirmPassRef.current?.focus()}
                     value={password}
@@ -375,6 +497,9 @@ const validatePassword = (password:string) => {
                     className="text-white text-base p-0 mt-0.5"
                     style={{ paddingLeft: 0, marginLeft: 0 }}
                     secureTextEntry={!showConfirmPassword}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    spellCheck={false}
                     returnKeyType="done"
                     onSubmitEditing={handleSignUp}
                     value={confirmPassword}
@@ -419,7 +544,11 @@ const validatePassword = (password:string) => {
 
               <Text className="text-gray-500 text-center my-4">or sign up with</Text>
 
-              <Pressable className="bg-[#1E3A44] border border-[#2D4F5C] p-4 rounded-2xl flex-row justify-center items-center active:opacity-80">
+              <Pressable 
+                onPress={handleGoogleSignUp}
+                disabled={loading}
+                className={`bg-[#1E3A44] border border-[#2D4F5C] p-4 rounded-2xl flex-row justify-center items-center active:opacity-80 ${loading ? 'opacity-50' : ''}`}
+              >
                 <Ionicons name="logo-google" size={20} color="white" />
                 <Text className="text-white font-semibold ml-3">Continue with Google</Text>
               </Pressable>
