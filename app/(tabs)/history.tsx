@@ -4,9 +4,9 @@ import {
   Text,
   ScrollView,
   Pressable,
-  FlatList,
   Modal,
   ActivityIndicator,
+  StyleSheet,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -83,6 +83,18 @@ const TIMELINE_STATUSES: ReportStatus[] = ['PENDING', 'ASSIGNED', 'FIXING', 'RES
 const FILTER_TABS = ['All', 'Pending', 'Fixing', 'Resolved', 'Rejected'] as const;
 type FilterTab = typeof FILTER_TABS[number];
 
+const DATE_FILTERS = [
+  { id: 'all',    label: 'All Time' },
+  { id: 'today',  label: 'Today' },
+  { id: '7d',     label: 'Last 7 Days' },
+  { id: '30d',    label: 'Last 30 Days' },
+  { id: 'custom', label: 'Custom Range' },
+] as const;
+type DateFilterId = typeof DATE_FILTERS[number]['id'];
+
+const INITIAL_PAGE_SIZE = 15;
+const LOAD_MORE_SIZE = 20;
+
 // ─────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────
@@ -102,13 +114,107 @@ function formatDate(ts: any): string {
   }
 }
 
+const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
+const getFirstDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay();
+
+// ─────────────────────────────────────────────
+// Custom Calendar Modal
+// ─────────────────────────────────────────────
+interface CalendarProps {
+  value: Date | null;
+  onChange: (date: Date) => void;
+  onClose: () => void;
+  title: string;
+}
+
+function CalendarModal({ value, onChange, onClose, title }: CalendarProps) {
+  const [currentYear, setCurrentYear] = useState(value ? value.getFullYear() : new Date().getFullYear());
+  const [currentMonth, setCurrentMonth] = useState(value ? value.getMonth() : new Date().getMonth());
+  const [selectedDay, setSelectedDay] = useState<number | null>(value ? value.getDate() : null);
+
+  const months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+
+  const daysInMonth = getDaysInMonth(currentYear, currentMonth);
+  const firstDay = getFirstDayOfMonth(currentYear, currentMonth);
+
+  const handlePrevMonth = () => {
+    if (currentMonth === 0) { setCurrentMonth(11); setCurrentYear(currentYear - 1); }
+    else setCurrentMonth(currentMonth - 1);
+    setSelectedDay(null);
+  };
+
+  const handleNextMonth = () => {
+    if (currentMonth === 11) { setCurrentMonth(0); setCurrentYear(currentYear + 1); }
+    else setCurrentMonth(currentMonth + 1);
+    setSelectedDay(null);
+  };
+
+  const cells = [];
+  for (let i = 0; i < firstDay; i++) cells.push({ day: null, key: `empty-${i}` });
+  for (let d = 1; d <= daysInMonth; d++) cells.push({ day: d, key: `day-${d}` });
+
+  const handleDaySelect = (day: number) => {
+    setSelectedDay(day);
+    onChange(new Date(currentYear, currentMonth, day));
+    onClose();
+  };
+
+  return (
+    <Modal transparent visible animationType="fade">
+      <View style={styles.modalOverlay}>
+        <View style={styles.calendarContainer}>
+          <Text style={styles.calendarTitle}>{title}</Text>
+          <View style={styles.calendarHeader}>
+            <Pressable onPress={handlePrevMonth} style={styles.arrowButton}>
+              <Ionicons name="chevron-back" size={20} color="#4CC2D1" />
+            </Pressable>
+            <Text style={styles.monthYearText}>{months[currentMonth]} {currentYear}</Text>
+            <Pressable onPress={handleNextMonth} style={styles.arrowButton}>
+              <Ionicons name="chevron-forward" size={20} color="#4CC2D1" />
+            </Pressable>
+          </View>
+          <View style={styles.weekdaysRow}>
+            {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d) => (
+              <Text key={d} style={styles.weekdayText}>{d}</Text>
+            ))}
+          </View>
+          <View style={styles.daysGrid}>
+            {cells.map((cell) => {
+              const isSelected = cell.day === selectedDay;
+              return (
+                <Pressable
+                  key={cell.key}
+                  disabled={cell.day === null}
+                  onPress={() => cell.day && handleDaySelect(cell.day)}
+                  style={[styles.dayCell, isSelected && styles.selectedDayCell]}
+                >
+                  {cell.day && (
+                    <Text style={[styles.dayText, isSelected && styles.selectedDayText]}>
+                      {cell.day}
+                    </Text>
+                  )}
+                </Pressable>
+              );
+            })}
+          </View>
+          <Pressable onPress={onClose} style={styles.closeCalendarButton}>
+            <Text style={styles.closeCalendarText}>Cancel</Text>
+          </Pressable>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
 // ─────────────────────────────────────────────
 // Report Detail Modal
 // ─────────────────────────────────────────────
 function ReportDetailModal({ report, onClose }: { report: Report | null; onClose: () => void }) {
   if (!report) return null;
   const cfg = STATUS_CONFIG[report.status] ?? STATUS_CONFIG.PENDING;
-
   const timelineIndex = TIMELINE_STATUSES.indexOf(report.status);
 
   return (
@@ -127,7 +233,7 @@ function ReportDetailModal({ report, onClose }: { report: Report | null; onClose
             </View>
           </View>
 
-          {/* Image (first one if exists) */}
+          {/* Image */}
           {report.imageUrls?.[0] && (
             <View className="mx-5 mb-4 rounded-2xl overflow-hidden" style={{ height: 180 }}>
               <Image source={{ uri: report.imageUrls[0] }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
@@ -136,9 +242,7 @@ function ReportDetailModal({ report, onClose }: { report: Report | null; onClose
 
           {/* Title + meta */}
           <View className="px-5 mb-4">
-            <Text className="text-[#4CC2D1] text-xs font-bold mb-1">
-              Ref: {report.id}
-            </Text>
+            <Text className="text-[#4CC2D1] text-xs font-bold mb-1">Ref: {report.id}</Text>
             <Text className="text-white text-2xl font-bold">{report.title}</Text>
             <View className="flex-row items-center mt-2 gap-2">
               <Ionicons name={report.categoryIcon as any} size={13} color="#5A7D8A" />
@@ -155,15 +259,12 @@ function ReportDetailModal({ report, onClose }: { report: Report | null; onClose
               <Text className="text-white font-bold mb-4">Status Timeline</Text>
 
               {report.status === 'REJECTED' ? (
-                /* Rejected path */
                 <>
                   {(['PENDING'] as ReportStatus[]).map((s) => {
                     const sc = STATUS_CONFIG[s];
-                    const done = true;
                     return (
                       <View key={s} className="flex-row items-center mb-3">
-                        <View className="w-8 h-8 rounded-full items-center justify-center mr-3"
-                          style={{ backgroundColor: sc.bg }}>
+                        <View className="w-8 h-8 rounded-full items-center justify-center mr-3" style={{ backgroundColor: sc.bg }}>
                           <Ionicons name={sc.icon as any} size={16} color={sc.color} />
                         </View>
                         <View className="flex-1">
@@ -185,24 +286,19 @@ function ReportDetailModal({ report, onClose }: { report: Report | null; onClose
                   </View>
                 </>
               ) : (
-                /* Normal path */
                 TIMELINE_STATUSES.map((s, i) => {
                   const sc = STATUS_CONFIG[s];
                   const done = timelineIndex >= i;
                   const isCurrent = report.status === s;
                   return (
                     <View key={s} className="flex-row items-center mb-3">
-                      {/* Connector line */}
                       <View style={{ alignItems: 'center', marginRight: 12 }}>
                         <View className="w-8 h-8 rounded-full items-center justify-center"
                           style={{ backgroundColor: done ? sc.bg : '#1A2D3D' }}>
                           <Ionicons name={sc.icon as any} size={16} color={done ? sc.color : '#2D4F5C'} />
                         </View>
                         {i < TIMELINE_STATUSES.length - 1 && (
-                          <View style={{
-                            width: 2, height: 16, marginTop: 2,
-                            backgroundColor: done ? sc.color + '40' : '#1E3347',
-                          }} />
+                          <View style={{ width: 2, height: 16, marginTop: 2, backgroundColor: done ? sc.color + '40' : '#1E3347' }} />
                         )}
                       </View>
                       <View className="flex-1">
@@ -265,17 +361,13 @@ function ReportDetailModal({ report, onClose }: { report: Report | null; onClose
               </View>
             </View>
 
-            {/* View on Map Button */}
+            {/* View on Map */}
             <Pressable
               onPress={() => {
                 onClose();
                 router.push({
                   pathname: '/(tabs)/map',
-                  params: { 
-                    lat: report.location.latitude, 
-                    lng: report.location.longitude,
-                    id: report.id 
-                  }
+                  params: { lat: report.location.latitude, lng: report.location.longitude, id: report.id }
                 });
               }}
               className="bg-[#1E3347] rounded-2xl p-4 flex-row items-center justify-center gap-2 active:opacity-70"
@@ -311,13 +403,10 @@ function ReportCard({ report, onPress }: { report: Report; onPress: () => void }
     <Pressable onPress={onPress} className="mb-3 active:opacity-80">
       <View className="bg-[#111E27] rounded-2xl overflow-hidden" style={{ borderWidth: 1, borderColor: '#1E3347' }}>
         <View className="flex-row">
-          {/* Category icon block */}
           <View className="w-[80px] h-[80px] items-center justify-center"
             style={{ backgroundColor: (report.categoryColor ?? '#4CC2D1') + '18' }}>
             <Ionicons name={report.categoryIcon as any} size={28} color={report.categoryColor ?? '#4CC2D1'} />
           </View>
-
-          {/* Info */}
           <View className="flex-1 p-3 justify-between">
             <View className="flex-row justify-between items-start">
               <Text className="text-white font-bold text-sm flex-1 mr-2" numberOfLines={1}>{report.title}</Text>
@@ -347,37 +436,23 @@ function ReportCard({ report, onPress }: { report: Report; onPress: () => void }
 // ─────────────────────────────────────────────
 const getResolvedTime = (report: Report): Date | null => {
   if (report.status !== 'RESOLVED') return null;
-
   if (report.statusHistory && Array.isArray(report.statusHistory)) {
     const resolvedEntry = report.statusHistory.find(h => h.status === 'RESOLVED');
-    if (resolvedEntry && resolvedEntry.changedAt) {
+    if (resolvedEntry?.changedAt) {
       return resolvedEntry.changedAt.toDate ? resolvedEntry.changedAt.toDate() : new Date(resolvedEntry.changedAt);
     }
   }
-
-  if (report.updatedAt) {
-    return report.updatedAt.toDate ? report.updatedAt.toDate() : new Date(report.updatedAt);
-  }
-
-  if (report.createdAt) {
-    return report.createdAt.toDate ? report.createdAt.toDate() : new Date(report.createdAt);
-  }
-
+  if (report.updatedAt) return report.updatedAt.toDate ? report.updatedAt.toDate() : new Date(report.updatedAt);
+  if (report.createdAt) return report.createdAt.toDate ? report.createdAt.toDate() : new Date(report.createdAt);
   return null;
 };
 
 const isEligibleForArchive = (report: Report): boolean => {
   if (report.status !== 'RESOLVED') return false;
   if (report.isArchived === true) return false;
-
   const resolvedTime = getResolvedTime(report);
   if (!resolvedTime) return false;
-
-  const now = new Date();
-  const diffMs = now.getTime() - resolvedTime.getTime();
-  const hours24 = 24 * 60 * 60 * 1000;
-
-  return diffMs >= hours24;
+  return (new Date().getTime() - resolvedTime.getTime()) >= 24 * 60 * 60 * 1000;
 };
 
 // ─────────────────────────────────────────────
@@ -388,13 +463,22 @@ export default function HistoryScreen() {
   const router = useRouter();
   const { onScroll } = useScrollContext();
   const { user, profile, refreshProfile } = useAuth();
-  // Track whether gamification processing is already in flight to avoid parallel runs
   const gamificationBusy = useRef(false);
 
   const [reports, setReports]           = useState<Report[]>([]);
   const [firestoreLoading, setFirestoreLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<FilterTab>('All');
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
+
+  // Date filter state
+  const [activeDateFilter, setActiveDateFilter] = useState<DateFilterId>('all');
+  const [customStartDate, setCustomStartDate] = useState<Date | null>(null);
+  const [customEndDate, setCustomEndDate]   = useState<Date | null>(null);
+  const [showStartPicker, setShowStartPicker] = useState(false);
+  const [showEndPicker, setShowEndPicker]   = useState(false);
+
+  // Pagination state
+  const [visibleCount, setVisibleCount] = useState(INITIAL_PAGE_SIZE);
 
   // ── Subscribe to current user's reports ──
   useEffect(() => {
@@ -420,23 +504,11 @@ export default function HistoryScreen() {
         if (!user || !profile || gamificationBusy.current) return;
         gamificationBusy.current = true;
         try {
-          // Reports newly ASSIGNED (accepted) that haven't been awarded points yet
-          const newlyAccepted = data.filter(
-            (r) => r.status === 'ASSIGNED' && !r.pointsAwarded,
-          );
-          // Reports newly RESOLVED that haven't been counted yet
-          const newlyResolved = data.filter(
-            (r) => r.status === 'RESOLVED' && !r.resolvedCounted,
-          );
+          const newlyAccepted = data.filter((r) => r.status === 'ASSIGNED' && !r.pointsAwarded);
+          const newlyResolved = data.filter((r) => r.status === 'RESOLVED' && !r.resolvedCounted);
 
-          // Award 10 pts for each newly accepted report
-          for (const r of newlyAccepted) {
-            await awardAcceptedPoints(user.uid, r.id);
-          }
-          // Increment resolved counter
-          for (const r of newlyResolved) {
-            await incrementResolvedCount(user.uid, r.id);
-          }
+          for (const r of newlyAccepted) await awardAcceptedPoints(user.uid, r.id);
+          for (const r of newlyResolved) await incrementResolvedCount(user.uid, r.id);
 
           if (newlyAccepted.length > 0) {
             const totalPts = newlyAccepted.length * 10;
@@ -447,15 +519,10 @@ export default function HistoryScreen() {
             });
           }
 
-          // Compute updated totals for badge evaluation
           const updatedAccepted = (profile.reportsAccepted ?? 0) + newlyAccepted.length;
           const updatedResolved = (profile.reportsResolved ?? 0) + newlyResolved.length;
           const updatedPoints   = (profile.contributionPoints ?? 0) + newlyAccepted.length * 10;
-
-          // Timestamps for early_bird / night_watch badges
-          const timestamps = data.map((r) =>
-            r.createdAt?.toDate ? r.createdAt.toDate() : new Date(r.createdAt),
-          );
+          const timestamps = data.map((r) => r.createdAt?.toDate ? r.createdAt.toDate() : new Date(r.createdAt));
 
           const earnedIds = computeEarnedBadgeIds({
             totalReports: data.length,
@@ -465,11 +532,7 @@ export default function HistoryScreen() {
             reportTimestamps: timestamps,
           });
 
-          const newBadges = await syncBadgesToFirestore(
-            user.uid,
-            earnedIds,
-            profile.badges ?? [],
-          );
+          const newBadges = await syncBadgesToFirestore(user.uid, earnedIds, profile.badges ?? []);
 
           if (newBadges.length > 0) {
             Toast.show({
@@ -479,7 +542,6 @@ export default function HistoryScreen() {
             });
           }
 
-          // Refresh profile so stats & badges update everywhere
           if (newlyAccepted.length > 0 || newlyResolved.length > 0 || newBadges.length > 0) {
             await refreshProfile();
           }
@@ -488,7 +550,6 @@ export default function HistoryScreen() {
         } finally {
           gamificationBusy.current = false;
         }
-        // ────────────────────────────────────────────────────────
       },
       (err) => {
         console.error('❌ History Firestore error:', err);
@@ -510,7 +571,6 @@ export default function HistoryScreen() {
   // ── Auto-archiving resolved reports after 24 hours ──
   useEffect(() => {
     if (reports.length === 0) return;
-
     const toArchive = reports.filter(isEligibleForArchive);
     if (toArchive.length === 0) return;
 
@@ -518,14 +578,9 @@ export default function HistoryScreen() {
       try {
         const batch = writeBatch(db);
         toArchive.forEach((report) => {
-          const reportRef = doc(db, 'reports', report.id);
-          batch.update(reportRef, {
-            isArchived: true,
-            updatedAt: new Date()
-          });
+          batch.update(doc(db, 'reports', report.id), { isArchived: true, updatedAt: new Date() });
         });
         await batch.commit();
-        console.log(`[AutoArchive] Successfully archived ${toArchive.length} reports.`);
       } catch (err) {
         console.error('[AutoArchive] Error auto-archiving reports:', err);
       }
@@ -534,24 +589,60 @@ export default function HistoryScreen() {
     archiveReports();
   }, [reports]);
 
+  // ── Reset visible count when any filter changes ──
+  useEffect(() => { setVisibleCount(INITIAL_PAGE_SIZE); }, [activeFilter, activeDateFilter, customStartDate, customEndDate]);
+
+  const clearCustomRange = () => {
+    setCustomStartDate(null);
+    setCustomEndDate(null);
+    setActiveDateFilter('all');
+  };
+
+  // ── Combined filtering ──
   const filtered = reports.filter((r) => {
     if (r.isArchived === true) return false;
 
-    if (activeFilter === 'All')      return true;
-    if (activeFilter === 'Pending')  return r.status === 'PENDING';
-    if (activeFilter === 'Fixing')   return r.status === 'FIXING' || r.status === 'ASSIGNED';
-    if (activeFilter === 'Resolved') return r.status === 'RESOLVED';
-    if (activeFilter === 'Rejected') return r.status === 'REJECTED';
+    // Status filter
+    if (activeFilter === 'Pending'  && r.status !== 'PENDING') return false;
+    if (activeFilter === 'Fixing'   && r.status !== 'FIXING' && r.status !== 'ASSIGNED') return false;
+    if (activeFilter === 'Resolved' && r.status !== 'RESOLVED') return false;
+    if (activeFilter === 'Rejected' && r.status !== 'REJECTED') return false;
+
+    // Date filter
+    const reportDate = r.createdAt?.toDate ? r.createdAt.toDate() : new Date(r.createdAt);
+    if (activeDateFilter === 'today') {
+      const startOfToday = new Date(); startOfToday.setHours(0, 0, 0, 0);
+      if (reportDate < startOfToday) return false;
+    } else if (activeDateFilter === '7d') {
+      const sevenAgo = new Date(); sevenAgo.setDate(sevenAgo.getDate() - 7);
+      if (reportDate < sevenAgo) return false;
+    } else if (activeDateFilter === '30d') {
+      const thirtyAgo = new Date(); thirtyAgo.setDate(thirtyAgo.getDate() - 30);
+      if (reportDate < thirtyAgo) return false;
+    } else if (activeDateFilter === 'custom') {
+      if (customStartDate) {
+        const start = new Date(customStartDate); start.setHours(0, 0, 0, 0);
+        if (reportDate < start) return false;
+      }
+      if (customEndDate) {
+        const end = new Date(customEndDate); end.setHours(23, 59, 59, 999);
+        if (reportDate > end) return false;
+      }
+    }
+
     return true;
   });
 
+  const visibleReports = filtered.slice(0, visibleCount);
+  const hasMore = visibleCount < filtered.length;
+
   const countFor = (tab: FilterTab): number => {
-    const activeReports = reports.filter((r) => r.isArchived !== true);
-    if (tab === 'All')      return activeReports.length;
-    if (tab === 'Pending')  return activeReports.filter((r) => r.status === 'PENDING').length;
-    if (tab === 'Fixing')   return activeReports.filter((r) => r.status === 'FIXING' || r.status === 'ASSIGNED').length;
-    if (tab === 'Resolved') return activeReports.filter((r) => r.status === 'RESOLVED').length;
-    if (tab === 'Rejected') return activeReports.filter((r) => r.status === 'REJECTED').length;
+    const active = reports.filter((r) => r.isArchived !== true);
+    if (tab === 'All')      return active.length;
+    if (tab === 'Pending')  return active.filter((r) => r.status === 'PENDING').length;
+    if (tab === 'Fixing')   return active.filter((r) => r.status === 'FIXING' || r.status === 'ASSIGNED').length;
+    if (tab === 'Resolved') return active.filter((r) => r.status === 'RESOLVED').length;
+    if (tab === 'Rejected') return active.filter((r) => r.status === 'REJECTED').length;
     return 0;
   };
 
@@ -584,45 +675,119 @@ export default function HistoryScreen() {
             </Pressable>
             <View className="bg-[#111E27] px-3 py-1.5 rounded-full" style={{ borderWidth: 1, borderColor: '#1E3347' }}>
               <Text className="text-gray-400 text-xs font-bold">
-                {reports.filter(r => r.isArchived !== true).length}
+                {filtered.length}
               </Text>
             </View>
           </View>
         </View>
 
-        {/* ── Filter Tabs ── */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 16, gap: 8 }}
-        >
-          {FILTER_TABS.map((tab) => {
-            const isActive = activeFilter === tab;
-            const count = countFor(tab);
-            return (
+        {/* ── Status Filter Tabs ── */}
+        <View className="mb-1">
+          <Text className="text-gray-400 text-xs font-bold px-5 mb-2 uppercase tracking-wide">Status</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 12, gap: 8 }}
+          >
+            {FILTER_TABS.map((tab) => {
+              const isActive = activeFilter === tab;
+              const count = countFor(tab);
+              return (
+                <Pressable
+                  key={tab}
+                  onPress={() => setActiveFilter(tab)}
+                  className="flex-row items-center px-4 py-2 rounded-full gap-1.5"
+                  style={{
+                    backgroundColor: isActive ? '#4CC2D1' : '#111E27',
+                    borderWidth: 1,
+                    borderColor: isActive ? '#4CC2D1' : '#1E3347',
+                  }}
+                >
+                  <Text className="text-sm font-semibold" style={{ color: isActive ? '#071318' : '#5A7D8A' }}>
+                    {tab}
+                  </Text>
+                  <View className="px-1.5 py-0.5 rounded-full"
+                    style={{ backgroundColor: isActive ? 'rgba(7,19,24,0.2)' : '#1E3347' }}>
+                    <Text className="text-[10px] font-bold" style={{ color: isActive ? '#071318' : '#4CC2D1' }}>
+                      {count}
+                    </Text>
+                  </View>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </View>
+
+        {/* ── Date Filter ── */}
+        <View className="mb-4">
+          <Text className="text-gray-400 text-xs font-bold px-5 mb-2 uppercase tracking-wide">Date Filter</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}
+          >
+            {DATE_FILTERS.map((df) => {
+              const isActive = activeDateFilter === df.id;
+              return (
+                <Pressable
+                  key={df.id}
+                  onPress={() => setActiveDateFilter(df.id)}
+                  className="px-4 py-2 rounded-full"
+                  style={{
+                    backgroundColor: isActive ? '#4CC2D1' : '#111E27',
+                    borderWidth: 1,
+                    borderColor: isActive ? '#4CC2D1' : '#1E3347',
+                  }}
+                >
+                  <Text className="text-xs font-semibold" style={{ color: isActive ? '#071318' : '#5A7D8A' }}>
+                    {df.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </View>
+
+        {/* ── Custom Date Range Picker ── */}
+        {activeDateFilter === 'custom' && (
+          <View className="mx-5 mb-4 p-4 rounded-2xl bg-[#111E27] border border-[#1E3347]">
+            <View className="flex-row justify-between items-center mb-3">
+              <Text className="text-white text-xs font-bold uppercase tracking-wide">Select Date Range</Text>
+              {(customStartDate || customEndDate) && (
+                <Pressable onPress={clearCustomRange} className="active:opacity-75">
+                  <Text className="text-[#E05C5C] text-xs font-semibold">Reset</Text>
+                </Pressable>
+              )}
+            </View>
+            <View className="flex-row gap-3">
               <Pressable
-                key={tab}
-                onPress={() => setActiveFilter(tab)}
-                className="flex-row items-center px-4 py-2 rounded-full gap-1.5"
-                style={{
-                  backgroundColor: isActive ? '#4CC2D1' : '#111E27',
-                  borderWidth: 1,
-                  borderColor: isActive ? '#4CC2D1' : '#1E3347',
-                }}
+                onPress={() => setShowStartPicker(true)}
+                className="flex-1 p-3 rounded-xl bg-[#1E3A44] border border-[#2D4F5C] flex-row justify-between items-center active:opacity-75"
               >
-                <Text className="text-sm font-semibold" style={{ color: isActive ? '#071318' : '#5A7D8A' }}>
-                  {tab}
-                </Text>
-                <View className="px-1.5 py-0.5 rounded-full"
-                  style={{ backgroundColor: isActive ? 'rgba(7,19,24,0.2)' : '#1E3347' }}>
-                  <Text className="text-[10px] font-bold" style={{ color: isActive ? '#071318' : '#4CC2D1' }}>
-                    {count}
+                <View>
+                  <Text className="text-gray-500 text-[10px] uppercase font-bold">Start Date</Text>
+                  <Text className="text-white text-sm font-semibold mt-0.5">
+                    {customStartDate ? customStartDate.toLocaleDateString('en-GB') : 'Select...'}
                   </Text>
                 </View>
+                <Ionicons name="calendar-outline" size={16} color="#4CC2D1" />
               </Pressable>
-            );
-          })}
-        </ScrollView>
+
+              <Pressable
+                onPress={() => setShowEndPicker(true)}
+                className="flex-1 p-3 rounded-xl bg-[#1E3A44] border border-[#2D4F5C] flex-row justify-between items-center active:opacity-75"
+              >
+                <View>
+                  <Text className="text-gray-500 text-[10px] uppercase font-bold">End Date</Text>
+                  <Text className="text-white text-sm font-semibold mt-0.5">
+                    {customEndDate ? customEndDate.toLocaleDateString('en-GB') : 'Select...'}
+                  </Text>
+                </View>
+                <Ionicons name="calendar-outline" size={16} color="#4CC2D1" />
+              </Pressable>
+            </View>
+          </View>
+        )}
 
         {/* ── Report List ── */}
         <View className="px-5">
@@ -632,28 +797,80 @@ export default function HistoryScreen() {
               <Text className="text-gray-500 mt-4 text-sm">Loading your reports…</Text>
             </View>
           ) : filtered.length === 0 ? (
-            <View className="items-center py-16">
-              <View className="w-16 h-16 rounded-full bg-[#111E27] items-center justify-center mb-4">
+            <View className="items-center py-16 bg-[#111E27] border border-[#1E3347] rounded-3xl p-6">
+              <View className="w-16 h-16 rounded-full bg-[#1E3A44] items-center justify-center mb-4">
                 <Ionicons name="document-outline" size={30} color="#2D4F5C" />
               </View>
-              <Text className="text-gray-500 font-semibold">
-                {activeFilter === 'All' ? 'No reports yet' : `No ${activeFilter} reports`}
+              <Text className="text-white font-bold text-base">
+                {activeFilter === 'All' ? 'No reports found' : `No ${activeFilter} reports`}
               </Text>
-              <Text className="text-gray-600 text-sm mt-1">
-                {activeFilter === 'All' ? 'Submit your first report using the + button' : 'Your reports will appear here'}
+              <Text className="text-gray-500 text-sm mt-1 text-center leading-5">
+                {activeFilter === 'All' && activeDateFilter === 'all'
+                  ? 'Submit your first report using the + button'
+                  : 'Try adjusting your filters'}
               </Text>
             </View>
           ) : (
-            filtered.map((report) => (
-              <ReportCard
-                key={report.id}
-                report={report}
-                onPress={() => setSelectedReport(report)}
-              />
-            ))
+            <>
+              {/* Results count */}
+              <View className="flex-row justify-between items-center mb-3">
+                <Text className="text-gray-500 text-xs">
+                  Showing <Text className="text-[#4CC2D1] font-bold">{visibleReports.length}</Text> of <Text className="text-white font-semibold">{filtered.length}</Text> reports
+                </Text>
+              </View>
+
+              {visibleReports.map((report) => (
+                <ReportCard
+                  key={report.id}
+                  report={report}
+                  onPress={() => setSelectedReport(report)}
+                />
+              ))}
+
+              {/* Load More Button */}
+              {hasMore && (
+                <Pressable
+                  onPress={() => setVisibleCount((c) => c + LOAD_MORE_SIZE)}
+                  className="mt-2 mb-4 py-4 rounded-2xl items-center justify-center active:opacity-75"
+                  style={{ borderWidth: 1, borderColor: '#2D4F5C', backgroundColor: '#111E27' }}
+                >
+                  <View className="flex-row items-center gap-2">
+                    <Ionicons name="chevron-down-circle-outline" size={20} color="#4CC2D1" />
+                    <Text className="text-[#4CC2D1] font-bold text-sm">
+                      Load More ({Math.min(LOAD_MORE_SIZE, filtered.length - visibleCount)} more)
+                    </Text>
+                  </View>
+                </Pressable>
+              )}
+
+              {/* End indicator */}
+              {!hasMore && filtered.length > INITIAL_PAGE_SIZE && (
+                <View className="items-center py-4">
+                  <Text className="text-gray-600 text-xs">All {filtered.length} reports shown</Text>
+                </View>
+              )}
+            </>
           )}
         </View>
       </ScrollView>
+
+      {/* Calendar Modals */}
+      {showStartPicker && (
+        <CalendarModal
+          title="Select Start Date"
+          value={customStartDate}
+          onChange={(d) => setCustomStartDate(d)}
+          onClose={() => setShowStartPicker(false)}
+        />
+      )}
+      {showEndPicker && (
+        <CalendarModal
+          title="Select End Date"
+          value={customEndDate}
+          onChange={(d) => setCustomEndDate(d)}
+          onClose={() => setShowEndPicker(false)}
+        />
+      )}
 
       <ReportDetailModal
         report={selectedReport}
@@ -662,3 +879,75 @@ export default function HistoryScreen() {
     </LinearGradient>
   );
 }
+
+// ─────────────────────────────────────────────
+// Calendar Styles
+// ─────────────────────────────────────────────
+const styles = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  calendarContainer: {
+    width: '100%',
+    maxWidth: 340,
+    backgroundColor: '#111E27',
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: '#1E3347',
+    padding: 20,
+    alignItems: 'center',
+  },
+  calendarTitle: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 16,
+  },
+  calendarHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginBottom: 16,
+  },
+  arrowButton: { padding: 8 },
+  monthYearText: { color: '#FFFFFF', fontSize: 16, fontWeight: '600' },
+  weekdaysRow: {
+    flexDirection: 'row',
+    width: '100%',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  weekdayText: {
+    color: '#5A7D8A',
+    width: '14.28%',
+    textAlign: 'center',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  daysGrid: { flexDirection: 'row', flexWrap: 'wrap', width: '100%' },
+  dayCell: {
+    width: '14.28%',
+    aspectRatio: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 8,
+    marginVertical: 2,
+  },
+  selectedDayCell: { backgroundColor: '#4CC2D1' },
+  dayText: { color: '#E2E8F0', fontSize: 14 },
+  selectedDayText: { color: '#071318', fontWeight: 'bold' },
+  closeCalendarButton: {
+    marginTop: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#2D4F5C',
+  },
+  closeCalendarText: { color: '#5A7D8A', fontWeight: '600', fontSize: 14 },
+});
