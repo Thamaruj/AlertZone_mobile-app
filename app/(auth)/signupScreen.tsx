@@ -469,6 +469,9 @@ const validatePassword = (password:string) => {
                     className="text-white text-base p-0 mt-0.5"
                     style={{ paddingLeft: 0, marginLeft: 0 }}
                     secureTextEntry={!showPassword}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    spellCheck={false}
                     returnKeyType="next"
                     onSubmitEditing={() => confirmPassRef.current?.focus()}
                     value={password}
@@ -494,6 +497,9 @@ const validatePassword = (password:string) => {
                     className="text-white text-base p-0 mt-0.5"
                     style={{ paddingLeft: 0, marginLeft: 0 }}
                     secureTextEntry={!showConfirmPassword}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    spellCheck={false}
                     returnKeyType="done"
                     onSubmitEditing={handleSignUp}
                     value={confirmPassword}

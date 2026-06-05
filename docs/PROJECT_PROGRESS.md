@@ -280,6 +280,10 @@ This document tracks the end-to-end development journey of the AlertZone mobile 
     - Integrated dedicated trigger settings rows in the main profile dashboard for improved user experience.
     - Replaced "Notification Sound" with a real-time push notification registration toggle to dynamically register and unregister device tokens in FCM.
 
+- **[2026-06-06] Password Reset Confirmation & Backspace Fixes:**
+    - Added a native two-step confirmation alert using `Alert.alert` before triggering password reset email delivery.
+    - Resolved standard secure entry keyboard backspace text deletion bugs on iOS/Android password fields by configuring `autoCapitalize="none"`, `autoCorrect={false}`, and `spellCheck={false}`.
+
 ---
 
-*Last Updated: 2026-06-06 — Profile Settings Modularization & Refactoring*
+*Last Updated: 2026-06-06 — Security Enhancements & Input Corrections*

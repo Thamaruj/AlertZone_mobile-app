@@ -9,6 +9,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { BADGE_DEFINITIONS } from '../../services/gamification.service';
 import {
   ActivityIndicator,
+  Alert,
   Animated,
   Image,
   Modal,
@@ -1370,29 +1371,45 @@ function SecurityModal({
     }
   };
 
-  const handleForgotPassword = async () => {
+  const handleForgotPassword = () => {
     setPasswordError('');
     setPasswordSuccess('');
     if (!user || !user.email) return;
     
-    setForgotPasswordLoading(true);
-    try {
-      const { sendPasswordResetEmail } = require('firebase/auth');
-      const { auth: firebaseAuth } = require('../../services/firebase');
-      
-      await sendPasswordResetEmail(firebaseAuth, user.email);
-      setPasswordSuccess('Reset email sent! Please check your inbox.');
-      Toast.show({
-        type: 'success',
-        text1: 'Email Sent',
-        text2: 'Password reset link sent to your email.',
-      });
-    } catch (err: any) {
-      console.error('Forgot password error:', err);
-      setPasswordError(err.message || 'Could not send reset email. Try again.');
-    } finally {
-      setForgotPasswordLoading(false);
-    }
+    Alert.alert(
+      "Send Reset Link",
+      `Are you sure you want to send a password reset link to ${user.email}?`,
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        {
+          text: "Send Link",
+          style: "default",
+          onPress: async () => {
+            setForgotPasswordLoading(true);
+            try {
+              const { sendPasswordResetEmail } = require('firebase/auth');
+              const { auth: firebaseAuth } = require('../../services/firebase');
+              
+              await sendPasswordResetEmail(firebaseAuth, user.email);
+              setPasswordSuccess('Reset email sent! Please check your inbox.');
+              Toast.show({
+                type: 'success',
+                text1: 'Email Sent',
+                text2: 'Password reset link sent to your email.',
+              });
+            } catch (err: any) {
+              console.error('Forgot password error:', err);
+              setPasswordError(err.message || 'Could not send reset email. Try again.');
+            } finally {
+              setForgotPasswordLoading(false);
+            }
+          }
+        }
+      ]
+    );
   };
 
   return (
@@ -1468,6 +1485,9 @@ function SecurityModal({
                   <Text className="text-gray-500 text-[10px] uppercase font-bold tracking-wide mb-1.5">Current Password</Text>
                   <TextInput
                     secureTextEntry
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    spellCheck={false}
                     value={currentPassword}
                     onChangeText={setCurrentPassword}
                     placeholder="Enter current password"
@@ -1481,6 +1501,9 @@ function SecurityModal({
                   <Text className="text-gray-500 text-[10px] uppercase font-bold tracking-wide mb-1.5">New Password</Text>
                   <TextInput
                     secureTextEntry
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    spellCheck={false}
                     value={newPassword}
                     onChangeText={setNewPassword}
                     placeholder="Min 6 characters"
@@ -1494,6 +1517,9 @@ function SecurityModal({
                   <Text className="text-gray-500 text-[10px] uppercase font-bold tracking-wide mb-1.5">Confirm New Password</Text>
                   <TextInput
                     secureTextEntry
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    spellCheck={false}
                     value={confirmNewPassword}
                     onChangeText={setConfirmNewPassword}
                     placeholder="Re-enter new password"
@@ -1570,6 +1596,9 @@ function SecurityModal({
               </Text>
               <TextInput
                 secureTextEntry
+                autoCapitalize="none"
+                autoCorrect={false}
+                spellCheck={false}
                 placeholder="Enter current password"
                 placeholderTextColor="#5A7D8A"
                 value={confirmPasswordText}

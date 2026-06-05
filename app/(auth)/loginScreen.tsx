@@ -435,6 +435,9 @@ export default function LoginScreen() {
                     className="text-white text-base p-0 m-0"
                     style={{ paddingLeft: 0, marginLeft: 0 }}
                     secureTextEntry={!showPassword}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    spellCheck={false}
                     value={password}
                     onChangeText={(val) => {
                       if (isPasswordFromStorage) {
