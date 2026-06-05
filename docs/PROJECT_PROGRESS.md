@@ -294,6 +294,18 @@ This document tracks the end-to-end development journey of the AlertZone mobile 
     - Standardized report document IDs using the custom format `yyyymmddPDDXXXXX` constructed dynamically based on current local date and reverse-geocoded region codes.
     - Implemented daily sequential numbering (`XXXXX`) by querying Firestore for the highest sequence number matching the day's region prefix.
 
+- **[2026-06-06] Notification & Report Detail Enhancements:**
+    - Integrated full Ref ID (`yyyymmddPDDXXXXX`) into all report-related notification bodies.
+    - Tapping a notification now auto-opens the `ReportDetailSheet` for the relevant report via `params.id` in `map.tsx`.
+    - Added Province, District, and LGA fields to the `ReportDetailSheet`, `history.tsx`, and `archive.tsx` report detail modals.
+
+- **[2026-06-06] LGA Resolution Accuracy Fixes (`sriLankaRegions.ts`):**
+    - **Root cause fixed:** The district name (e.g., `"Ratnapura"`) in a reverse-geocoded address was false-matching the same-named LGA (`Ratnapura Pradeshiya Sabha`) in all three text-matching steps of `resolveSrilankaRegion`, incorrectly assigning municipal council instead of the actual local PS.
+    - **Algorithm fix (Steps 1, 7a, 7b):** All three LGA text-matching passes now exclude LGA clean-names and individual words that exactly equal the resolved district name, forcing those ambiguous cases to be resolved by coordinate-proximity (centroid fallback) instead.
+    - **Imbulpe PS coordinates corrected:** Updated `Imbulpe Pradeshiya Sabha` center from `(6.6946, 80.6887)` → `(6.7008, 80.7533)` based on verified DS division coordinates.
+    - **Ratnapura PS coordinates separated:** `Ratnapura Pradeshiya Sabha` was sharing the exact same coordinates as `Ratnapura Municipal Council`; PS center moved to `(6.6107, 80.5521)` to ensure correct nearest-neighbor resolution.
+    - **Added Nivithigala Pradeshiya Sabha:** Missing LGA added to both the `sriLankaGeographics` list and `LGA_CENTERS` for Ratnapura district with coordinates `(6.7956, 80.5219)`.
+
 ---
 
-*Last Updated: 2026-06-06 — Incident Report ID Standardization*
+*Last Updated: 2026-06-06 — LGA Resolution Accuracy Fixes*
