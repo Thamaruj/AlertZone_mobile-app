@@ -340,6 +340,12 @@ This document tracks the end-to-end development journey of the AlertZone mobile 
     - Configured the gate to render a non-blocking top notification banner ("No Internet Connection") on auth/onboarding screens instead of the full-screen locking bottom sheet.
     - Ensured that when connection is restored, the banner transitions to "Connection Restored" (green) and automatically slides out of view.
 
+- **[2026-06-06] Prevention of Self-Upvoting & Self-Commenting:**
+    - Modified `ReportDetailSheet.tsx` to verify if the report's owner ID matches the current user's UID (`report.uid === user.uid`).
+    - If true, both the upvote action button and the comment input area are fully disabled and visually greyed-out with lock icons.
+    - Added warning/explanation text inside the disabled button (`"You cannot upvote your own report"`) and text input placeholder (`"You cannot comment on your own report"`).
+    - Extended safety guards inside the `handleUpvotePress`, `performUpvote`, and `handlePostComment` callback logic to securely block transaction execution if called manually.
+
 ---
 
-*Last Updated: 2026-06-06 — Offline Routing & Notification Banner*
+*Last Updated: 2026-06-06 — Self-Upvoting/Commenting Prevention & Offline Handling*

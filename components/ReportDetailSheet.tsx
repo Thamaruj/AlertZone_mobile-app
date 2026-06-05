@@ -243,7 +243,7 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
 
   // ── Upvote press flow ──
   const handleUpvotePress = useCallback(() => {
-    if (!user || !report || isUpvoting) return;
+    if (!user || !report || isUpvoting || report.uid === user.uid) return;
     if (hasUpvoted) {
       setUpvoteModalType('remove');
     } else {
@@ -253,7 +253,7 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
   }, [user, report, hasUpvoted, isUpvoting]);
 
   const performUpvote = async (shouldUpvote: boolean, commentText?: string) => {
-    if (!user || !report) return;
+    if (!user || !report || report.uid === user.uid) return;
     setIsUpvoting(true);
     setUpvoteModalType(null);
     try {
@@ -365,7 +365,7 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
 
   // ── Post comment ──
   const handlePostComment = useCallback(async () => {
-    if (!user || !report || !newComment.trim() || isPostingComment) return;
+    if (!user || !report || !newComment.trim() || isPostingComment || report.uid === user.uid) return;
     setIsPostingComment(true);
     try {
       const batch = writeBatch(db);
@@ -614,50 +614,54 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
                   </View>
 
                   {/* ── Upvote Bar (Make whole button pressable + show as of date/time) ── */}
-                  <Pressable
-                    onPress={handleUpvotePress}
-                    disabled={isUpvoting || !user}
-                    style={({ pressed }) => ({
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      backgroundColor: pressed ? '#007cc0' : '#0f93f2ff',
-                      borderRadius: 16,
-                      paddingHorizontal: 20,
-                      paddingVertical: 16,
-                      borderWidth: 1,
-                      borderColor: '#1E3347',
-                      gap: 12,
-                    })}
-                  >
-                    <View style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 12,
-                      backgroundColor: hasUpvoted ? '#045236ff' : '#0a8ac5ff',
-                      paddingHorizontal: 12,
-                      paddingVertical: 8,
-                      borderRadius: 12,
-                      flex: 1,
-                    }}>
-                      {isUpvoting ? (
-                        <ActivityIndicator size="small" color="#FFFFFF" />
-                      ) : (
-                        <Ionicons
-                          name={hasUpvoted ? 'checkmark-circle' : 'arrow-up-circle-outline'}
-                          size={28}
-                          color={hasUpvoted ? '#34D399' : '#ffffffff'}
-                        />
-                      )}
-                      <View style={{ flexShrink: 1, flex: 1 }}>
-                        <Text style={{ color: '#FFFFFF', fontWeight: '400', fontSize: 15 }} numberOfLines={1}>
-                          {hasUpvoted ? 'You have already upvoted this Issue!' : 'Upvote this Issue?'}
-                        </Text>
-                      </View>
-                    </View>
-
-
-                  </Pressable>
+                  {(() => {
+                    const isOwnReport = report && user && report.uid === user.uid;
+                    return (
+                      <Pressable
+                        onPress={handleUpvotePress}
+                        disabled={isUpvoting || !user || isOwnReport}
+                        style={({ pressed }) => ({
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          backgroundColor: isOwnReport ? '#1A2F3B' : (pressed ? '#007cc0' : '#0f93f2ff'),
+                          borderRadius: 16,
+                          paddingHorizontal: 20,
+                          paddingVertical: 16,
+                          borderWidth: 1,
+                          borderColor: isOwnReport ? '#223847' : '#1E3347',
+                          gap: 12,
+                          opacity: isOwnReport ? 0.7 : 1,
+                        })}
+                      >
+                        <View style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 12,
+                          backgroundColor: isOwnReport ? '#1E3347' : (hasUpvoted ? '#045236ff' : '#0a8ac5ff'),
+                          paddingHorizontal: 12,
+                          paddingVertical: 8,
+                          borderRadius: 12,
+                          flex: 1,
+                        }}>
+                          {isUpvoting ? (
+                            <ActivityIndicator size="small" color="#FFFFFF" />
+                          ) : (
+                            <Ionicons
+                              name={isOwnReport ? 'lock-closed-outline' : (hasUpvoted ? 'checkmark-circle' : 'arrow-up-circle-outline')}
+                              size={28}
+                              color={isOwnReport ? '#5A7D8A' : (hasUpvoted ? '#34D399' : '#ffffffff')}
+                            />
+                          )}
+                          <View style={{ flexShrink: 1, flex: 1 }}>
+                            <Text style={{ color: isOwnReport ? '#5A7D8A' : '#FFFFFF', fontWeight: isOwnReport ? '500' : '400', fontSize: 15 }} numberOfLines={1}>
+                              {isOwnReport ? 'You cannot upvote your own report' : (hasUpvoted ? 'You have already upvoted this Issue!' : 'Upvote this Issue?')}
+                            </Text>
+                          </View>
+                        </View>
+                      </Pressable>
+                    );
+                  })()}
 
                   {/* ── Location ── */}
                   <View style={{
@@ -868,56 +872,67 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
               </ScrollView>
 
               {/* ── Comment Input (fixed above keyboard via flex layout) ── */}
-              <View style={{
-                paddingBottom: Math.max(insets.bottom, 16),
-                paddingTop: 12, paddingHorizontal: 16,
-                backgroundColor: '#0A1820',
-                borderTopWidth: 1, borderTopColor: '#1E3347',
-              }}>
-                <View style={{
-                  flexDirection: 'row', alignItems: 'center', gap: 10,
-                  backgroundColor: '#111E27', borderRadius: 20,
-                  paddingHorizontal: 12, paddingVertical: 8,
-                  borderWidth: 1, borderColor: '#4CC2D1',
-                }}>
-                  <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: '#1E3A44', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                    {profile?.avatarUrl ? (
-                      <Image source={{ uri: profile.avatarUrl }} style={{ width: 28, height: 28 }} resizeMode="cover" />
-                    ) : (
-                      <Ionicons name="person-outline" size={14} color="#4CC2D1" />
-                    )}
+              {(() => {
+                const isOwnReport = report && user && report.uid === user.uid;
+                return (
+                  <View style={{
+                    paddingBottom: Math.max(insets.bottom, 16),
+                    paddingTop: 12, paddingHorizontal: 16,
+                    backgroundColor: '#0A1820',
+                    borderTopWidth: 1, borderTopColor: '#1E3347',
+                  }}>
+                    <View style={{
+                      flexDirection: 'row', alignItems: 'center', gap: 10,
+                      backgroundColor: isOwnReport ? '#0A1820' : '#111E27', borderRadius: 20,
+                      paddingHorizontal: 12, paddingVertical: 8,
+                      borderWidth: 1, borderColor: isOwnReport ? '#1E3347' : '#4CC2D1',
+                      opacity: isOwnReport ? 0.7 : 1,
+                    }}>
+                      <View style={{
+                        width: 28, height: 28, borderRadius: 14,
+                        backgroundColor: isOwnReport ? '#1A2D3D' : '#1E3A44',
+                        alignItems: 'center', justifyContent: 'center', overflow: 'hidden'
+                      }}>
+                        {profile?.avatarUrl && !isOwnReport ? (
+                          <Image source={{ uri: profile.avatarUrl }} style={{ width: 28, height: 28 }} resizeMode="cover" />
+                        ) : (
+                          <Ionicons name={isOwnReport ? "lock-closed-outline" : "person-outline"} size={14} color={isOwnReport ? "#5A7D8A" : "#4CC2D1"} />
+                        )}
+                      </View>
+                      <TextInput
+                        value={newComment}
+                        onChangeText={setNewComment}
+                        editable={!isOwnReport}
+                        placeholder={isOwnReport ? "You cannot comment on your own report" : "Add a community comment…"}
+                        placeholderTextColor="#5A7D8A"
+                        multiline
+                        maxLength={280}
+                        style={{
+                          flex: 1, color: isOwnReport ? '#5A7D8A' : 'white', fontSize: 14,
+                          maxHeight: 80,
+                          paddingTop: Platform.OS === 'ios' ? 4 : 0,
+                          paddingBottom: Platform.OS === 'ios' ? 4 : 0,
+                        }}
+                      />
+                      <Pressable
+                        onPress={handlePostComment}
+                        disabled={!newComment.trim() || isPostingComment || isOwnReport}
+                        style={({ pressed }) => ({
+                          width: 36, height: 36, borderRadius: 18,
+                          backgroundColor: isOwnReport ? '#1E3347' : (newComment.trim() ? (pressed ? '#3BAFBD' : '#4CC2D1') : '#e8e8e8ff'),
+                          alignItems: 'center', justifyContent: 'center',
+                        })}
+                      >
+                        {isPostingComment ? (
+                          <ActivityIndicator size="small" color="#ffffffff" />
+                        ) : (
+                          <Ionicons name="send" size={16} color={isOwnReport ? '#5A7D8A' : (newComment.trim() ? '#ffffffff' : '#2D4F5C')} />
+                        )}
+                      </Pressable>
+                    </View>
                   </View>
-                  <TextInput
-                    value={newComment}
-                    onChangeText={setNewComment}
-                    placeholder="Add a community comment…"
-                    placeholderTextColor="#5A7D8A"
-                    multiline
-                    maxLength={280}
-                    style={{
-                      flex: 1, color: 'white', fontSize: 14,
-                      maxHeight: 80,
-                      paddingTop: Platform.OS === 'ios' ? 4 : 0,
-                      paddingBottom: Platform.OS === 'ios' ? 4 : 0,
-                    }}
-                  />
-                  <Pressable
-                    onPress={handlePostComment}
-                    disabled={!newComment.trim() || isPostingComment}
-                    style={({ pressed }) => ({
-                      width: 36, height: 36, borderRadius: 18,
-                      backgroundColor: newComment.trim() ? (pressed ? '#3BAFBD' : '#4CC2D1') : '#e8e8e8ff',
-                      alignItems: 'center', justifyContent: 'center',
-                    })}
-                  >
-                    {isPostingComment ? (
-                      <ActivityIndicator size="small" color="#ffffffff" />
-                    ) : (
-                      <Ionicons name="send" size={16} color={newComment.trim() ? '#ffffffff' : '#2D4F5C'} />
-                    )}
-                  </Pressable>
-                </View>
-              </View>
+                );
+              })()}
             </View>
           )}
         </KeyboardAvoidingView>
