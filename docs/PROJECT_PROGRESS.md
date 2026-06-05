@@ -275,6 +275,11 @@ This document tracks the end-to-end development journey of the AlertZone mobile 
     - Secured the splash gate [index.tsx](file:///e:/AlertZone_New/alertzone-mobile-app/app/index.tsx) and tabs layout [_layout.tsx](file:///e:/AlertZone_New/alertzone-mobile-app/app/(tabs)/_layout.tsx) to redirect authenticated users with incomplete profiles to `/completeProfile`.
     - Cast route path strings as `any` (e.g. `'/(auth)/completeProfile' as any`) to resolve TypeScript route typings issues before the Expo development server regenerates the type definitions.
 
+- **[2026-06-06] Profile Modals Refactoring & Security Section:**
+    - Split the monolithic edit profile modal into distinct `PersonalInfoModal`, `AlertPreferencesModal`, and `SecurityModal` components.
+    - Integrated dedicated trigger settings rows in the main profile dashboard for improved user experience.
+    - Replaced "Notification Sound" with a real-time push notification registration toggle to dynamically register and unregister device tokens in FCM.
+
 ---
 
-*Last Updated: 2026-06-05 — Google Sign-In & Complete Profile Integration*
+*Last Updated: 2026-06-06 — Profile Settings Modularization & Refactoring*
