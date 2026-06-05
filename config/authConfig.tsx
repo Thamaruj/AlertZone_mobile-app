@@ -40,6 +40,7 @@ interface AuthContextType {
   loading: boolean;                // true while checking auth state
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  isProfileComplete: boolean;
 }
 
 
@@ -49,6 +50,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser]       = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);  // start true — checking auth
+
+  const isProfileComplete = !!(
+    profile &&
+    profile.fullName &&
+    profile.phoneNumber &&
+    profile.nic &&
+    profile.province &&
+    profile.district &&
+    profile.localGovernmentArea
+  );
 
   // Fetch Firestore profile for a given uid
   const fetchProfile = async (uid: string) => {
@@ -111,7 +122,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, logout, refreshProfile }}>
+    <AuthContext.Provider value={{ user, profile, loading, logout, refreshProfile, isProfileComplete }}>
       {children}
     </AuthContext.Provider>
   );
