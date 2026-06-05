@@ -306,7 +306,7 @@ function SuccessScreen({
         <Text className="text-gray-400 text-sm text-center leading-6 mb-2">
           Your report has been received and is being{'\n'}reviewed by our safety team.
         </Text>
-        <Text className="text-[#4CC2D1] font-bold mb-8">Ref ID: {refId.slice(0, 8).toUpperCase()}</Text>
+        <Text className="text-[#4CC2D1] font-bold mb-8">Ref ID: {refId}</Text>
 
         <View className="w-full bg-[#111E27] rounded-2xl p-4 mb-8"
           style={{ borderWidth: 1, borderColor: '#1E3347' }}>

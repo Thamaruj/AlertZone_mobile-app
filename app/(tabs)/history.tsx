@@ -130,7 +130,7 @@ function ReportDetailModal({ report, onClose }: { report: Report | null; onClose
           {/* Title + meta */}
           <View className="px-5 mb-4">
             <Text className="text-[#4CC2D1] text-xs font-bold mb-1">
-              Ref: {report.id.slice(0, 8).toUpperCase()}
+              Ref: {report.id}
             </Text>
             <Text className="text-white text-2xl font-bold">{report.title}</Text>
             <View className="flex-row items-center mt-2 gap-2">

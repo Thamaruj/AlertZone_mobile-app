@@ -505,7 +505,7 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
                   </Pressable>
                   <View style={{ flex: 1 }}>
                     <Text style={{ color: '#4CC2D1', fontSize: 10, fontWeight: '700', letterSpacing: 1.5 }}>
-                      REF: {report.id.slice(0, 8).toUpperCase()}
+                      REF: {report.id}
                     </Text>
                     <Text style={{ color: 'white', fontSize: 15, fontWeight: '700' }} numberOfLines={1}>
                       Issue Details
