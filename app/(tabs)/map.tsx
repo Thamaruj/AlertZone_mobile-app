@@ -138,6 +138,31 @@ export default function MapScreen() {
     }
   }, [params.lat, params.lng, params.id, reports]);
 
+  // ── Auto-open detail sheet if id is passed in search params ──
+  useEffect(() => {
+    if (params.id) {
+      setDetailReportId(params.id);
+      
+      // If we don't have lat/lng in params, try to find the report pin and animate to it
+      if (!params.lat || !params.lng) {
+        const pin = reports.find(r => r.id === params.id);
+        if (pin) {
+          setSelectedPin(pin);
+          const targetRegion = {
+            latitude: pin.latitude,
+            longitude: pin.longitude,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+          };
+          setRegion(targetRegion);
+          setTimeout(() => {
+            mapRef.current?.animateToRegion(targetRegion, 800);
+          }, 300);
+        }
+      }
+    }
+  }, [params.id, reports, params.lat, params.lng]);
+
   // ── Subscribe to Firestore reports ──
   useEffect(() => {
     const q = query(

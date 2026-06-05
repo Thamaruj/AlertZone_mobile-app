@@ -24,8 +24,10 @@ import {
   collection,
   doc,
   serverTimestamp,
-  updateDoc,
-  increment,
+  setDoc,
+  query,
+  where,
+  getDocs,
 } from 'firebase/firestore';
 import Toast from 'react-native-toast-message';
 
@@ -34,7 +36,7 @@ import { db } from '../../services/firebase';
 import { compressImage, isUnderSizeLimit, uploadFile } from '../../services/storage.service';
 import BlurLoadingOverlay from '../../components/BlurLoadingOverlay';
 import PhotoSourceModal from '../../components/PhotoSourceModal';
-import { resolveSrilankaRegion } from '../../config/sriLankaRegions';
+import { resolveSrilankaRegion, PROVINCE_CODES, DISTRICT_CODES } from '../../config/sriLankaRegions';
 
 // ─────────────────────────────────────────────
 // Constants
@@ -304,7 +306,7 @@ function SuccessScreen({
         <Text className="text-gray-400 text-sm text-center leading-6 mb-2">
           Your report has been received and is being{'\n'}reviewed by our safety team.
         </Text>
-        <Text className="text-[#4CC2D1] font-bold mb-8">Ref ID: {refId.slice(0, 8).toUpperCase()}</Text>
+        <Text className="text-[#4CC2D1] font-bold mb-8">Ref ID: {refId}</Text>
 
         <View className="w-full bg-[#111E27] rounded-2xl p-4 mb-8"
           style={{ borderWidth: 1, borderColor: '#1E3347' }}>
@@ -718,10 +720,47 @@ export default function ReportScreen() {
       }
 
       setUploadStatusText('Securing report details...');
+
+      // Generate standardized daily custom ID
+      const year = new Date().getFullYear();
+      const month = String(new Date().getMonth() + 1).padStart(2, '0');
+      const day = String(new Date().getDate()).padStart(2, '0');
+      const dateStr = `${year}${month}${day}`;
+      
+      const pCode = PROVINCE_CODES[resolvedProvince] || "0";
+      const dCode = DISTRICT_CODES[resolvedDistrict] || "00";
+      const idPrefix = `${dateStr}${pCode}${dCode}`;
+      
+      // Query reports matching current date, province, and district (equality filters only)
+      const q = query(
+        collection(db, 'reports'),
+        where('reportDate', '==', dateStr),
+        where('location.province', '==', resolvedProvince),
+        where('location.district', '==', resolvedDistrict)
+      );
+      
+      const querySnapshot = await getDocs(q);
+      let nextNumber = 1;
+      querySnapshot.forEach((doc) => {
+        const docId = doc.id;
+        if (docId.startsWith(idPrefix) && docId.length === idPrefix.length + 5) {
+          const lastSeqStr = docId.substring(idPrefix.length);
+          const lastSeqNum = parseInt(lastSeqStr, 10);
+          if (!isNaN(lastSeqNum) && lastSeqNum >= nextNumber) {
+            nextNumber = lastSeqNum + 1;
+          }
+        }
+      });
+      
+      const seqStr = String(nextNumber).padStart(5, '0');
+      const customReportId = `${idPrefix}${seqStr}`;
+
       // 2. Add document
-      const docRef = await addDoc(collection(db, 'reports'), {
+      const reportDocRef = doc(db, 'reports', customReportId);
+      await setDoc(reportDocRef, {
         uid: user.uid,
         authorName: profile.fullName,
+        reportDate: dateStr,
         title: selectedCategory.label,
         category: selectedCategory.label,
         categoryId: selectedCategory.id,
@@ -761,8 +800,8 @@ export default function ReportScreen() {
           recipientUid: 'admin',
           type: 'status_change',
           title: 'New Issue Received',
-          body: `A new ${selectedCategory.label} Incident has been reported by ${profile.fullName} in ${locationAddress.split(',').slice(-2).join(',').trim() || 'unknown region'}.`,
-          reportId: docRef.id,
+          body: `A new ${selectedCategory.label} Incident (Ref: ${customReportId}) has been reported by ${profile.fullName} in ${locationAddress.split(',').slice(-2).join(',').trim() || 'unknown region'}.`,
+          reportId: customReportId,
           isRead: false,
           createdAt: serverTimestamp(),
         });
@@ -771,7 +810,7 @@ export default function ReportScreen() {
       }
 
       setUploadStatusText('Report submitted successfully!');
-      setSubmittedRefId(docRef.id);
+      setSubmittedRefId(customReportId);
     } catch (e: any) {
       console.error('❌ Report submission error:', e);
       Toast.show({

@@ -1,5 +1,42 @@
-// config/sriLankaRegions.ts
-// Comprehensive Sri Lankan geographic database mapping 9 Provinces -> 25 Districts -> 341 LGAs.
+export const PROVINCE_CODES: Record<string, string> = {
+  "Central": "1",
+  "Eastern": "2",
+  "North Central": "3",
+  "North Western": "4",
+  "Northern": "5",
+  "Sabaragamuwa": "6",
+  "Southern": "7",
+  "Uva": "8",
+  "Western": "9",
+};
+
+export const DISTRICT_CODES: Record<string, string> = {
+  "Ampara": "01",
+  "Anuradhapura": "02",
+  "Badulla": "03",
+  "Batticaloa": "04",
+  "Colombo": "05",
+  "Galle": "06",
+  "Gampaha": "07",
+  "Hambantota": "08",
+  "Jaffna": "09",
+  "Kalutara": "10",
+  "Kandy": "11",
+  "Kegalle": "12",
+  "Kilinochchi": "13",
+  "Kurunegala": "14",
+  "Mannar": "15",
+  "Matale": "16",
+  "Matara": "17",
+  "Moneragala": "18",
+  "Mullaitivu": "19",
+  "Nuwara Eliya": "20",
+  "Polonnaruwa": "21",
+  "Puttalam": "22",
+  "Ratnapura": "23",
+  "Trincomalee": "24",
+  "Vavuniya": "25",
+};
 
 export const sriLankaGeographics: Record<string, Record<string, string[]>> = {
   "Western": {
@@ -400,7 +437,8 @@ export const sriLankaGeographics: Record<string, Record<string, string[]>> = {
       "Godakawela Pradeshiya Sabha",
       "Weligepola Pradeshiya Sabha",
       "Embilipitiya Pradeshiya Sabha",
-      "Kolonna Pradeshiya Sabha"
+      "Kolonna Pradeshiya Sabha",
+      "Nivithigala Pradeshiya Sabha"
     ],
     "Kegalle": [
       "Kegalle Urban Council",
@@ -1889,12 +1927,12 @@ export const LGA_CENTERS: Record<string, Record<string, Record<string, { lat: nu
         "lng": 80.8487743
       },
       "Ratnapura Pradeshiya Sabha": {
-        "lat": 6.5795685,
-        "lng": 80.588223
+        "lat": 6.6107,
+        "lng": 80.5521
       },
       "Imbulpe Pradeshiya Sabha": {
-        "lat": 6.6945796,
-        "lng": 80.6886713
+        "lat": 6.7008,
+        "lng": 80.7533
       },
       "Balangoda Pradeshiya Sabha": {
         "lat": 6.654957,
@@ -1947,6 +1985,10 @@ export const LGA_CENTERS: Record<string, Record<string, Record<string, { lat: nu
       "Kolonna Pradeshiya Sabha": {
         "lat": 6.4012382,
         "lng": 80.6918168
+      },
+      "Nivithigala Pradeshiya Sabha": {
+        "lat": 6.7956,
+        "lng": 80.5219
       }
     },
     "Kegalle": {
@@ -2052,12 +2094,17 @@ export function resolveSrilankaRegion(
   };
 
   // 1. Gather all matching LGAs from address text
+  // Skip LGAs whose cleaned name exactly equals the district name — the district name appearing in
+  // the address is expected and should not be used to assign an LGA bearing that same name.
+  // Those cases are better resolved by coordinate proximity in later steps.
   const matchesList: { lga: string; prov: string; dist: string; cleanLga: string }[] = [];
   for (const [provKey, districts] of Object.entries(sriLankaGeographics)) {
     for (const [distKey, lgas] of Object.entries(districts)) {
+      const distNameLower = distKey.toLowerCase();
       for (const lga of lgas) {
         const cleanLga = lga.replace(/ Municipal Council| Urban Council| Pradeshiya Sabha/gi, "").toLowerCase().trim();
-        if (cleanLga.length > 3 && matches(cleanLga)) {
+        // Exclude if the LGA's base name is just the district name (too ambiguous)
+        if (cleanLga.length > 3 && cleanLga !== distNameLower && matches(cleanLga)) {
           matchesList.push({ lga, prov: provKey, dist: distKey, cleanLga });
         }
       }
@@ -2141,22 +2188,29 @@ export function resolveSrilankaRegion(
   if (resolvedProvince && resolvedDistrict) {
     const lgas = sriLankaGeographics[resolvedProvince][resolvedDistrict];
     
+    const districtNameLower = resolvedDistrict.toLowerCase();
+
     if (!resolvedLGA) {
       for (const lga of lgas) {
         const cleanLga = lga.replace(/ Municipal Council| Urban Council| Pradeshiya Sabha/gi, "").toLowerCase().trim();
-        if (cleanLga.length > 3 && matches(cleanLga)) {
+        // Skip district-named LGAs — the district name in address doesn't confirm this specific LGA
+        if (cleanLga.length > 3 && cleanLga !== districtNameLower && matches(cleanLga)) {
           resolvedLGA = lga;
           break;
         }
       }
     }
 
-    // Try matching LGA partial words
+    // Try matching LGA partial words (exclude words that are the district name itself to avoid false-positive matches)
     if (!resolvedLGA) {
       for (const lga of lgas) {
         const cleanLga = lga.replace(/ Municipal Council| Urban Council| Pradeshiya Sabha/gi, "").toLowerCase().trim();
         const words = cleanLga.split(/\s+/);
-        const match = words.some(word => word.length > 3 && matches(word));
+        // Skip any word that exactly equals the district name — district name appearing in the
+        // address is not evidence the location belongs to an LGA sharing that name
+        const match = words.some(
+          word => word.length > 3 && word !== districtNameLower && matches(word)
+        );
         if (match) {
           resolvedLGA = lga;
           break;

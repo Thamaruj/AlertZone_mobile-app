@@ -39,7 +39,14 @@ interface Report {
   status: ReportStatus;
   upvoteCount: number;
   imageUrls: string[];
-  location: { address: string; latitude: number; longitude: number };
+  location: {
+    address: string;
+    latitude: number;
+    longitude: number;
+    province?: string;
+    district?: string;
+    localGovernmentArea?: string;
+  };
   resolutionNote?: string;
   createdAt: any;
   updatedAt?: any;
@@ -79,6 +86,9 @@ const DATE_FILTERS = [
 ] as const;
 
 type DateFilterId = typeof DATE_FILTERS[number]['id'];
+
+const INITIAL_PAGE_SIZE = 15;
+const LOAD_MORE_SIZE = 20;
 
 // ─────────────────────────────────────────────
 // Helpers
@@ -295,7 +305,7 @@ function ReportDetailModal({ report, onClose }: { report: Report | null; onClose
 
           <View className="px-5 mb-4">
             <Text className="text-[#4CC2D1] text-xs font-bold mb-1">
-              Ref: {report.id.slice(0, 8).toUpperCase()}
+              Ref: {report.id}
             </Text>
             <Text className="text-white text-2xl font-bold">{report.title}</Text>
             <View className="flex-row items-center mt-2 gap-2">
@@ -377,6 +387,25 @@ function ReportDetailModal({ report, onClose }: { report: Report | null; onClose
               <View className="flex-1">
                 <Text className="text-gray-500 text-[10px] uppercase font-bold tracking-wide mb-1">Location</Text>
                 <Text className="text-white text-sm leading-5">{report.location?.address ?? 'Unknown'}</Text>
+                {(report.location?.province || report.location?.district || report.location?.localGovernmentArea) && (
+                  <View className="mt-2 pt-2 border-t border-[#1E3347] gap-1">
+                    {report.location?.province && (
+                      <Text className="text-[#CBD5E1] text-xs">
+                        <Text className="text-gray-500 font-semibold">Province: </Text>{report.location.province}
+                      </Text>
+                    )}
+                    {report.location?.district && (
+                      <Text className="text-[#CBD5E1] text-xs">
+                        <Text className="text-gray-500 font-semibold">District: </Text>{report.location.district}
+                      </Text>
+                    )}
+                    {report.location?.localGovernmentArea && (
+                      <Text className="text-[#CBD5E1] text-xs">
+                        <Text className="text-gray-500 font-semibold">LGA: </Text>{report.location.localGovernmentArea}
+                      </Text>
+                    )}
+                  </View>
+                )}
               </View>
             </View>
 
@@ -420,6 +449,9 @@ export default function ArchiveScreen() {
   const [showEndPicker, setShowEndPicker] = useState(false);
 
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
+
+  // Pagination
+  const [visibleCount, setVisibleCount] = useState(INITIAL_PAGE_SIZE);
 
   // ── Subscribe to user's archived reports ──
   useEffect(() => {
@@ -503,6 +535,13 @@ export default function ArchiveScreen() {
     setCustomEndDate(null);
     setActiveDateFilter('all');
   };
+
+  // Reset pagination when filters change
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { setVisibleCount(INITIAL_PAGE_SIZE); }, [activeCategory, activeDateFilter, customStartDate, customEndDate]);
+
+  const visibleReports = filtered.slice(0, visibleCount);
+  const hasMore = visibleCount < filtered.length;
 
   return (
     <LinearGradient colors={['#0D1F2D', '#0A1820', '#071318']} style={{ flex: 1 }}>
@@ -648,13 +687,45 @@ export default function ArchiveScreen() {
               </Text>
             </View>
           ) : (
-            filtered.map((report) => (
-              <ReportCard
-                key={report.id}
-                report={report}
-                onPress={() => setSelectedReport(report)}
-              />
-            ))
+            <>
+              {/* Results count */}
+              <View className="flex-row justify-between items-center mb-3">
+                <Text className="text-gray-500 text-xs">
+                  Showing <Text className="text-[#4CC2D1] font-bold">{visibleReports.length}</Text> of <Text className="text-white font-semibold">{filtered.length}</Text> reports
+                </Text>
+              </View>
+
+              {visibleReports.map((report) => (
+                <ReportCard
+                  key={report.id}
+                  report={report}
+                  onPress={() => setSelectedReport(report)}
+                />
+              ))}
+
+              {/* Load More Button */}
+              {hasMore && (
+                <Pressable
+                  onPress={() => setVisibleCount((c) => c + LOAD_MORE_SIZE)}
+                  className="mt-2 mb-4 py-4 rounded-2xl items-center justify-center active:opacity-75"
+                  style={{ borderWidth: 1, borderColor: '#2D4F5C', backgroundColor: '#111E27' }}
+                >
+                  <View className="flex-row items-center gap-2">
+                    <Ionicons name="chevron-down-circle-outline" size={20} color="#4CC2D1" />
+                    <Text className="text-[#4CC2D1] font-bold text-sm">
+                      Load More ({Math.min(LOAD_MORE_SIZE, filtered.length - visibleCount)} more)
+                    </Text>
+                  </View>
+                </Pressable>
+              )}
+
+              {/* End indicator */}
+              {!hasMore && filtered.length > INITIAL_PAGE_SIZE && (
+                <View className="items-center py-4">
+                  <Text className="text-gray-600 text-xs">All {filtered.length} reports shown</Text>
+                </View>
+              )}
+            </>
           )}
         </View>
       </ScrollView>

@@ -289,6 +289,63 @@ This document tracks the end-to-end development journey of the AlertZone mobile 
     - Implemented auto-logout synchronization by matching the Firestore `lastPasswordChange` timestamp against the local `lastPasswordChangeLocal` value stored in `AsyncStorage`.
     - Automatically signs out other devices with an active session expired toast feedback when the password is changed elsewhere.
 
+- **[2026-06-06] Standardized Incident Report IDs:**
+    - Integrated alphabetical ascending mapping indices for the 9 provinces (1-9) and 25 districts (01-25) in Sri Lanka.
+    - Standardized report document IDs using the custom format `yyyymmddPDDXXXXX` constructed dynamically based on current local date and reverse-geocoded region codes.
+    - Implemented daily sequential numbering (`XXXXX`) by querying Firestore for the highest sequence number matching the day's region prefix.
+
+- **[2026-06-06] Notification & Report Detail Enhancements:**
+    - Integrated full Ref ID (`yyyymmddPDDXXXXX`) into all report-related notification bodies.
+    - Tapping a notification now auto-opens the `ReportDetailSheet` for the relevant report via `params.id` in `map.tsx`.
+    - Added Province, District, and LGA fields to the `ReportDetailSheet`, `history.tsx`, and `archive.tsx` report detail modals.
+
+- **[2026-06-06] LGA Resolution Accuracy Fixes (`sriLankaRegions.ts`):**
+    - **Root cause fixed:** The district name (e.g., `"Ratnapura"`) in a reverse-geocoded address was false-matching the same-named LGA (`Ratnapura Pradeshiya Sabha`) in all three text-matching steps of `resolveSrilankaRegion`, incorrectly assigning municipal council instead of the actual local PS.
+    - **Algorithm fix (Steps 1, 7a, 7b):** All three LGA text-matching passes now exclude LGA clean-names and individual words that exactly equal the resolved district name, forcing those ambiguous cases to be resolved by coordinate-proximity (centroid fallback) instead.
+    - **Imbulpe PS coordinates corrected:** Updated `Imbulpe Pradeshiya Sabha` center from `(6.6946, 80.6887)` → `(6.7008, 80.7533)` based on verified DS division coordinates.
+    - **Ratnapura PS coordinates separated:** `Ratnapura Pradeshiya Sabha` was sharing the exact same coordinates as `Ratnapura Municipal Council`; PS center moved to `(6.6107, 80.5521)` to ensure correct nearest-neighbor resolution.
+    - **Added Nivithigala Pradeshiya Sabha:** Missing LGA added to both the `sriLankaGeographics` list and `LGA_CENTERS` for Ratnapura district with coordinates `(6.7956, 80.5219)`.
+
 ---
 
-*Last Updated: 2026-06-06 — Security Enhancements, Input Corrections & Multi-device Sync*
+*Last Updated: 2026-06-06 — LGA Resolution Accuracy Fixes*
+
+---
+
+## 📋 Session: Pagination & Date Filtering for My Reports / Archive / Upvoted
+**Date:** 2026-06-06
+
+- **[2026-06-06] Date Filters in My Reports (`history.tsx`):**
+    - Added a "Date Filter" horizontal chip row beneath the existing Status filter row: **All Time**, **Today**, **Last 7 Days**, **Last 30 Days**, **Custom Range**.
+    - Custom Range shows a Start/End date picker using the shared `CalendarModal` component (ported from `archive.tsx`).
+    - Status and date filters are combined client-side; pagination resets to 15 whenever any filter changes.
+
+- **[2026-06-06] Pagination — My Reports & Archive (both screens):**
+    - Initial render is limited to **15 reports** to avoid overwhelming the list.
+    - A teal **"Load More (N more)"** button appears below the list when more results exist, loading **20 additional** reports per tap.
+    - A "Showing X of Y reports" results-count label appears above the list.
+    - An **"All X reports shown"** end indicator renders after the last report when the user has paged through everything.
+    - Both `history.tsx` and `archive.tsx` share identical Load More button design and constants (`INITIAL_PAGE_SIZE = 15`, `LOAD_MORE_SIZE = 20`).
+
+- **[2026-06-06] Date Filters and Pagination in Upvoted Reports (`upvoted-reports.tsx`):**
+    - Ported the identical Date Filter chip row and custom `CalendarModal` range picker UI.
+    - Implemented combined filtering (category + status + date) client-side.
+    - Added the matching pagination behavior (`INITIAL_PAGE_SIZE = 15`, `LOAD_MORE_SIZE = 20`) with results count label, "Load More" button, and end indicator.
+    - Built using standard inline React Native styles to maintain style standardization rules.
+    - Configured visible count to reset on any filter change (category, status, date).
+
+- **[2026-06-06] Offline Startup Routing & Non-Blocking Login Notice:**
+    - Modified splash screen (`index.tsx`) to permit navigation even when offline, allowing users to reach the login screen.
+    - Enhanced `NetworkStatusGate.tsx` to detect segment routes (`useSegments()`).
+    - Configured the gate to render a non-blocking top notification banner ("No Internet Connection") on auth/onboarding screens instead of the full-screen locking bottom sheet.
+    - Ensured that when connection is restored, the banner transitions to "Connection Restored" (green) and automatically slides out of view.
+
+- **[2026-06-06] Prevention of Self-Upvoting & Self-Commenting:**
+    - Modified `ReportDetailSheet.tsx` to verify if the report's owner ID matches the current user's UID (`report.uid === user.uid`).
+    - If true, both the upvote action button and the comment input area are fully disabled and visually greyed-out with lock icons.
+    - Added warning/explanation text inside the disabled button (`"You cannot upvote your own report"`) and text input placeholder (`"You cannot comment on your own report"`).
+    - Extended safety guards inside the `handleUpvotePress`, `performUpvote`, and `handlePostComment` callback logic to securely block transaction execution if called manually.
+
+---
+
+*Last Updated: 2026-06-06 — Self-Upvoting/Commenting Prevention & Offline Handling*
