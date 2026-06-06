@@ -1,7 +1,7 @@
 # Current Status — AlertZone Mobile App
 > **Full Log:** [PROJECT_PROGRESS.md](./PROJECT_PROGRESS.md)
 
-> **Last Updated:** 2026-06-06 (Google Sign-in Cleanup, Caching, Preferences Sync, Biometrics, and Upvote/Exclusion Constraints)
+> **Last Updated:** 2026-06-06 (Report Card Photo Thumbnails, Address Wrap, Details Category Removal, Nearby Issues Filters & Vertical List, Google Sign-in Cleanup, Caching, Preferences Sync, Biometrics, Upvote Constraints)
 >
 > This document tracks what is done, what is broken, and what remains. Agents MUST read this before starting work.
 
@@ -86,7 +86,7 @@
 
 ### Home Screen (`home.tsx`)
 - [ ] Browse Categories — hardcoded array, not from Firestore
-- [x] Nearby Issues — live Firestore subscription filtered to user's alert radius (resolved/rejected reports excluded) ✅
+- [x] Nearby Issues — live Firestore subscription filtered to user's alert radius (resolved/rejected excluded, status filter chips, View on Map/View List buttons, vertical list modal) ✅
 - [x] Latest Updates — live Firestore subscription (resolved/rejected reports excluded) ✅
 - [x] Notification bell badge — wired to real Firestore unread count ✅
 - [x] **Pull-to-Refresh** — re-fetches GPS location and refreshes nearby issues + updates ✅

@@ -585,8 +585,7 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
                         <Ionicons name={(report.categoryIcon || 'help-circle-outline') as any} size={18} color={report.categoryColor ?? '#4CC2D1'} />
                       </View>
                       <View>
-                        <Text style={{ color: '#5A7D8A', fontSize: 11, fontWeight: '600' }}>{report.category}</Text>
-                        <Text style={{ color: '#3A5060', fontSize: 10 }}>{timeAgo(report.createdAt)}</Text>
+                        <Text style={{ color: '#5A7D8A', fontSize: 11 }}>{timeAgo(report.createdAt)}</Text>
                       </View>
                     </View>
                     <Text style={{ color: 'white', fontSize: 22, fontWeight: '800', lineHeight: 28, marginTop: 6 }}>

@@ -1956,7 +1956,7 @@ export default function ProfileScreen() {
               iconBg="#1E2D3D"
               iconColor="#4CC2D1"
               label="Alert Preferences"
-              subtitle="Notifications status and radius"
+              subtitle="Notification status and radius"
               onPress={() => setAlertPreferencesVisible(true)}
             />
             <View className="h-px bg-[#1E3347]" />
