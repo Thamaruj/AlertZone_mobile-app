@@ -326,7 +326,7 @@ export default function NetworkStatusGate() {
 const styles = StyleSheet.create({
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#1A1A1A',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
   },
   sheetContainer: {
     position: 'absolute',
@@ -350,8 +350,8 @@ const styles = StyleSheet.create({
     width: 48,
     height: 5,
     borderRadius: 3,
-    backgroundColor: '#1A1A1A',
-    opacity: 0.25,
+    backgroundColor: '#FFFFFF',
+    opacity: 0.4,
     marginBottom: 20,
   },
   content: {
@@ -363,13 +363,13 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 22,
     borderWidth: 3.5,
-    borderColor: '#1A1A1A', // White spinner on red background
+    borderColor: '#FFFFFF',
     borderTopColor: 'transparent',
     marginBottom: 16,
   },
   successIconBg: {
     marginBottom: 12,
-    shadowColor: '#1A1A1A',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.3,
     shadowRadius: 6,
@@ -378,7 +378,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#1A1A1A',
+    color: '#FFFFFF',
     letterSpacing: 0.5,
     marginBottom: 6,
     textAlign: 'center',
@@ -393,7 +393,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#FFFFFF',
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 24,
@@ -432,7 +432,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   topBannerText: {
-    color: '#1A1A1A',
+    color: '#FFFFFF',
     fontSize: 13,
     fontWeight: '700',
     letterSpacing: 0.3,

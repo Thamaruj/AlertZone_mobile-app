@@ -5,6 +5,7 @@ import { ActivityIndicator, Animated, Pressable, Text, View } from 'react-native
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from "../../config/authConfig";
 import { ScrollProvider, useScrollContext } from '../../config/tabBarScrollContext';
+import { useTheme } from '../../config/themeContext';
 
 // ─────────────────────────────────────────────
 // Tab definition
@@ -17,9 +18,6 @@ const TABS = [
   { name: 'profile', label: 'Profile', icon: 'person-outline', iconFocused: 'person' },
 ] as const;
 
-const ACTIVE_COLOR   = '#0D8A72';
-const INACTIVE_COLOR = '#9CA3AF';
-
 // ─────────────────────────────────────────────
 // Custom Tab Bar
 // ─────────────────────────────────────────────
@@ -27,9 +25,13 @@ function CustomTabBar() {
   const router   = useRouter();
   const pathname = usePathname();
   const insets   = useSafeAreaInsets();
+  const { colors, isDark } = useTheme();
   const { tabBarTranslateY } = useScrollContext();
 
   const bottomOffset = Math.max(insets.bottom, 8) + 12;
+
+  const activeColor = colors.primary;
+  const inactiveColor = colors.textSecondary;
 
   return (
     <Animated.View
@@ -41,15 +43,17 @@ function CustomTabBar() {
         transform: [{ translateY: tabBarTranslateY }],
       }}
     >
-      <View className="flex-row items-end justify-around bg-white rounded-[28px] px-2 pt-2.5 pb-3"
+      <View
+        className="flex-row items-end justify-around rounded-[28px] px-2 pt-2.5 pb-3"
         style={{
+          backgroundColor: colors.card,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.08,
+          shadowOpacity: isDark ? 0.3 : 0.08,
           shadowRadius: 12,
           elevation: 8,
           borderWidth: 1,
-          borderColor: '#F0F0F0',
+          borderColor: colors.border,
         }}
       >
         {TABS.map((tab) => {
@@ -58,34 +62,34 @@ function CustomTabBar() {
 
           if (isFab) {
             return (
-          <Pressable
-            key={tab.name}
-            onPress={() => router.push(`/(tabs)/${tab.name}`)}
-            className="flex-1 items-center justify-end"
-            style={{ marginTop: -60 }}
-          >
+              <Pressable
+                key={tab.name}
+                onPress={() => router.push(`/(tabs)/${tab.name}`)}
+                className="flex-1 items-center justify-end"
+                style={{ marginTop: -60 }}
+              >
+                {/* FAB circle */}
+                <View
+                  className="w-[54px] h-[54px] rounded-full items-center justify-center"
+                  style={{
+                    backgroundColor: colors.primary,
+                    elevation: 6,
+                    shadowColor: colors.primary,
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.3,
+                    shadowRadius: 8,
+                  }}
+                >
+                  <Ionicons name="add" size={30} color={isDark ? '#122D36' : '#FFFFFF'} />
+                </View>
 
-            {/* FAB circle */}
-            <View
-              className={`w-[54px] h-[54px] rounded-full items-center justify-center bg-[#0D8A72]`}
-              style={{
-                elevation: 6,
-                shadowColor: '#0D8A72',
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.3,
-                shadowRadius: 8,
-              }}
-            >
-              <Ionicons name="add" size={30} color="#FFFFFF" />
-            </View>
-
-            <Text
-              className="text-[10px] font-semibold mt-1.5"
-              style={{ color: isActive ? ACTIVE_COLOR : INACTIVE_COLOR }}
-            >
-              {tab.label}
-            </Text>
-          </Pressable>
+                <Text
+                  className="text-[10px] font-semibold mt-1.5"
+                  style={{ color: isActive ? activeColor : inactiveColor }}
+                >
+                  {tab.label}
+                </Text>
+              </Pressable>
             );
           }
 
@@ -98,11 +102,11 @@ function CustomTabBar() {
               <Ionicons
                 name={isActive ? tab.iconFocused : tab.icon}
                 size={23}
-                color={isActive ? ACTIVE_COLOR : INACTIVE_COLOR}
+                color={isActive ? activeColor : inactiveColor}
               />
               <Text
                 className="text-[10px] font-semibold tracking-wide"
-                style={{ color: isActive ? ACTIVE_COLOR : INACTIVE_COLOR }}
+                style={{ color: isActive ? activeColor : inactiveColor }}
               >
                 {tab.label}
               </Text>
@@ -118,13 +122,14 @@ function CustomTabBar() {
 // Root Layout
 // ─────────────────────────────────────────────
 export default function TabLayout() {
-    const { user, loading, isProfileComplete } = useAuth();
+  const { user, loading, isProfileComplete } = useAuth();
+  const { colors } = useTheme();
 
-    // Still checking auth state — show spinner
+  // Still checking auth state — show spinner
   if (loading) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#F5F5F5', alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator color="#0D8A72" size="large" />
+      <View style={{ flex: 1, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator color={colors.primary} size="large" />
       </View>
     );
   }
@@ -140,7 +145,6 @@ export default function TabLayout() {
   }
 
   return (
-    
     <ScrollProvider>
       <Tabs
         tabBar={() => <CustomTabBar />}

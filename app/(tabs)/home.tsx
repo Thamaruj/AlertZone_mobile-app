@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTheme } from '../../config/themeContext';
 import {
   View,
   Text,
@@ -82,12 +83,13 @@ const timeAgo = (date: Date) => {
 // Sub-components
 // ─────────────────────────────────────────────
 function SectionHeader({ title, actionLabel, onAction }: { title: string; actionLabel?: string; onAction?: () => void }) {
+  const { colors } = useTheme();
   return (
     <View className="flex-row justify-between items-center mb-3">
-      <Text style={{ color: '#1A1A1A', fontSize: 17, fontWeight: '700' }}>{title}</Text>
+      <Text style={{ color: colors.text, fontSize: 17, fontWeight: '700' }}>{title}</Text>
       {actionLabel && (
         <Pressable onPress={onAction} className="active:opacity-70">
-          <Text style={{ color: '#0D8A72', fontSize: 13, fontWeight: '600' }}>{actionLabel}</Text>
+          <Text style={{ color: colors.primary, fontSize: 13, fontWeight: '600' }}>{actionLabel}</Text>
         </Pressable>
       )}
     </View>
@@ -97,14 +99,15 @@ function SectionHeader({ title, actionLabel, onAction }: { title: string; action
 
 
 function NearbyCard({ item, onPress }: { item: ReportPin; onPress: () => void }) {
+  const { colors } = useTheme();
   return (
     <Pressable onPress={onPress} className="mr-3 active:opacity-90" style={{ width: 180 }}>
-      <View style={{ borderRadius: 16, overflow: 'hidden', backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E8E8E8' }}>
-        <View style={{ height: 110, backgroundColor: '#F0F0F0' }}>
+      <View style={{ borderRadius: 16, overflow: 'hidden', backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
+        <View style={{ height: 110, backgroundColor: colors.border }}>
           {item.image ? (
             <Image source={{ uri: item.image }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
           ) : (
-            <View className="flex-1 items-center justify-center" style={{ backgroundColor: '#F5F5F5' }}>
+            <View className="flex-1 items-center justify-center" style={{ backgroundColor: colors.background }}>
                <Ionicons name={item.categoryIcon as any} size={40} color={item.categoryColor} style={{ opacity: 0.4 }} />
             </View>
           )}
@@ -113,10 +116,10 @@ function NearbyCard({ item, onPress }: { item: ReportPin; onPress: () => void })
           </View>
         </View>
         <View className="px-3 py-2.5">
-          <Text style={{ color: '#1A1A1A', fontWeight: '600', fontSize: 13 }} numberOfLines={1}>{item.title}</Text>
+          <Text style={{ color: colors.text, fontWeight: '600', fontSize: 13 }} numberOfLines={1}>{item.title}</Text>
           <View className="flex-row items-center mt-1">
-            <Ionicons name="location-outline" size={12} color="#9CA3AF" />
-            <Text style={{ color: '#6B7280', fontSize: 11, marginLeft: 4 }} numberOfLines={1}>{item.distance ? formatDistance(item.distance) : 'Nearby'}</Text>
+            <Ionicons name="location-outline" size={12} color={colors.textMuted} />
+            <Text style={{ color: colors.textSecondary, fontSize: 11, marginLeft: 4 }} numberOfLines={1}>{item.distance ? formatDistance(item.distance) : 'Nearby'}</Text>
           </View>
         </View>
       </View>
@@ -125,6 +128,7 @@ function NearbyCard({ item, onPress }: { item: ReportPin; onPress: () => void })
 }
 
 function NearbyListRow({ item, onPress }: { item: ReportPin; onPress: () => void }) {
+  const { colors } = useTheme();
   const statusColor = STATUS_COLOR[item.status] || '#D97706';
   const statusBg = statusColor + '14';
   
@@ -135,10 +139,10 @@ function NearbyListRow({ item, onPress }: { item: ReportPin; onPress: () => void
         flexDirection: 'row',
         alignItems: 'center',
         padding: 12,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: colors.card,
         borderRadius: 14,
         borderWidth: 1,
-        borderColor: '#E8E8E8',
+        borderColor: colors.border,
         marginBottom: 10,
       }}
       className="active:opacity-85"
@@ -150,7 +154,7 @@ function NearbyListRow({ item, onPress }: { item: ReportPin; onPress: () => void
           height: 60,
           borderRadius: 12,
           overflow: 'hidden',
-          backgroundColor: '#F5F5F5',
+          backgroundColor: colors.background,
           marginRight: 12,
           justifyContent: 'center',
           alignItems: 'center',
@@ -176,22 +180,22 @@ function NearbyListRow({ item, onPress }: { item: ReportPin; onPress: () => void
 
       {/* Title & Details */}
       <View style={{ flex: 1, marginRight: 8 }}>
-        <Text style={{ color: '#1A1A1A', fontWeight: 'bold', fontSize: 14 }} numberOfLines={1}>
+        <Text style={{ color: colors.text, fontWeight: 'bold', fontSize: 14 }} numberOfLines={1}>
           {item.title}
         </Text>
-        <Text style={{ color: '#6B7280', fontSize: 11, marginTop: 2 }}>
+        <Text style={{ color: colors.textSecondary, fontSize: 11, marginTop: 2 }}>
           {item.address || 'Sri Lanka'}
         </Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-            <Ionicons name="location-outline" size={12} color="#0D8A72" />
-            <Text style={{ color: '#0D8A72', fontSize: 11, fontWeight: '600' }}>
+            <Ionicons name="location-outline" size={12} color={colors.primary} />
+            <Text style={{ color: colors.primary, fontSize: 11, fontWeight: '600' }}>
               {item.distance ? formatDistance(item.distance) : 'Nearby'}
             </Text>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-            <Ionicons name="arrow-up-circle-outline" size={12} color="#6B7280" />
-            <Text style={{ color: '#6B7280', fontSize: 11 }}>
+            <Ionicons name="arrow-up-circle-outline" size={12} color={colors.textSecondary} />
+            <Text style={{ color: colors.textSecondary, fontSize: 11 }}>
               {item.upvoteCount ?? 0} upvotes
             </Text>
           </View>
@@ -203,13 +207,14 @@ function NearbyListRow({ item, onPress }: { item: ReportPin; onPress: () => void
         <View style={{ backgroundColor: statusBg, borderWidth: 1, borderColor: statusColor + '40', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12 }}>
           <Text style={{ color: statusColor, fontSize: 10, fontWeight: 'bold' }}>{item.status}</Text>
         </View>
-        <Ionicons name="chevron-forward" size={16} color="#D1D5DB" />
+        <Ionicons name="chevron-forward" size={16} color={colors.border} />
       </View>
     </Pressable>
   );
 }
 
 function UpdateRow({ item, onPress }: { item: ReportPin; onPress: () => void }) {
+  const { colors } = useTheme();
   const isResolved = item.status === 'RESOLVED';
   const isNew = item.status === 'PENDING';
   
@@ -230,50 +235,53 @@ function UpdateRow({ item, onPress }: { item: ReportPin; onPress: () => void }) 
         <Ionicons name={icon as any} size={20} color={iconColor} />
       </View>
       <View className="flex-1 pr-2">
-        <Text style={{ color: '#1A1A1A', fontSize: 13, fontWeight: '600' }} numberOfLines={1}>
+        <Text style={{ color: colors.text, fontSize: 13, fontWeight: '600' }} numberOfLines={1}>
           {titlePrefix}{item.title}
         </Text>
-        <Text style={{ color: '#9CA3AF', fontSize: 12, marginTop: 2 }} numberOfLines={1}>
+        <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }} numberOfLines={1}>
           {addressStr} • {timeStr}
         </Text>
       </View>
-      <Ionicons name="chevron-forward" size={16} color="#D1D5DB" />
+      <Ionicons name="chevron-forward" size={16} color={colors.border} />
     </Pressable>
   );
 }
 
 function SkeletonCard() {
+  const { colors } = useTheme();
   return (
-    <View className="mr-3 rounded-2xl overflow-hidden" style={{ width: 180, borderWidth: 1, borderColor: '#E8E8E8', backgroundColor: '#FFFFFF' }}>
-      <View style={{ height: 110, backgroundColor: '#F0F0F0' }} />
+    <View className="mr-3 rounded-2xl overflow-hidden" style={{ width: 180, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card }}>
+      <View style={{ height: 110, backgroundColor: colors.border }} />
       <View className="px-3 py-3 gap-2">
-        <View className="h-4 bg-[#E5E7EB] rounded w-3/4" />
-        <View className="h-3 bg-[#E5E7EB] rounded w-1/2" />
+        <View className="h-4 rounded w-3/4" style={{ backgroundColor: colors.border }} />
+        <View className="h-3 rounded w-1/2" style={{ backgroundColor: colors.border }} />
       </View>
     </View>
   );
 }
 
 function SkeletonUpdate() {
+  const { colors } = useTheme();
   return (
     <View className="flex-row items-center py-3">
-      <View className="w-10 h-10 rounded-full bg-[#F0F0F0] mr-3" />
+      <View className="w-10 h-10 rounded-full mr-3" style={{ backgroundColor: colors.border }} />
       <View className="flex-1 gap-2">
-        <View className="h-4 bg-[#F0F0F0] rounded w-2/3" />
-        <View className="h-3 bg-[#F0F0F0] rounded w-1/3" />
+        <View className="h-4 rounded w-2/3" style={{ backgroundColor: colors.border }} />
+        <View className="h-3 rounded w-1/3" style={{ backgroundColor: colors.border }} />
       </View>
     </View>
   );
 }
 
 function EmptyState({ title, subtitle, icon }: { title: string; subtitle: string; icon: string }) {
+  const { colors } = useTheme();
   return (
-    <View style={{ alignItems: 'center', justifyContent: 'center', paddingVertical: 32, paddingHorizontal: 16, borderWidth: 1, borderColor: '#E8E8E8', borderRadius: 16, backgroundColor: '#FFFFFF' }}>
-      <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: '#E6F7F3', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
-        <Ionicons name={icon as any} size={24} color="#0D8A72" />
+    <View style={{ alignItems: 'center', justifyContent: 'center', paddingVertical: 32, paddingHorizontal: 16, borderWidth: 1, borderColor: colors.border, borderRadius: 16, backgroundColor: colors.card }}>
+      <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: colors.primary + '15', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+        <Ionicons name={icon as any} size={24} color={colors.primary} />
       </View>
-      <Text style={{ color: '#1A1A1A', fontWeight: 'bold', fontSize: 14, marginBottom: 4 }}>{title}</Text>
-      <Text style={{ color: '#9CA3AF', fontSize: 12, textAlign: 'center', lineHeight: 18 }}>{subtitle}</Text>
+      <Text style={{ color: colors.text, fontWeight: 'bold', fontSize: 14, marginBottom: 4 }}>{title}</Text>
+      <Text style={{ color: colors.textMuted, fontSize: 12, textAlign: 'center', lineHeight: 18 }}>{subtitle}</Text>
     </View>
   );
 }
@@ -286,6 +294,7 @@ export default function HomeScreen() {
   const insets  = useSafeAreaInsets();
   const { onScroll } = useScrollContext();
   const { user, profile } = useAuth();
+  const { colors } = useTheme();
   
   const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -452,7 +461,7 @@ export default function HomeScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#F5F5F5' }}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       <ScrollView
         onScroll={onScroll}
         scrollEventThrottle={16}
@@ -465,8 +474,8 @@ export default function HomeScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            tintColor="#0D8A72"
-            colors={["#0D8A72"]}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
           />
         }
       >
@@ -478,13 +487,13 @@ export default function HomeScreen() {
               style={{ width: 28, height: 28 }}
               resizeMode="contain"
             />
-            <Text style={{ color: '#1A1A1A', fontSize: 20, fontWeight: '700', letterSpacing: -0.3 }}>AlertZone</Text>
+            <Text style={{ color: colors.text, fontSize: 20, fontWeight: '700', letterSpacing: -0.3 }}>AlertZone</Text>
           </View>
 
           {/* Notification bell with badge */}
           <Pressable onPress={() => router.push('/notifications' as any)} className="active:opacity-70">
-            <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#E8E8E8' }}>
-              <Ionicons name="notifications-outline" size={20} color="#6B7280" />
+            <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.card, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border }}>
+              <Ionicons name="notifications-outline" size={20} color={colors.textSecondary} />
             </View>
             {unreadCount > 0 && (
               <View className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[#DC2626] items-center justify-center">
@@ -497,19 +506,19 @@ export default function HomeScreen() {
         {/* ── 2. Hero Banner ── */}
         <View className="mx-5 mb-6">
           <View
-            style={{ borderRadius: 20, overflow: 'hidden', padding: 20, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E8E8E8' }}
+            style={{ borderRadius: 20, overflow: 'hidden', padding: 20, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}
           >
             <View className="flex-row items-center">
               <View className="flex-1 pr-3">
-                <Text style={{ color: '#1A1A1A', fontSize: 19, fontWeight: '700', lineHeight: 26 }}>
+                <Text style={{ color: colors.text, fontSize: 19, fontWeight: '700', lineHeight: 26 }}>
                   Hello {firstName},{'\n'}Your Voice Matters.
                 </Text>
 
                 <View className="mt-4">
                   <Pressable
-                    className="w-full rounded-xl flex-row items-center justify-center py-2.5 active:opacity-80"
-                    style={{ backgroundColor: '#0D8A72' }}
-                    onPress={() => router.push('/(tabs)/report')}
+                     className="w-full rounded-xl flex-row items-center justify-center py-2.5 active:opacity-80"
+                     style={{ backgroundColor: colors.primary }}
+                     onPress={() => router.push('/(tabs)/report')}
                   >
                     <Ionicons name="camera" size={16} color="#FFFFFF" />
                     <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 13, marginLeft: 6 }}>New Report</Text>
@@ -518,7 +527,7 @@ export default function HomeScreen() {
               </View>
 
               <View
-                style={{ width: 100, height: 100, borderRadius: 16, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', backgroundColor: '#F0F0F0', borderWidth: 1, borderColor: '#E8E8E8' }}
+                style={{ width: 100, height: 100, borderRadius: 16, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', backgroundColor: colors.border, borderWidth: 1, borderColor: colors.border }}
               >
                 <Image
                   source={{ uri: 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=300&q=80' }}
@@ -566,8 +575,8 @@ export default function HomeScreen() {
                   key={status}
                   onPress={() => setNearbyFilter(status)}
                   style={{
-                    backgroundColor: isActive ? activeColor + '12' : '#FFFFFF',
-                    borderColor: isActive ? activeColor : '#E8E8E8',
+                    backgroundColor: isActive ? activeColor + '12' : colors.card,
+                    borderColor: isActive ? activeColor : colors.border,
                     borderWidth: 1,
                     paddingHorizontal: 16,
                     paddingVertical: 8,
@@ -576,7 +585,7 @@ export default function HomeScreen() {
                   }}
                   className="active:opacity-85"
                 >
-                  <Text style={{ color: isActive ? activeColor : '#6B7280', fontWeight: 'bold', fontSize: 12 }}>
+                  <Text style={{ color: isActive ? activeColor : colors.textSecondary, fontWeight: 'bold', fontSize: 12 }}>
                     {label}
                   </Text>
                 </Pressable>
@@ -614,15 +623,15 @@ export default function HomeScreen() {
           <View className="flex-row gap-3 px-5 mt-4">
             <Pressable
               onPress={() => router.push('/(tabs)/map')}
-              style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E8E8E8', borderRadius: 12 }}
+              style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderRadius: 12 }}
               className="active:opacity-80"
             >
-              <Ionicons name="map-outline" size={16} color="#0D8A72" style={{ marginRight: 6 }} />
-              <Text style={{ color: '#0D8A72', fontWeight: '700', fontSize: 13 }}>View on Map</Text>
+              <Ionicons name="map-outline" size={16} color={colors.primary} style={{ marginRight: 6 }} />
+              <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 13 }}>View on Map</Text>
             </Pressable>
             <Pressable
               onPress={() => setIsListViewVisible(true)}
-              style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12, backgroundColor: '#0D8A72', borderRadius: 12 }}
+              style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12, backgroundColor: colors.primary, borderRadius: 12 }}
               className="active:opacity-80"
             >
               <Ionicons name="list-outline" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
@@ -636,14 +645,14 @@ export default function HomeScreen() {
           <SectionHeader title="Latest Updates" />
           
           <View
-            style={{ backgroundColor: '#FFFFFF', borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: '#E8E8E8' }}
+            style={{ backgroundColor: colors.card, borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: colors.border }}
           >
             {loading ? (
               <View className="px-4">
                 {[1, 2, 3].map((i, index) => (
                   <View key={i}>
                     <SkeletonUpdate />
-                    {index < 2 && <View style={{ height: 1, backgroundColor: '#F0F0F0' }} />}
+                    {index < 2 && <View style={{ height: 1, backgroundColor: colors.border }} />}
                   </View>
                 ))}
               </View>
@@ -653,7 +662,7 @@ export default function HomeScreen() {
                   <View key={item.id}>
                     <UpdateRow item={item} onPress={() => openReportDetail(item)} />
                     {index < latestUpdates.length - 1 && (
-                      <View style={{ height: 1, backgroundColor: '#F0F0F0' }} />
+                      <View style={{ height: 1, backgroundColor: colors.border }} />
                     )}
                   </View>
                 ))}
@@ -679,11 +688,11 @@ export default function HomeScreen() {
           >
             <View
               style={{
-                backgroundColor: '#FFFFFF',
+                backgroundColor: colors.card,
                 borderRadius: 16,
                 padding: 16,
                 borderWidth: 1,
-                borderColor: '#E8E8E8',
+                borderColor: colors.border,
                 flexDirection: 'row',
                 alignItems: 'center',
                 gap: 14,
@@ -692,23 +701,23 @@ export default function HomeScreen() {
               <View
                 style={{
                   width: 50, height: 50, borderRadius: 25,
-                  backgroundColor: '#E6F7F3',
+                  backgroundColor: colors.primary + '15',
                   alignItems: 'center', justifyContent: 'center',
                 }}
               >
-                <Ionicons name="arrow-up-circle" size={26} color="#0D8A72" />
+                <Ionicons name="arrow-up-circle" size={26} color={colors.primary} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ color: '#1A1A1A', fontWeight: '700', fontSize: 15 }}>My Upvoted Reports</Text>
-                <Text style={{ color: '#6B7280', fontSize: 12, marginTop: 2 }}>
+                <Text style={{ color: colors.text, fontWeight: '700', fontSize: 15 }}>My Upvoted Reports</Text>
+                <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 2 }}>
                   Reports you&apos;ve supported in your community
                 </Text>
               </View>
               <View style={{ alignItems: 'center' }}>
-                <Text style={{ color: '#0D8A72', fontWeight: '800', fontSize: 20 }}>{upvotedCount}</Text>
-                <Text style={{ color: '#9CA3AF', fontSize: 10 }}>upvoted</Text>
+                <Text style={{ color: colors.primary, fontWeight: '800', fontSize: 20 }}>{upvotedCount}</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 10 }}>upvoted</Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color="#D1D5DB" />
+              <Ionicons name="chevron-forward" size={18} color={colors.border} />
             </View>
           </Pressable>
         </View>
@@ -722,14 +731,14 @@ export default function HomeScreen() {
         transparent={false}
         onRequestClose={() => setIsListViewVisible(false)}
       >
-        <View style={{ flex: 1, backgroundColor: '#F5F5F5' }}>
+        <View style={{ flex: 1, backgroundColor: colors.background }}>
           <View style={{ flex: 1, paddingTop: insets.top + 4, paddingBottom: insets.bottom + 8 }}>
             
             {/* Header */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#E8E8E8', backgroundColor: '#FFFFFF' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: colors.card }}>
               <View style={{ flex: 1 }}>
-                <Text style={{ color: '#1A1A1A', fontSize: 18, fontWeight: 'bold' }}>Nearby Issues List</Text>
-                <Text style={{ color: '#6B7280', fontSize: 12, marginTop: 2 }}>
+                <Text style={{ color: colors.text, fontSize: 18, fontWeight: 'bold' }}>Nearby Issues List</Text>
+                <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 2 }}>
                   Showing active issues within {radiusKm}km
                 </Text>
               </View>
@@ -737,17 +746,17 @@ export default function HomeScreen() {
                 onPress={() => setIsListViewVisible(false)}
                 style={({ pressed }) => ({
                   width: 36, height: 36, borderRadius: 18,
-                  backgroundColor: pressed ? '#F0F0F0' : '#FFFFFF',
+                  backgroundColor: pressed ? colors.border : colors.card,
                   alignItems: 'center', justifyContent: 'center',
-                  borderWidth: 1, borderColor: '#E8E8E8'
+                  borderWidth: 1, borderColor: colors.border
                 })}
               >
-                <Ionicons name="close" size={20} color="#6B7280" />
+                <Ionicons name="close" size={20} color={colors.textSecondary} />
               </Pressable>
             </View>
 
             {/* Filter Bar in Modal */}
-            <View style={{ paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#F0F0F0', backgroundColor: '#FFFFFF' }}>
+            <View style={{ paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: colors.card }}>
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -770,8 +779,8 @@ export default function HomeScreen() {
                       key={status}
                       onPress={() => setNearbyFilter(status)}
                       style={{
-                        backgroundColor: isActive ? activeColor + '12' : '#FFFFFF',
-                        borderColor: isActive ? activeColor : '#E8E8E8',
+                        backgroundColor: isActive ? activeColor + '12' : colors.card,
+                        borderColor: isActive ? activeColor : colors.border,
                         borderWidth: 1,
                         paddingHorizontal: 16,
                         paddingVertical: 8,
@@ -780,7 +789,7 @@ export default function HomeScreen() {
                       }}
                       className="active:opacity-80"
                     >
-                      <Text style={{ color: isActive ? activeColor : '#6B7280', fontWeight: 'bold', fontSize: 12 }}>
+                      <Text style={{ color: isActive ? activeColor : colors.textSecondary, fontWeight: 'bold', fontSize: 12 }}>
                         {label}
                       </Text>
                     </Pressable>

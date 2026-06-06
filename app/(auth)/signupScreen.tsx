@@ -22,12 +22,11 @@ import SelectionModal from '../../components/SelectionModal';
 import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../../services/firebase';
-
-
-
+import { useTheme } from '../../config/themeContext';
 
 export default function RegisterScreen() {
   const router = useRouter();
+  const { colors, isDark } = useTheme();
   
   // UI States
   const [showPassword, setShowPassword] = useState(false);
@@ -58,43 +57,41 @@ export default function RegisterScreen() {
   const passwordRef     = useRef<TextInput>(null);
   const confirmPassRef  = useRef<TextInput>(null);
 
+  const validatePassword = (password:string) => {
+    let isValidPassword = true;
 
+    // Minimum 8 characters
+    if (!/.{8,}/.test(password)) {
+      Toast.show({
+        type: "error",
+        text1: "Password too short",
+        text2: "Password must be at least 8 characters long.",
+      });
+      isValidPassword = false;
+    }
 
-const validatePassword = (password:string) => {
-  let isValidPassword= true;
+    // At least one uppercase letter
+    if (!/[A-Z]/.test(password)) {
+      Toast.show({
+        type: "error",
+        text1: "Missing Uppercase",
+        text2: "Password must contain at least one uppercase letter.",
+      });
+      isValidPassword = false;
+    }
 
-  // Minimum 8 characters
-  if (!/.{8,}/.test(password)) {
-    Toast.show({
-      type: "error",
-      text1: "Password too short",
-      text2: "Password must be at least 8 characters long.",
-    });
-    isValidPassword= false;
-  }
+    // At least one number
+    if (!/[0-9]/.test(password)) {
+      Toast.show({
+        type: "error",
+        text1: "Missing Number",
+        text2: "Password must contain at least one number.",
+      });
+      isValidPassword = false;
+    }
 
-  // At least one uppercase letter
-  if (!/[A-Z]/.test(password)) {
-    Toast.show({
-      type: "error",
-      text1: "Missing Uppercase",
-      text2: "Password must contain at least one uppercase letter.",
-    });
-    isValidPassword= false;
-  }
-
-  // At least one number
-  if (!/[0-9]/.test(password)) {
-    Toast.show({
-      type: "error",
-      text1: "Missing Number",
-      text2: "Password must contain at least one number.",
-    });
-    isValidPassword= false;
-  }
-
-  return isValidPassword;
-};
+    return isValidPassword;
+  };
 
   const handleSignUp = async () => {
     if (!fullName || !email || !phone || !password || !nic || !province || !district || !lga) {
@@ -111,7 +108,6 @@ const validatePassword = (password:string) => {
       return;
     }
     if (!validatePassword(password)) {
-        // If invalid, stop further execution
         return;
     }
     if (password !== confirmPassword) {
@@ -119,7 +115,6 @@ const validatePassword = (password:string) => {
       setConfirmPassword('');
       return;
     }
-
 
     setLoading(true);
 
@@ -165,9 +160,11 @@ const validatePassword = (password:string) => {
     }
   };
 
-
   return (
-    <LinearGradient colors={['#F5F5F5', '#FAFAFA', '#F5F5F5']} className="flex-1">
+    <LinearGradient
+      colors={[colors.background, colors.card, colors.background]}
+      className="flex-1"
+    >
       <KeyboardAvoidingView
         behavior="padding"
         keyboardVerticalOffset={Platform.OS === 'android' ? 30 : 0}
@@ -183,25 +180,31 @@ const validatePassword = (password:string) => {
             {/* Header */}
             <View className="items-center mb-6">
               <Image source={require('../../assets/images/iconAlerZone-Bg-none.png')} className="w-20 h-20" resizeMode="contain" />
-              <Text className="text-[#1A1A1A] text-3xl font-bold mt-4">Create Account</Text>
-              <Text className="text-[#6B7280] mt-1">Get started with AlertZone.</Text>
+              <Text className="text-3xl font-bold mt-4" style={{ color: colors.text }}>Create Account</Text>
+              <Text className="mt-1" style={{ color: colors.textSecondary }}>Get started with AlertZone.</Text>
             </View>
 
             {/* Inputs Section */}
             <View className="space-y-2">
               {/* Full Name */}
-              <View className="bg-[#FFFFFF] border border-[#E8E8E8] rounded-2xl p-2 flex-row items-center">
-                    <View className="px-4 py-3 border-r border-[#E8E8E8] justify-center items-center">
-                    <Ionicons name="person-outline" size={20} color="#059669" />
-                  </View>
+              <View
+                className="border rounded-2xl p-2 flex-row items-center"
+                style={{ backgroundColor: colors.card, borderColor: colors.border }}
+              >
+                <View
+                  className="px-4 py-3 border-r justify-center items-center"
+                  style={{ borderRightColor: colors.border }}
+                >
+                  <Ionicons name="person-outline" size={20} color={colors.primary} />
+                </View>
 
                 <View className="ml-3 flex-1">
-                  <Text className="text-[#6B7280] text-[10px] uppercase font-bold">Full Name:</Text>
+                  <Text className="text-[10px] uppercase font-bold" style={{ color: colors.textSecondary }}>Full Name:</Text>
                   <TextInput
                     placeholder="John Snow"
-                    placeholderTextColor="#6B7280"
-                    className="text-[#1A1A1A] text-base p-0 mt-0.5"
-                    style={{ paddingLeft: 0, marginLeft: 0 }}
+                    placeholderTextColor={colors.textSecondary}
+                    className="text-base p-0 mt-0.5"
+                    style={{ color: colors.text, paddingLeft: 0, marginLeft: 0 }}
                     returnKeyType="next"
                     onSubmitEditing={() => emailRef.current?.focus()}
                     value={fullName}
@@ -211,18 +214,24 @@ const validatePassword = (password:string) => {
               </View>
 
               {/* Email */}
-              <View className="bg-[#FFFFFF] border border-[#E8E8E8] rounded-2xl p-2 flex-row items-center mt-3">
-                  <View className="px-4 py-3 border-r border-[#E8E8E8] justify-center items-center">
-                      <Ionicons name="mail-outline" size={20} color="#059669" />
-                  </View>
+              <View
+                className="border rounded-2xl p-2 flex-row items-center mt-3"
+                style={{ backgroundColor: colors.card, borderColor: colors.border }}
+              >
+                <View
+                  className="px-4 py-3 border-r justify-center items-center"
+                  style={{ borderRightColor: colors.border }}
+                >
+                  <Ionicons name="mail-outline" size={20} color={colors.primary} />
+                </View>
                 <View className="ml-3 flex-1">
-                  <Text className="text-[#6B7280] text-[10px] uppercase font-bold">E-mail:</Text>
+                  <Text className="text-[10px] uppercase font-bold" style={{ color: colors.textSecondary }}>E-mail:</Text>
                   <TextInput
                     ref={emailRef}
                     placeholder="john@email.com"
-                    placeholderTextColor="#6B7280"
-                    className="text-[#1A1A1A] text-base p-0 mt-0.5"
-                    style={{ paddingLeft: 0, marginLeft: 0 }}
+                    placeholderTextColor={colors.textSecondary}
+                    className="text-base p-0 mt-0.5"
+                    style={{ color: colors.text, paddingLeft: 0, marginLeft: 0 }}
                     keyboardType="email-address"
                     autoCapitalize="none"
                     returnKeyType="next"
@@ -234,18 +243,24 @@ const validatePassword = (password:string) => {
               </View>
 
               {/* Phone */}
-              <View className="bg-[#FFFFFF] border border-[#E8E8E8] rounded-2xl p-2 flex-row items-center mt-3">
-                <View className="px-4 py-3 border-r border-[#E8E8E8] justify-center items-center">
-                    <Ionicons name="call-outline" size={20} color="#059669" />
+              <View
+                className="border rounded-2xl p-2 flex-row items-center mt-3"
+                style={{ backgroundColor: colors.card, borderColor: colors.border }}
+              >
+                <View
+                  className="px-4 py-3 border-r justify-center items-center"
+                  style={{ borderRightColor: colors.border }}
+                >
+                  <Ionicons name="call-outline" size={20} color={colors.primary} />
                 </View>
                 <View className="ml-3 flex-1">
-                  <Text className="text-[#6B7280] text-[10px] uppercase font-bold">Phone Number:</Text>
+                  <Text className="text-[10px] uppercase font-bold" style={{ color: colors.textSecondary }}>Phone Number:</Text>
                   <TextInput
                     ref={phoneRef}
                     placeholder="+94 7X XXX XXXX"
-                    placeholderTextColor="#6B7280"
-                    className="text-[#1A1A1A] text-base p-0 mt-0.5"
-                    style={{ paddingLeft: 0, marginLeft: 0 }}
+                    placeholderTextColor={colors.textSecondary}
+                    className="text-base p-0 mt-0.5"
+                    style={{ color: colors.text, paddingLeft: 0, marginLeft: 0 }}
                     keyboardType="phone-pad"
                     returnKeyType="next"
                     value={phone}
@@ -255,17 +270,23 @@ const validatePassword = (password:string) => {
               </View>
 
               {/* NIC */}
-              <View className="bg-[#FFFFFF] border border-[#E8E8E8] rounded-2xl p-2 flex-row items-center mt-3">
-                <View className="px-4 py-3 border-r border-[#E8E8E8] justify-center items-center">
-                  <Ionicons name="card-outline" size={20} color="#059669" />
+              <View
+                className="border rounded-2xl p-2 flex-row items-center mt-3"
+                style={{ backgroundColor: colors.card, borderColor: colors.border }}
+              >
+                <View
+                  className="px-4 py-3 border-r justify-center items-center"
+                  style={{ borderRightColor: colors.border }}
+                >
+                  <Ionicons name="card-outline" size={20} color={colors.primary} />
                 </View>
                 <View className="ml-3 flex-1">
-                  <Text className="text-[#6B7280] text-[10px] uppercase font-bold">NIC Number:</Text>
+                  <Text className="text-[10px] uppercase font-bold" style={{ color: colors.textSecondary }}>NIC Number:</Text>
                   <TextInput
                     placeholder="199912345678 or 991234567V"
-                    placeholderTextColor="#6B7280"
-                    className="text-[#1A1A1A] text-base p-0 mt-0.5"
-                    style={{ paddingLeft: 0, marginLeft: 0 }}
+                    placeholderTextColor={colors.textSecondary}
+                    className="text-base p-0 mt-0.5"
+                    style={{ color: colors.text, paddingLeft: 0, marginLeft: 0 }}
                     returnKeyType="next"
                     value={nic}
                     onChangeText={setNic}
@@ -277,18 +298,25 @@ const validatePassword = (password:string) => {
               {/* Province Selector */}
               <Pressable
                 onPress={() => setProvinceModalVisible(true)}
-                className="bg-[#FFFFFF] border border-[#E8E8E8] rounded-2xl p-2 flex-row items-center mt-3 active:opacity-80"
+                className="border rounded-2xl p-2 flex-row items-center mt-3 active:opacity-80"
+                style={{ backgroundColor: colors.card, borderColor: colors.border }}
               >
-                <View className="px-4 py-3 border-r border-[#E8E8E8] justify-center items-center">
-                  <Ionicons name="map-outline" size={20} color="#059669" />
+                <View
+                  className="px-4 py-3 border-r justify-center items-center"
+                  style={{ borderRightColor: colors.border }}
+                >
+                  <Ionicons name="map-outline" size={20} color={colors.primary} />
                 </View>
                 <View className="ml-3 flex-1">
-                  <Text className="text-[#6B7280] text-[10px] uppercase font-bold">Province:</Text>
-                  <Text className={`text-base mt-0.5 ${province ? 'text-[#1A1A1A]' : 'text-[#6B7280]'}`}>
+                  <Text className="text-[10px] uppercase font-bold" style={{ color: colors.textSecondary }}>Province:</Text>
+                  <Text
+                    className="text-base mt-0.5"
+                    style={{ color: province ? colors.text : colors.textSecondary }}
+                  >
                     {province || 'Select Province'}
                   </Text>
                 </View>
-                <Ionicons name="chevron-down-outline" size={20} color="#059669" style={{ marginRight: 8 }} />
+                <Ionicons name="chevron-down-outline" size={20} color={colors.primary} style={{ marginRight: 8 }} />
               </Pressable>
 
               {/* District Selector */}
@@ -300,18 +328,29 @@ const validatePassword = (password:string) => {
                   }
                   setDistrictModalVisible(true);
                 }}
-                className={`bg-[#FFFFFF] border border-[#E8E8E8] rounded-2xl p-2 flex-row items-center mt-3 active:opacity-80 ${!province ? 'opacity-50' : ''}`}
+                className="border rounded-2xl p-2 flex-row items-center mt-3 active:opacity-80"
+                style={{
+                  backgroundColor: colors.card,
+                  borderColor: colors.border,
+                  opacity: !province ? 0.5 : 1
+                }}
               >
-                <View className="px-4 py-3 border-r border-[#E8E8E8] justify-center items-center">
-                  <Ionicons name="navigate-outline" size={20} color="#059669" />
+                <View
+                  className="px-4 py-3 border-r justify-center items-center"
+                  style={{ borderRightColor: colors.border }}
+                >
+                  <Ionicons name="navigate-outline" size={20} color={colors.primary} />
                 </View>
                 <View className="ml-3 flex-1">
-                  <Text className="text-[#6B7280] text-[10px] uppercase font-bold">District:</Text>
-                  <Text className={`text-base mt-0.5 ${district ? 'text-[#1A1A1A]' : 'text-[#6B7280]'}`}>
+                  <Text className="text-[10px] uppercase font-bold" style={{ color: colors.textSecondary }}>District:</Text>
+                  <Text
+                    className="text-base mt-0.5"
+                    style={{ color: district ? colors.text : colors.textSecondary }}
+                  >
                     {district || 'Select District'}
                   </Text>
                 </View>
-                <Ionicons name="chevron-down-outline" size={20} color="#059669" style={{ marginRight: 8 }} />
+                <Ionicons name="chevron-down-outline" size={20} color={colors.primary} style={{ marginRight: 8 }} />
               </Pressable>
 
               {/* LGA Selector */}
@@ -323,33 +362,50 @@ const validatePassword = (password:string) => {
                   }
                   setLgaModalVisible(true);
                 }}
-                className={`bg-[#FFFFFF] border border-[#E8E8E8] rounded-2xl p-2 flex-row items-center mt-3 active:opacity-80 ${!district ? 'opacity-50' : ''}`}
+                className="border rounded-2xl p-2 flex-row items-center mt-3 active:opacity-80"
+                style={{
+                  backgroundColor: colors.card,
+                  borderColor: colors.border,
+                  opacity: !district ? 0.5 : 1
+                }}
               >
-                <View className="px-4 py-3 border-r border-[#E8E8E8] justify-center items-center">
-                  <Ionicons name="business-outline" size={20} color="#059669" />
+                <View
+                  className="px-4 py-3 border-r justify-center items-center"
+                  style={{ borderRightColor: colors.border }}
+                >
+                  <Ionicons name="business-outline" size={20} color={colors.primary} />
                 </View>
                 <View className="ml-3 flex-1">
-                  <Text className="text-[#6B7280] text-[10px] uppercase font-bold">Local Government Authority:</Text>
-                  <Text className={`text-base mt-0.5 ${lga ? 'text-[#1A1A1A]' : 'text-[#6B7280]'}`}>
+                  <Text className="text-[10px] uppercase font-bold" style={{ color: colors.textSecondary }}>Local Government Authority:</Text>
+                  <Text
+                    className="text-base mt-0.5"
+                    style={{ color: lga ? colors.text : colors.textSecondary }}
+                  >
                     {lga || 'Select Local Government'}
                   </Text>
                 </View>
-                <Ionicons name="chevron-down-outline" size={20} color="#059669" style={{ marginRight: 8 }} />
+                <Ionicons name="chevron-down-outline" size={20} color={colors.primary} style={{ marginRight: 8 }} />
               </Pressable>
 
               {/* Password */}
-              <View className="bg-[#FFFFFF] border border-[#E8E8E8] rounded-2xl p-2 flex-row items-center mt-3">
-                <View className="px-4 py-3 border-r border-[#E8E8E8] justify-center items-center">
-                    <Ionicons name="call-outline" size={20} color="#059669" />
+              <View
+                className="border rounded-2xl p-2 flex-row items-center mt-3"
+                style={{ backgroundColor: colors.card, borderColor: colors.border }}
+              >
+                <View
+                  className="px-4 py-3 border-r justify-center items-center"
+                  style={{ borderRightColor: colors.border }}
+                >
+                  <Ionicons name="lock-closed-outline" size={20} color={colors.primary} />
                 </View>
                 <View className="ml-3 flex-1">
-                  <Text className="text-[#6B7280] text-[10px] uppercase font-bold">Password:</Text>
+                  <Text className="text-[10px] uppercase font-bold" style={{ color: colors.textSecondary }}>Password:</Text>
                   <TextInput
                     ref={passwordRef}
                     placeholder="••••••••••••"
-                    placeholderTextColor="#6B7280"
-                    className="text-[#1A1A1A] text-base p-0 mt-0.5"
-                    style={{ paddingLeft: 0, marginLeft: 0 }}
+                    placeholderTextColor={colors.textSecondary}
+                    className="text-base p-0 mt-0.5"
+                    style={{ color: colors.text, paddingLeft: 0, marginLeft: 0 }}
                     secureTextEntry={!showPassword}
                     autoCapitalize="none"
                     autoCorrect={false}
@@ -361,23 +417,29 @@ const validatePassword = (password:string) => {
                   />
                 </View>
                 <Pressable onPress={() => setShowPassword(!showPassword)}>
-                  <Ionicons name={showPassword ? "eye-outline": "eye-off-outline"} size={20} color="#059669" />
+                  <Ionicons name={showPassword ? "eye-outline": "eye-off-outline"} size={20} color={colors.primary} />
                 </Pressable>
               </View>
 
               {/* Confirm Password */}
-                <View className="bg-[#FFFFFF] border border-[#E8E8E8] rounded-2xl p-2 flex-row items-center mt-3">
-                <View className="px-4 py-3 border-r border-[#E8E8E8] justify-center items-center">
-                    <Ionicons name="lock-closed-outline" size={20} color="#059669" />
+              <View
+                className="border rounded-2xl p-2 flex-row items-center mt-3"
+                style={{ backgroundColor: colors.card, borderColor: colors.border }}
+              >
+                <View
+                  className="px-4 py-3 border-r justify-center items-center"
+                  style={{ borderRightColor: colors.border }}
+                >
+                  <Ionicons name="lock-closed-outline" size={20} color={colors.primary} />
                 </View>
                 <View className="ml-3 flex-1 ">
-                  <Text className="text-[#6B7280] text-[10px] uppercase font-bold">Confirm Password:</Text>
+                  <Text className="text-[10px] uppercase font-bold" style={{ color: colors.textSecondary }}>Confirm Password:</Text>
                   <TextInput
                     ref={confirmPassRef}
                     placeholder="••••••••••••"
-                    placeholderTextColor="#6B7280"
-                    className="text-[#1A1A1A] text-base p-0 mt-0.5"
-                    style={{ paddingLeft: 0, marginLeft: 0 }}
+                    placeholderTextColor={colors.textSecondary}
+                    className="text-base p-0 mt-0.5"
+                    style={{ color: colors.text, paddingLeft: 0, marginLeft: 0 }}
                     secureTextEntry={!showConfirmPassword}
                     autoCapitalize="none"
                     autoCorrect={false}
@@ -389,33 +451,37 @@ const validatePassword = (password:string) => {
                   />
                 </View>
                 <Pressable onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-                   <Ionicons name={showConfirmPassword ? "eye-outline": "eye-off-outline"} size={20} color="#059669" />
+                  <Ionicons name={showConfirmPassword ? "eye-outline": "eye-off-outline"} size={20} color={colors.primary} />
                 </Pressable>
               </View>
             </View>
 
-
             <View className="mt-2 px-1">
-                <Text className="text-[#6B7280] text-sm">
-                    Password must be at least 8 characters long, include an uppercase letter and a number.
-                </Text>
+              <Text className="text-sm" style={{ color: colors.textSecondary }}>
+                Password must be at least 8 characters long, include an uppercase letter and a number.
+              </Text>
             </View>
 
             {/* Primary Action Buttons */}
             <View className="mt-6">
               <Pressable
-                className={`p-4 rounded-full shadow-lg items-center ${loading ? 'bg-[#0D8A72]/50' : 'bg-[#0D8A72]'}`}
+                className="p-4 rounded-full shadow-lg items-center"
+                style={{ backgroundColor: loading ? (isDark ? '#4CC2D180' : '#0D8A7280') : colors.primary }}
                 onPress={handleSignUp}
                 disabled={loading}
               >
-                {loading ? <ActivityIndicator color="#122D36" /> : <Text className="text-[#122D36] text-center font-bold text-lg">Sign Up</Text>}
+                {loading ? (
+                  <ActivityIndicator color={isDark ? '#122D36' : '#FFFFFF'} />
+                ) : (
+                  <Text className="text-center font-bold text-lg" style={{ color: isDark ? '#122D36' : '#FFFFFF' }}>Sign Up</Text>
+                )}
               </Pressable>
             </View>
 
             <View className="flex-row justify-center mt-8">
-              <Text className="text-[#6B7280]">Already have an account? </Text>
+              <Text style={{ color: colors.textSecondary }}>Already have an account? </Text>
               <Pressable onPress={() => router.push("/(auth)/loginScreen")} className='active:opacity-70'>
-                <Text className="text-[#0D8A72] font-bold">Log In</Text>
+                <Text className="font-bold" style={{ color: colors.primary }}>Log In</Text>
               </Pressable>
             </View>
 
@@ -429,38 +495,43 @@ const validatePassword = (password:string) => {
         transparent={true}
         visible={isSuccessModalVisible}
       >
-        {/* Replaced BlurView with simple View to fix ViewManager crash */}
         <View
-          style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 32, backgroundColor: 'rgba(0, 0, 0, 0.8)' }}
+          style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 32, backgroundColor: colors.modalBackdrop }}
         >
-          <View className="bg-[#FFFFFF] border border-[#059669] rounded-3xl p-8 w-full items-center shadow-2xl">
-            
-            <View className="bg-[#059669]/20 p-5 rounded-full mb-6">
-              <Ionicons name="mail-unread-outline" size={60} color="#0D8A72" />
+          <View
+            className="rounded-3xl p-8 w-full items-center shadow-2xl border"
+            style={{ backgroundColor: colors.card, borderColor: colors.primary }}
+          >
+            <View
+              className="p-5 rounded-full mb-6"
+              style={{ backgroundColor: isDark ? '#4CC2D120' : '#05966920' }}
+            >
+              <Ionicons name="mail-unread-outline" size={60} color={colors.primary} />
             </View>
 
-            <Text className="text-[#1A1A1A] text-2xl font-bold text-center">
+            <Text className="text-2xl font-bold text-center" style={{ color: colors.text }}>
               Verify Your Email
             </Text>
             
-            <Text className="text-[#4A4A4A] text-center mt-4 leading-6">
+            <Text className="text-center mt-4 leading-6" style={{ color: colors.textSecondary }}>
               A verification link has been sent to:{"\n"}
-              <Text className="text-[#0D8A72] font-bold">{email}</Text>
+              <Text className="font-bold" style={{ color: colors.primary }}>{email}</Text>
             </Text>
 
-            <Text className="text-[#6B7280] text-xs text-center mt-6 italic">
+            <Text className="text-xs text-center mt-6 italic" style={{ color: colors.textMuted }}>
               Please check your inbox (and spam folder) before logging in.
             </Text>
 
             <View className="space-y-3 mb-6 active:opacity-70">
               <Pressable 
-                className="border border-gray-500 p-4 rounded-xl mt-3 mb-3"
+                className="border p-4 rounded-xl mt-3 mb-3"
+                style={{ borderColor: colors.textSecondary }}
                 onPress={() => {
                   setIsSuccessModalVisible(false);
                   router.replace("/(auth)/loginScreen");
                 }}
               >
-                <Text className="text-[#4A4A4A] text-center font-medium">
+                <Text className="text-center font-medium" style={{ color: colors.text }}>
                   Proceed to Login
                 </Text>
               </Pressable>

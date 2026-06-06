@@ -32,12 +32,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { sriLankaGeographics } from '../../config/sriLankaRegions';
 import { useScrollContext } from '../../config/tabBarScrollContext';
 import { db, storage } from '../../services/firebase';
+import { useTheme } from '../../config/themeContext';
 import { compressImage, isUnderSizeLimit, uploadFile } from '../../services/storage.service';
 import { registerForPushNotificationsAsync, unregisterPushNotificationsAsync } from '../../services/notification.service';
 
 const DEFAULT_COORDS = { latitude: 6.9271, longitude: 79.8612 }; // Colombo default
 
-const DARK_MAP_STYLE: any[] = [];
+import { DARK_MAP_STYLE } from '../../config/mapStyle';
 
 
 // ─────────────────────────────────────────────
@@ -45,39 +46,41 @@ const DARK_MAP_STYLE: any[] = [];
 // ─────────────────────────────────────────────
 
 function StatCard({ label, value, trend, icon }: { label: string; value: string | number; trend?: string; icon: string }) {
+  const { colors } = useTheme();
   return (
-    <View className="flex-1 bg-white rounded-2xl p-3.5"
-      style={{ borderWidth: 1, borderColor: '#E8E8E8' }}
+    <View className="flex-1 rounded-2xl p-3.5"
+      style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}
     >
       <View className="flex-row justify-between items-start">
-        <Text className="text-[#9CA3AF] text-[11px] font-semibold uppercase tracking-wide">{label}</Text>
-        <View className="w-7 h-7 rounded-lg bg-[#E8E8E8] items-center justify-center">
-          <Ionicons name={icon as any} size={14} color="#0D8A72" />
+        <Text className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: colors.textMuted }}>{label}</Text>
+        <View className="w-7 h-7 rounded-lg items-center justify-center" style={{ backgroundColor: colors.border }}>
+          <Ionicons name={icon as any} size={14} color={colors.primary} />
         </View>
       </View>
-      <Text className="text-[#1A1A1A] text-2xl font-bold mt-2">{value}</Text>
+      <Text className="text-2xl font-bold mt-2" style={{ color: colors.text }}>{value}</Text>
       {trend && <Text className="text-[#059669] text-[11px] mt-1 font-medium">{trend}</Text>}
     </View>
   );
 }
 
 function BadgeChip({ badge, earned = true }: { badge: typeof BADGE_DEFINITIONS[0]; earned?: boolean }) {
+  const { colors, isDark } = useTheme();
   return (
     <View className="items-center" style={{ width: 76 }}>
       <View
         className="w-14 h-14 rounded-2xl items-center justify-center mb-1.5"
         style={{
-          backgroundColor: earned ? badge.bg : '#F9FAFB',
+          backgroundColor: earned ? (isDark ? badge.color + '1A' : badge.bg) : colors.cardUnearned,
           borderWidth: 1,
-          borderColor: earned ? badge.color + '50' : '#E8E8E8',
+          borderColor: earned ? badge.color + '50' : colors.border,
           opacity: earned ? 1 : 0.4,
         }}
       >
-        <Ionicons name={badge.icon as any} size={26} color={earned ? badge.color : '#E8E8E8'} />
+        <Ionicons name={badge.icon as any} size={26} color={earned ? badge.color : colors.border} />
       </View>
       <Text
-        className="text-[#6B7280] text-[10px] text-center leading-3"
-        style={{ color: earned ? '#9CA3AF' : '#9CA3AF' }}
+        className="text-[10px] text-center leading-3"
+        style={{ color: colors.textSecondary }}
       >
         {badge.name}
       </Text>
@@ -89,6 +92,7 @@ function SettingsRow({ icon, iconBg, iconColor, label, subtitle, onPress, danger
   icon: string; iconBg: string; iconColor: string;
   label: string; subtitle: string; onPress?: () => void; danger?: boolean;
 }) {
+  const { colors } = useTheme();
   return (
     <Pressable onPress={onPress} className="flex-row items-center py-3.5 active:opacity-70">
       <View className="w-9 h-9 rounded-xl items-center justify-center mr-3.5"
@@ -97,10 +101,10 @@ function SettingsRow({ icon, iconBg, iconColor, label, subtitle, onPress, danger
         <Ionicons name={icon as any} size={18} color={iconColor} />
       </View>
       <View className="flex-1">
-        <Text className={`text-sm font-semibold ${danger ? 'text-[#DC2626]' : 'text-[#1A1A1A]'}`}>{label}</Text>
-        <Text className="text-[#9CA3AF] text-xs mt-0.5">{subtitle}</Text>
+        <Text className="text-sm font-semibold" style={{ color: danger ? '#DC2626' : colors.text }}>{label}</Text>
+        <Text className="text-xs mt-0.5" style={{ color: colors.textMuted }}>{subtitle}</Text>
       </View>
-      {!danger && <Ionicons name="chevron-forward" size={16} color="#E8E8E8" />}
+      {!danger && <Ionicons name="chevron-forward" size={16} color={colors.border} />}
     </Pressable>
   );
 }
@@ -116,6 +120,7 @@ function PersonalInfoModal({
   onClose: () => void;
 }) {
   const { user, profile, refreshProfile } = useAuth();
+  const { colors, isDark } = useTheme();
 
   // Local form state — initialised from real profile data
   const [phone, setPhone] = useState(profile?.phoneNumber ?? '');
@@ -835,7 +840,7 @@ function PersonalInfoModal({
             </View>
 
             {/* Interactive MapView */}
-            <View className="rounded-2xl overflow-hidden my-3" style={{ height: 220, borderWidth: 1, borderColor: '#E8E8E8' }}>
+            <View className="rounded-2xl overflow-hidden my-3" style={{ height: 220, borderWidth: 1, borderColor: colors.border }}>
               <MapView
                 ref={mapRef}
                 provider={PROVIDER_GOOGLE}
@@ -847,7 +852,7 @@ function PersonalInfoModal({
                   longitudeDelta: 0.005,
                 }}
                 onPress={(e) => handleMapPress(e.nativeEvent.coordinate)}
-                
+                customMapStyle={isDark ? DARK_MAP_STYLE : []}
                 showsUserLocation={gpsGranted}
                 showsMyLocationButton={false}
               >
@@ -863,10 +868,10 @@ function PersonalInfoModal({
               <View className="absolute bottom-3 right-3">
                 <Pressable
                   onPress={recenter}
-                  style={{ backgroundColor: '#FFFFFF', borderRadius: 8, padding: 8, borderWidth: 1, borderColor: '#E8E8E8' }}
+                  style={{ backgroundColor: colors.card, borderRadius: 8, padding: 8, borderWidth: 1, borderColor: colors.border }}
                   className="active:opacity-80"
                 >
-                  <Ionicons name="locate" size={20} color="#0D8A72" />
+                  <Ionicons name="locate" size={20} color={colors.primary} />
                 </Pressable>
               </View>
             </View>
@@ -1810,6 +1815,7 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const { onScroll } = useScrollContext();
   const { user, profile, logout } = useAuth();
+  const { theme, isDark, colors, toggleTheme } = useTheme();
   const [personalInfoVisible, setPersonalInfoVisible] = useState(false);
   const [alertPreferencesVisible, setAlertPreferencesVisible] = useState(false);
   const [securityVisible, setSecurityVisible] = useState(false);
@@ -1852,22 +1858,23 @@ export default function ProfileScreen() {
   // Show spinner while profile is loading
   if (!profile) {
     return (
-      <LinearGradient colors={['#F5F5F5', '#FAFAFA', '#F5F5F5']} style={{ flex: 1 }}>
+      <LinearGradient colors={isDark ? ['#0D1F2D', '#111E27', '#0D1F2D'] : ['#F5F5F5', '#FAFAFA', '#F5F5F5']} style={{ flex: 1 }}>
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator color="#0D8A72" size="large" />
-          <Text className="text-[#9CA3AF] mt-4 text-sm">Loading profile...</Text>
+          <ActivityIndicator color={colors.primary} size="large" />
+          <Text className="mt-4 text-sm" style={{ color: colors.textMuted }}>Loading profile...</Text>
         </View>
       </LinearGradient>
     );
   }
 
   return (
-    <LinearGradient colors={['#F5F5F5', '#FAFAFA', '#F5F5F5']} style={{ flex: 1 }}>
+    <LinearGradient colors={isDark ? ['#0D1F2D', '#111E27', '#0D1F2D'] : ['#F5F5F5', '#FAFAFA', '#F5F5F5']} style={{ flex: 1 }}>
       <ScrollView
         onScroll={onScroll}
         scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 120 }}
+        decelerationRate="normal"
       >
 
         {/* ── 1. Top Nav ── */}
@@ -1878,17 +1885,17 @@ export default function ProfileScreen() {
               style={{ width: 28, height: 28 }}
               resizeMode="contain"
             />
-            <Text className="text-[#1A1A1A] text-xl font-bold tracking-tight">AlertZone</Text>
+            <Text className="text-xl font-bold tracking-tight" style={{ color: colors.text }}>AlertZone</Text>
           </View>
           <Pressable onPress={() => router.push('/notifications' as any)} className="active:opacity-70">
-            <View className="w-10 h-10 rounded-full bg-white items-center justify-center"
-              style={{ borderWidth: 1, borderColor: '#E8E8E8' }}
+            <View className="w-10 h-10 rounded-full items-center justify-center"
+              style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}
             >
-              <Ionicons name="notifications-outline" size={20} color="#6B7280" />
+              <Ionicons name="notifications-outline" size={20} color={colors.textSecondary} />
             </View>
             {unreadCount > 0 && (
               <View className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[#DC2626] items-center justify-center">
-                <Text className="text-[#1A1A1A] text-[10px] font-bold">{unreadCount}</Text>
+                <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: '800' }}>{unreadCount}</Text>
               </View>
             )}
           </Pressable>
@@ -1904,25 +1911,25 @@ export default function ProfileScreen() {
                   : require('../../assets/images/iconAlerZone-Bg-none.png')
               }
               className="w-32 h-32 rounded-full"
-              style={{ borderWidth: 3, borderColor: '#0D8A72' }}
+              style={{ borderWidth: 3, borderColor: colors.primary }}
               resizeMode={profile.avatarUrl ? 'cover' : 'contain'}
             />
-            <View className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-[#0D8A72] items-center justify-center"
-              style={{ borderWidth: 2, borderColor: '#1A1A1A' }}
+            <View className="absolute bottom-0 right-0 w-8 h-8 rounded-full items-center justify-center"
+              style={{ borderWidth: 2, borderColor: colors.card, backgroundColor: colors.primary }}
             >
-              <Ionicons name="camera" size={14} color="#1A1A1A" />
+              <Ionicons name="camera" size={14} color="#FFFFFF" />
             </View>
           </Pressable>
 
           {/* ✅ Real data from Firestore via AuthContext */}
-          <Text className="text-[#1A1A1A] text-2xl font-bold mt-3">{profile.fullName}</Text>
-          <Text className="text-[#6B7280] text-sm mt-1">
+          <Text className="text-2xl font-bold mt-3" style={{ color: colors.text }}>{profile.fullName}</Text>
+          <Text className="text-sm mt-1" style={{ color: colors.textSecondary }}>
             {profile.role === 'citizen' ? 'Safety Contributor' : profile.role} • Level {profile.level ?? 1}
           </Text>
           {profile.localGovernmentArea && (
-            <View className="flex-row items-center mt-2 bg-white/40 px-3 py-1.5 rounded-full border border-[#E8E8E8]/40">
-              <Ionicons name="location-outline" size={12} color="#0D8A72" />
-              <Text className="text-[#4A4A4A] text-xs ml-1 font-medium">
+            <View className="flex-row items-center mt-2 px-3 py-1.5 rounded-full border" style={{ backgroundColor: colors.card + '70', borderColor: colors.border }}>
+              <Ionicons name="location-outline" size={12} color={colors.primary} />
+              <Text className="text-xs ml-1 font-medium" style={{ color: colors.textSecondary }}>
                 {profile.localGovernmentArea} • {profile.district}
               </Text>
             </View>
@@ -1947,9 +1954,9 @@ export default function ProfileScreen() {
         {/* ── 4. Earned Badges ── */}
         <View className="px-5 mb-6">
           <View className="flex-row justify-between items-center mb-3">
-            <Text className="text-[#1A1A1A] text-lg font-bold">Earned Badges</Text>
+            <Text className="text-lg font-bold" style={{ color: colors.text }}>Earned Badges</Text>
             <Pressable onPress={() => router.push('/badges' as any)} className="active:opacity-70">
-              <Text className="text-[#0D8A72] text-sm font-semibold">View All</Text>
+              <Text className="text-sm font-semibold" style={{ color: colors.primary }}>View All</Text>
             </Pressable>
           </View>
           {(() => {
@@ -1959,10 +1966,10 @@ export default function ProfileScreen() {
               return (
                 <View
                   className="rounded-2xl items-center py-5"
-                  style={{ backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E8E8E8' }}
+                  style={{ backgroundColor: colors.cardUnearned, borderWidth: 1, borderColor: colors.border }}
                 >
-                  <Ionicons name="ribbon-outline" size={28} color="#E8E8E8" />
-                  <Text className="text-[#9CA3AF] text-xs mt-2 text-center">
+                  <Ionicons name="ribbon-outline" size={28} color={colors.border} />
+                  <Text className="text-xs mt-2 text-center" style={{ color: colors.textMuted }}>
                     No badges yet — get reports accepted to earn your first one!
                   </Text>
                 </View>
@@ -1980,37 +1987,58 @@ export default function ProfileScreen() {
 
         {/* ── 5. Account Settings ── */}
         <View className="px-5">
-          <Text className="text-[#1A1A1A] text-lg font-bold mb-3">Account Settings</Text>
-          <View className="bg-white rounded-2xl px-4"
-            style={{ borderWidth: 1, borderColor: '#E8E8E8' }}
+          <Text className="text-lg font-bold mb-3" style={{ color: colors.text }}>Account Settings</Text>
+          <View className="rounded-2xl px-4"
+            style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}
           >
             <SettingsRow
               icon="person-outline"
-              iconBg="#E8E8E8"
-              iconColor="#0D8A72"
+              iconBg={colors.border}
+              iconColor={colors.primary}
               label="Personal Information"
               subtitle="Email, phone, and address"
               onPress={() => setPersonalInfoVisible(true)}
             />
-            <View className="h-px bg-[#E8E8E8]" />
+            <View className="h-px" style={{ backgroundColor: colors.border }} />
             <SettingsRow
               icon="notifications-outline"
-              iconBg="#E8E8E8"
-              iconColor="#0D8A72"
+              iconBg={colors.border}
+              iconColor={colors.primary}
               label="Alert Preferences"
               subtitle="Notification status and radius"
               onPress={() => setAlertPreferencesVisible(true)}
             />
-            <View className="h-px bg-[#E8E8E8]" />
+            <View className="h-px" style={{ backgroundColor: colors.border }} />
             <SettingsRow
               icon="shield-checkmark-outline"
-              iconBg="#E8E8E8"
-              iconColor="#0D8A72"
+              iconBg={colors.border}
+              iconColor={colors.primary}
               label="Security"
               subtitle="Password management and biometrics"
               onPress={() => setSecurityVisible(true)}
             />
-            <View className="h-px bg-[#E8E8E8]" />
+            <View className="h-px" style={{ backgroundColor: colors.border }} />
+            
+            {/* Theme Toggle Button */}
+            <View className="flex-row items-center py-3.5">
+              <View className="w-9 h-9 rounded-xl items-center justify-center mr-3.5"
+                style={{ backgroundColor: colors.border }}
+              >
+                <Ionicons name={isDark ? "moon" : "sunny-outline"} size={18} color={colors.primary} />
+              </View>
+              <View className="flex-1">
+                <Text className="text-sm font-semibold" style={{ color: colors.text }}>Dark Theme</Text>
+                <Text className="text-xs mt-0.5" style={{ color: colors.textMuted }}>Toggle app color mode</Text>
+              </View>
+              <Switch
+                value={isDark}
+                onValueChange={toggleTheme}
+                trackColor={{ false: colors.border, true: colors.primary }}
+                thumbColor="white"
+              />
+            </View>
+
+            <View className="h-px" style={{ backgroundColor: colors.border }} />
             <SettingsRow
               icon="log-out-outline"
               iconBg="#FEE2E2"

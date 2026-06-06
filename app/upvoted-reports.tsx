@@ -10,10 +10,10 @@ import {
   StyleSheet,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../config/authConfig';
+import { useTheme } from '../config/themeContext';
 import { db } from '../services/firebase';
 import {
   collectionGroup,
@@ -47,14 +47,6 @@ interface Report {
 // ─────────────────────────────────────────────
 // Constants
 // ─────────────────────────────────────────────
-const STATUS_CONFIG: Record<ReportStatus, { label: string; color: string; bg: string }> = {
-  PENDING:  { label: 'Pending',  color: '#D97706', bg: '#FEF3C7' },
-  ASSIGNED: { label: 'Assigned', color: '#3B82F6', bg: '#DBEAFE' },
-  FIXING:   { label: 'Fixing',   color: '#0D8A72', bg: '#E6F7F3' },
-  RESOLVED: { label: 'Resolved', color: '#059669', bg: '#D1FAE5' },
-  REJECTED: { label: 'Rejected', color: '#DC2626', bg: '#FEE2E2' },
-};
-
 const CATEGORIES = [
   { id: 'all',               label: 'All',          icon: 'grid-outline',        color: '#0D8A72' },
   { id: 'road_traffic',      label: 'Roads',         icon: 'car-outline',         color: '#0D8A72' },
@@ -102,6 +94,9 @@ function formatDate(ts: any): string {
   }
 }
 
+// ─────────────────────────────────────────────
+// Calendar Modal Component
+// ─────────────────────────────────────────────
 interface CalendarProps {
   value: Date | null;
   onChange: (date: Date) => void;
@@ -113,6 +108,7 @@ function CalendarModal({ value, onChange, onClose, title }: CalendarProps) {
   const [currentYear, setCurrentYear] = useState(value ? value.getFullYear() : new Date().getFullYear());
   const [currentMonth, setCurrentMonth] = useState(value ? value.getMonth() : new Date().getMonth());
   const [selectedDay, setSelectedDay] = useState<number | null>(value ? value.getDate() : null);
+  const { colors } = useTheme();
 
   const months = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -123,46 +119,64 @@ function CalendarModal({ value, onChange, onClose, title }: CalendarProps) {
   const firstDay = getFirstDayOfMonth(currentYear, currentMonth);
 
   const handlePrevMonth = () => {
-    if (currentMonth === 0) { setCurrentMonth(11); setCurrentYear(currentYear - 1); }
-    else setCurrentMonth(currentMonth - 1);
+    if (currentMonth === 0) {
+      setCurrentMonth(11);
+      setCurrentYear(currentYear - 1);
+    } else {
+      setCurrentMonth(currentMonth - 1);
+    }
     setSelectedDay(null);
   };
 
   const handleNextMonth = () => {
-    if (currentMonth === 11) { setCurrentMonth(0); setCurrentYear(currentYear + 1); }
-    else setCurrentMonth(currentMonth + 1);
+    if (currentMonth === 11) {
+      setCurrentMonth(0);
+      setCurrentYear(currentYear + 1);
+    } else {
+      setCurrentMonth(currentMonth + 1);
+    }
     setSelectedDay(null);
   };
 
   const cells = [];
-  for (let i = 0; i < firstDay; i++) cells.push({ day: null, key: `empty-${i}` });
-  for (let d = 1; d <= daysInMonth; d++) cells.push({ day: d, key: `day-${d}` });
+  for (let i = 0; i < firstDay; i++) {
+    cells.push({ day: null, key: `empty-${i}` });
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    cells.push({ day: d, key: `day-${d}` });
+  }
 
   const handleDaySelect = (day: number) => {
     setSelectedDay(day);
-    onChange(new Date(currentYear, currentMonth, day));
+    const newDate = new Date(currentYear, currentMonth, day);
+    onChange(newDate);
     onClose();
   };
 
   return (
     <Modal transparent visible animationType="fade">
-      <View style={styles.modalOverlay}>
-        <View style={styles.calendarContainer}>
-          <Text style={styles.calendarTitle}>{title}</Text>
+      <View style={[styles.modalOverlay, { backgroundColor: colors.modalBackdrop }]}>
+        <View style={[styles.calendarContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Text style={[styles.calendarTitle, { color: colors.text }]}>{title}</Text>
+          
           <View style={styles.calendarHeader}>
             <Pressable onPress={handlePrevMonth} style={styles.arrowButton}>
-              <Ionicons name="chevron-back" size={20} color="#0D8A72" />
+              <Ionicons name="chevron-back" size={20} color={colors.primary} />
             </Pressable>
-            <Text style={styles.monthYearText}>{months[currentMonth]} {currentYear}</Text>
+            <Text style={[styles.monthYearText, { color: colors.text }]}>
+              {months[currentMonth]} {currentYear}
+            </Text>
             <Pressable onPress={handleNextMonth} style={styles.arrowButton}>
-              <Ionicons name="chevron-forward" size={20} color="#0D8A72" />
+              <Ionicons name="chevron-forward" size={20} color={colors.primary} />
             </Pressable>
           </View>
+
           <View style={styles.weekdaysRow}>
             {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d) => (
-              <Text key={d} style={styles.weekdayText}>{d}</Text>
+              <Text key={d} style={[styles.weekdayText, { color: colors.textSecondary }]}>{d}</Text>
             ))}
           </View>
+
           <View style={styles.daysGrid}>
             {cells.map((cell) => {
               const isSelected = cell.day === selectedDay;
@@ -171,10 +185,19 @@ function CalendarModal({ value, onChange, onClose, title }: CalendarProps) {
                   key={cell.key}
                   disabled={cell.day === null}
                   onPress={() => cell.day && handleDaySelect(cell.day)}
-                  style={[styles.dayCell, isSelected && styles.selectedDayCell]}
+                  style={[
+                    styles.dayCell,
+                    isSelected && [styles.selectedDayCell, { backgroundColor: colors.primary }]
+                  ]}
                 >
                   {cell.day && (
-                    <Text style={[styles.dayText, isSelected && styles.selectedDayText]}>
+                    <Text
+                      style={[
+                        styles.dayText,
+                        { color: colors.text },
+                        isSelected && [styles.selectedDayText, { color: '#FFFFFF' }]
+                      ]}
+                    >
                       {cell.day}
                     </Text>
                   )}
@@ -182,8 +205,9 @@ function CalendarModal({ value, onChange, onClose, title }: CalendarProps) {
               );
             })}
           </View>
-          <Pressable onPress={onClose} style={styles.closeCalendarButton}>
-            <Text style={styles.closeCalendarText}>Cancel</Text>
+
+          <Pressable onPress={onClose} style={[styles.closeCalendarButton, { borderColor: colors.border }]}>
+            <Text style={[styles.closeCalendarText, { color: colors.textSecondary }]}>Cancel</Text>
           </Pressable>
         </View>
       </View>
@@ -192,10 +216,30 @@ function CalendarModal({ value, onChange, onClose, title }: CalendarProps) {
 }
 
 // ─────────────────────────────────────────────
-// Report Card
+// Report Card Component
 // ─────────────────────────────────────────────
 function ReportCard({ report, onPress }: { report: Report; onPress: () => void }) {
-  const cfg = STATUS_CONFIG[report.status] ?? STATUS_CONFIG.PENDING;
+  const { colors, isDark } = useTheme();
+
+  const getStatusColorConfig = (status: ReportStatus) => {
+    switch (status) {
+      case 'PENDING':
+        return { label: 'Pending', color: colors.warningText, bg: colors.warningBg };
+      case 'ASSIGNED':
+        return { label: 'Assigned', color: '#3B82F6', bg: isDark ? 'rgba(59, 130, 246, 0.15)' : '#DBEAFE' };
+      case 'FIXING':
+        return { label: 'Fixing', color: colors.primary, bg: colors.successBg };
+      case 'RESOLVED':
+        return { label: 'Resolved', color: colors.successText, bg: colors.successBg };
+      case 'REJECTED':
+        return { label: 'Rejected', color: colors.dangerText, bg: colors.dangerBg };
+      default:
+        return { label: 'Pending', color: colors.warningText, bg: colors.warningBg };
+    }
+  };
+
+  const cfg = getStatusColorConfig(report.status);
+
   return (
     <Pressable
       onPress={onPress}
@@ -203,12 +247,13 @@ function ReportCard({ report, onPress }: { report: Report; onPress: () => void }
         flexDirection: 'row',
         alignItems: 'center',
         padding: 12,
-        backgroundColor: '#1A1A1A',
+        backgroundColor: colors.card,
         borderRadius: 16,
         borderWidth: 1,
-        borderColor: '#E8E8E8',
+        borderColor: colors.border,
         marginBottom: 10,
       }}
+      className="active:opacity-85"
     >
       {/* Image / Icon preview */}
       <View
@@ -217,7 +262,7 @@ function ReportCard({ report, onPress }: { report: Report; onPress: () => void }
           height: 60,
           borderRadius: 12,
           overflow: 'hidden',
-          backgroundColor: '#1A1A1A',
+          backgroundColor: colors.border,
           marginRight: 12,
           justifyContent: 'center',
           alignItems: 'center',
@@ -231,7 +276,7 @@ function ReportCard({ report, onPress }: { report: Report; onPress: () => void }
               width: 36,
               height: 36,
               borderRadius: 10,
-              backgroundColor: (report.categoryColor ?? '#0D8A72') + '22',
+              backgroundColor: (report.categoryColor ?? colors.primary) + '22',
               alignItems: 'center',
               justifyContent: 'center',
             }}
@@ -243,23 +288,23 @@ function ReportCard({ report, onPress }: { report: Report; onPress: () => void }
 
       {/* Title & Details */}
       <View style={{ flex: 1, marginRight: 8 }}>
-        <Text style={{ color: '#1A1A1A', fontWeight: 'bold', fontSize: 14 }} numberOfLines={1}>
+        <Text style={{ color: colors.text, fontWeight: 'bold', fontSize: 14 }} numberOfLines={1}>
           {report.title}
         </Text>
-        <Text style={{ color: '#6B7280', fontSize: 11, marginTop: 2 }}>
+        <Text style={{ color: colors.textSecondary, fontSize: 11, marginTop: 2 }}>
           {report.location?.address ?? 'Sri Lanka'}
         </Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-            <Ionicons name="time-outline" size={12} color="#6B7280" />
-            <Text style={{ color: '#6B7280', fontSize: 11 }}>
+            <Ionicons name="time-outline" size={12} color={colors.textSecondary} />
+            <Text style={{ color: colors.textSecondary, fontSize: 11 }}>
               {formatDate(report.createdAt)}
             </Text>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-            <Ionicons name="arrow-up-circle-outline" size={12} color="#6B7280" />
-            <Text style={{ color: '#6B7280', fontSize: 11 }}>
-              {report.upvoteCount ?? 0} upvotes
+            <Ionicons name="arrow-up-circle-outline" size={12} color={colors.textSecondary} />
+            <Text style={{ color: colors.textSecondary, fontSize: 11 }}>
+              {report.upvoteCount} upvotes
             </Text>
           </View>
         </View>
@@ -270,7 +315,7 @@ function ReportCard({ report, onPress }: { report: Report; onPress: () => void }
         <View style={{ backgroundColor: cfg.bg, borderWidth: 1, borderColor: cfg.color, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12 }}>
           <Text style={{ color: cfg.color, fontSize: 10, fontWeight: 'bold' }}>{cfg.label}</Text>
         </View>
-        <Ionicons name="chevron-forward" size={16} color="#E8E8E8" />
+        <Ionicons name="chevron-forward" size={16} color={colors.border} />
       </View>
     </Pressable>
   );
@@ -283,6 +328,7 @@ export default function UpvotedReportsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user } = useAuth();
+  const { colors, isDark } = useTheme();
 
   const [reports, setReports]               = useState<Report[]>([]);
   const [loading, setLoading]               = useState(true);
@@ -321,7 +367,6 @@ export default function UpvotedReportsScreen() {
     );
 
     const unsub = onSnapshot(q, async (snap) => {
-      // Extract unique report IDs from parent paths
       const reportIds = [...new Set(
         snap.docs
           .map((d) => d.ref.parent?.parent?.id)
@@ -334,7 +379,6 @@ export default function UpvotedReportsScreen() {
         return;
       }
 
-      // Fetch each report individually (handles any list size)
       try {
         const fetched = await Promise.all(
           reportIds.map(async (id) => {
@@ -399,61 +443,62 @@ export default function UpvotedReportsScreen() {
         if (reportDate > end) return false;
       }
     }
-
     return true;
   });
 
   const visibleReports = filtered.slice(0, visibleCount);
-  const hasMore = visibleCount < filtered.length;
+  const hasMore = filtered.length > visibleCount;
 
   return (
-    <LinearGradient colors={['#F5F5F5', '#FAFAFA', '#F5F5F5']} style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       <ScrollView
+        contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 60 }}
       >
         {/* ── Header ── */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, marginBottom: 20, gap: 12 }}>
+        <View className="flex-row items-center gap-3 px-5 mb-5">
           <Pressable
             onPress={() => router.back()}
             style={({ pressed }) => ({
               width: 40, height: 40, borderRadius: 20,
-              backgroundColor: pressed ? '#FFFFFF' : '#E8E8E8',
+              backgroundColor: pressed ? colors.card : colors.border,
               alignItems: 'center', justifyContent: 'center',
             })}
           >
-            <Ionicons name="arrow-back" size={20} color="#0D8A72" />
+            <Ionicons name="arrow-back" size={20} color={colors.primary} />
           </Pressable>
-          <View style={{ flex: 1 }}>
-            <Text style={{ color: '#1A1A1A', fontSize: 20, fontWeight: '800' }}>My Upvoted Reports</Text>
-            <Text style={{ color: '#6B7280', fontSize: 12, marginTop: 2 }}>{"Issues you've supported in your community"}</Text>
+          <View className="flex-1">
+            <Text className="text-xl font-bold tracking-tight" style={{ color: colors.text }}>Upvoted Issues</Text>
+            <Text className="text-xs mt-0.5" style={{ color: colors.textSecondary }}>Track issues supported by you</Text>
           </View>
-          <View style={{ backgroundColor: '#E8E8E8', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12 }}>
-            <Text style={{ color: '#0D8A72', fontSize: 12, fontWeight: '700' }}>{filtered.length}</Text>
+          <View style={{ backgroundColor: colors.border, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12 }}>
+            <Text style={{ color: colors.primary, fontSize: 11, fontWeight: '700' }}>{filtered.length} Upvoted</Text>
           </View>
         </View>
 
-        {/* ── Category Filter ── */}
-        <View style={{ marginBottom: 12 }}>
-          <Text style={{ color: '#6B7280', fontSize: 10, fontWeight: '700', letterSpacing: 1.5, textTransform: 'uppercase', paddingHorizontal: 20, marginBottom: 8 }}>
-            Category
-          </Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}>
+        {/* ── Category Filters ── */}
+        <View className="mb-4">
+          <Text className="text-xs font-bold px-5 mb-2 uppercase tracking-wide" style={{ color: colors.textSecondary }}>Categories</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}
+          >
             {CATEGORIES.map((cat) => {
               const isActive = activeCategory === cat.id;
               return (
                 <Pressable
                   key={cat.id}
                   onPress={() => setActiveCategory(cat.id)}
+                  className="flex-row items-center px-4 py-2 rounded-full gap-1.5"
                   style={{
-                    flexDirection: 'row', alignItems: 'center', gap: 6,
-                    paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20,
-                    backgroundColor: isActive ? '#0D8A72' : '#FFFFFF',
-                    borderWidth: 1, borderColor: isActive ? '#0D8A72' : '#E8E8E8',
+                    backgroundColor: isActive ? colors.primary : colors.card,
+                    borderWidth: 1,
+                    borderColor: isActive ? colors.primary : colors.border,
                   }}
                 >
-                  <Ionicons name={cat.icon as any} size={13} color={isActive ? '#F5F5F5' : cat.color} />
-                  <Text style={{ color: isActive ? '#F5F5F5' : '#6B7280', fontSize: 12, fontWeight: '600' }}>
+                  <Ionicons name={cat.icon as any} size={14} color={isActive ? '#FFFFFF' : cat.color} />
+                  <Text className="text-xs font-semibold" style={{ color: isActive ? '#FFFFFF' : colors.textSecondary }}>
                     {cat.label}
                   </Text>
                 </Pressable>
@@ -462,50 +507,58 @@ export default function UpvotedReportsScreen() {
           </ScrollView>
         </View>
 
-        {/* ── Status Filter ── */}
-        <View style={{ marginBottom: 16 }}>
-          <Text style={{ color: '#6B7280', fontSize: 10, fontWeight: '700', letterSpacing: 1.5, textTransform: 'uppercase', paddingHorizontal: 20, marginBottom: 8 }}>
-            Status
-          </Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}>
-            {STATUS_FILTERS.map((sf) => {
-              const isActive = activeStatus === sf;
+        {/* ── Status Filters ── */}
+        <View className="mb-4">
+          <Text className="text-xs font-bold px-5 mb-2 uppercase tracking-wide" style={{ color: colors.textSecondary }}>Status</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}
+          >
+            {STATUS_FILTERS.map((s) => {
+              const isActive = activeStatus === s;
               return (
                 <Pressable
-                  key={sf}
-                  onPress={() => setActiveStatus(sf)}
+                  key={s}
+                  onPress={() => setActiveStatus(s)}
+                  className="px-4 py-2 rounded-full"
                   style={{
-                    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
-                    backgroundColor: isActive ? '#0D8A72' : '#FFFFFF',
-                    borderWidth: 1, borderColor: isActive ? '#0D8A72' : '#E8E8E8',
+                    backgroundColor: isActive ? colors.primary : colors.card,
+                    borderWidth: 1,
+                    borderColor: isActive ? colors.primary : colors.border,
                   }}
                 >
-                  <Text style={{ color: isActive ? '#F5F5F5' : '#6B7280', fontSize: 12, fontWeight: '600' }}>{sf}</Text>
+                  <Text className="text-xs font-semibold" style={{ color: isActive ? '#FFFFFF' : colors.textSecondary }}>
+                    {s}
+                  </Text>
                 </Pressable>
               );
             })}
           </ScrollView>
         </View>
 
-        {/* ── Date Filter ── */}
-        <View style={{ marginBottom: 16 }}>
-          <Text style={{ color: '#6B7280', fontSize: 10, fontWeight: '700', letterSpacing: 1.5, textTransform: 'uppercase', paddingHorizontal: 20, marginBottom: 8 }}>
-            Date Filter
-          </Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}>
+        {/* ── Date Filters ── */}
+        <View className="mb-4">
+          <Text className="text-xs font-bold px-5 mb-2 uppercase tracking-wide" style={{ color: colors.textSecondary }}>Date</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}
+          >
             {DATE_FILTERS.map((df) => {
               const isActive = activeDateFilter === df.id;
               return (
                 <Pressable
                   key={df.id}
                   onPress={() => setActiveDateFilter(df.id)}
+                  className="px-4 py-2 rounded-full"
                   style={{
-                    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
-                    backgroundColor: isActive ? '#0D8A72' : '#FFFFFF',
-                    borderWidth: 1, borderColor: isActive ? '#0D8A72' : '#E8E8E8',
+                    backgroundColor: isActive ? colors.primary : colors.card,
+                    borderWidth: 1,
+                    borderColor: isActive ? colors.primary : colors.border,
                   }}
                 >
-                  <Text style={{ color: isActive ? '#F5F5F5' : '#6B7280', fontSize: 12, fontWeight: '600' }}>
+                  <Text className="text-xs font-semibold" style={{ color: isActive ? '#FFFFFF' : colors.textSecondary }}>
                     {df.label}
                   </Text>
                 </Pressable>
@@ -514,84 +567,78 @@ export default function UpvotedReportsScreen() {
           </ScrollView>
         </View>
 
-        {/* ── Custom Date Range Picker ── */}
+        {/* ── Custom Range Inputs ── */}
         {activeDateFilter === 'custom' && (
-          <View style={{ marginHorizontal: 20, marginBottom: 16, padding: 16, borderRadius: 18, backgroundColor: '#1A1A1A', borderWidth: 1, borderColor: '#E8E8E8' }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <Text style={{ color: '#1A1A1A', fontSize: 10, fontWeight: '700', letterSpacing: 1.5, textTransform: 'uppercase' }}>Select Date Range</Text>
+          <View style={{ marginHorizontal: 20, marginBottom: 16, padding: 16, borderRadius: 18, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
+            <View className="flex-row justify-between items-center mb-3">
+              <Text className="text-xs font-bold uppercase tracking-wide" style={{ color: colors.text }}>Select Date Range</Text>
               {(customStartDate || customEndDate) && (
-                <Pressable onPress={clearCustomRange} style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}>
-                  <Text style={{ color: '#DC2626', fontSize: 12, fontWeight: '600' }}>Reset</Text>
+                <Pressable onPress={clearCustomRange} className="active:opacity-75">
+                  <Text className="text-xs font-semibold" style={{ color: colors.dangerText }}>Reset</Text>
                 </Pressable>
               )}
             </View>
-            <View style={{ flexDirection: 'row', gap: 12 }}>
+            <View className="flex-row gap-3">
               <Pressable
                 onPress={() => setShowStartPicker(true)}
-                style={({ pressed }) => ({
-                  flex: 1, padding: 12, borderRadius: 12, backgroundColor: '#1A1A1A', borderWidth: 1, borderColor: '#E8E8E8',
-                  flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', opacity: pressed ? 0.75 : 1
-                })}
+                style={{
+                  flex: 1, padding: 12, borderRadius: 12, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border,
+                  flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+                }}
+                className="active:opacity-75"
               >
                 <View>
-                  <Text style={{ color: '#6B7280', fontSize: 10, fontWeight: '700', textTransform: 'uppercase' }}>Start Date</Text>
-                  <Text style={{ color: '#1A1A1A', fontSize: 14, fontWeight: '600', marginTop: 2 }}>
+                  <Text className="text-[10px] uppercase font-bold" style={{ color: colors.textMuted }}>Start Date</Text>
+                  <Text className="text-sm font-semibold mt-0.5" style={{ color: colors.text }}>
                     {customStartDate ? customStartDate.toLocaleDateString('en-GB') : 'Select...'}
                   </Text>
                 </View>
-                <Ionicons name="calendar-outline" size={16} color="#0D8A72" />
+                <Ionicons name="calendar-outline" size={16} color={colors.primary} />
               </Pressable>
 
               <Pressable
                 onPress={() => setShowEndPicker(true)}
-                style={({ pressed }) => ({
-                  flex: 1, padding: 12, borderRadius: 12, backgroundColor: '#1A1A1A', borderWidth: 1, borderColor: '#E8E8E8',
-                  flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', opacity: pressed ? 0.75 : 1
-                })}
+                style={{
+                  flex: 1, padding: 12, borderRadius: 12, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border,
+                  flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+                }}
+                className="active:opacity-75"
               >
                 <View>
-                  <Text style={{ color: '#6B7280', fontSize: 10, fontWeight: '700', textTransform: 'uppercase' }}>End Date</Text>
-                  <Text style={{ color: '#1A1A1A', fontSize: 14, fontWeight: '600', marginTop: 2 }}>
+                  <Text className="text-[10px] uppercase font-bold" style={{ color: colors.textMuted }}>End Date</Text>
+                  <Text className="text-sm font-semibold mt-0.5" style={{ color: colors.text }}>
                     {customEndDate ? customEndDate.toLocaleDateString('en-GB') : 'Select...'}
                   </Text>
                 </View>
-                <Ionicons name="calendar-outline" size={16} color="#0D8A72" />
+                <Ionicons name="calendar-outline" size={16} color={colors.primary} />
               </Pressable>
             </View>
           </View>
         )}
 
-        {/* ── Report List ── */}
-        <View style={{ paddingHorizontal: 20 }}>
+        {/* ── Main List ── */}
+        <View className="px-5 mt-2">
           {loading ? (
-            <View style={{ alignItems: 'center', paddingVertical: 60 }}>
-              <ActivityIndicator color="#0D8A72" size="large" />
-              <Text style={{ color: '#6B7280', marginTop: 12, fontSize: 13 }}>Loading your upvoted reports…</Text>
+            <View className="items-center py-16">
+              <ActivityIndicator color={colors.primary} size="large" />
+              <Text className="mt-4 text-sm" style={{ color: colors.textMuted }}>Loading upvoted reports…</Text>
             </View>
           ) : filtered.length === 0 ? (
-            <View style={{
-              alignItems: 'center', paddingVertical: 50,
-              backgroundColor: '#1A1A1A', borderRadius: 24, padding: 30,
-              borderWidth: 1, borderColor: '#E8E8E8',
-            }}>
-              <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: '#1A1A1A', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
-                <Ionicons name="arrow-up-circle-outline" size={32} color="#0D8A72" />
+            <View style={{ backgroundColor: colors.card, borderColor: colors.border }} className="items-center py-16 border rounded-3xl p-6">
+              <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: colors.border, alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
+                <Ionicons name="arrow-up-circle-outline" size={32} color={colors.primary} />
               </View>
-              <Text style={{ color: '#1A1A1A', fontWeight: '700', fontSize: 15, textAlign: 'center' }}>
-                {reports.length === 0 ? 'No upvoted reports yet' : 'No matches found'}
-              </Text>
-              <Text style={{ color: '#6B7280', fontSize: 12, textAlign: 'center', marginTop: 6, lineHeight: 18 }}>
-                {reports.length === 0
-                  ? 'Tap the upvote button on any nearby issue to support it.'
-                  : 'Try changing your category or status filter.'}
+              <Text className="font-bold text-base" style={{ color: colors.text }}>No upvoted reports</Text>
+              <Text className="text-sm text-center mt-1 leading-5" style={{ color: colors.textMuted }}>
+                Issues you support or upvote will be shown here. Use filters to adjust search.
               </Text>
             </View>
           ) : (
             <>
-              {/* Results count */}
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <Text style={{ color: '#6B7280', fontSize: 12 }}>
-                  Showing <Text style={{ color: '#0D8A72', fontWeight: 'bold' }}>{visibleReports.length}</Text> of <Text style={{ color: '#1A1A1A', fontWeight: '600' }}>{filtered.length}</Text> reports
+              {/* Results count text */}
+              <View className="flex-row justify-between items-center mb-3">
+                <Text className="text-xs" style={{ color: colors.textMuted }}>
+                  Showing <Text className="font-bold" style={{ color: colors.primary }}>{visibleReports.length}</Text> of <Text className="font-semibold" style={{ color: colors.text }}>{filtered.length}</Text> reports
                 </Text>
               </View>
 
@@ -607,16 +654,12 @@ export default function UpvotedReportsScreen() {
               {hasMore && (
                 <Pressable
                   onPress={() => setVisibleCount((c) => c + LOAD_MORE_SIZE)}
-                  style={({ pressed }) => ({
-                    marginTop: 8, marginBottom: 16, paddingVertical: 16, borderRadius: 18,
-                    alignItems: 'center', justifyContent: 'center',
-                    borderWidth: 1, borderColor: '#E8E8E8', backgroundColor: '#1A1A1A',
-                    opacity: pressed ? 0.75 : 1
-                  })}
+                  style={{ borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card }}
+                  className="mt-2 mb-4 py-4 rounded-2xl items-center justify-center active:opacity-75"
                 >
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <Ionicons name="chevron-down-circle-outline" size={20} color="#0D8A72" />
-                    <Text style={{ color: '#0D8A72', fontWeight: 'bold', fontSize: 14 }}>
+                  <View className="flex-row items-center gap-2">
+                    <Ionicons name="chevron-down-circle-outline" size={20} color={colors.primary} />
+                    <Text className="font-bold text-sm" style={{ color: colors.primary }}>
                       Load More ({Math.min(LOAD_MORE_SIZE, filtered.length - visibleCount)} more)
                     </Text>
                   </View>
@@ -625,8 +668,8 @@ export default function UpvotedReportsScreen() {
 
               {/* End indicator */}
               {!hasMore && filtered.length > INITIAL_PAGE_SIZE && (
-                <View style={{ alignItems: 'center', paddingVertical: 16 }}>
-                  <Text style={{ color: '#9CA3AF', fontSize: 12 }}>All {filtered.length} reports shown</Text>
+                <View className="items-center py-4">
+                  <Text className="text-xs" style={{ color: colors.textMuted }}>All {filtered.length} reports shown</Text>
                 </View>
               )}
             </>
@@ -634,7 +677,7 @@ export default function UpvotedReportsScreen() {
         </View>
       </ScrollView>
 
-      {/* Calendar Modals */}
+      {/* ── Start Date Picker Modal ── */}
       {showStartPicker && (
         <CalendarModal
           title="Select Start Date"
@@ -643,6 +686,8 @@ export default function UpvotedReportsScreen() {
           onClose={() => setShowStartPicker(false)}
         />
       )}
+
+      {/* ── End Date Picker Modal ── */}
       {showEndPicker && (
         <CalendarModal
           title="Select End Date"
@@ -656,17 +701,16 @@ export default function UpvotedReportsScreen() {
         reportId={selectedReportId}
         onClose={() => setSelectedReportId(null)}
       />
-    </LinearGradient>
+    </View>
   );
 }
 
 // ─────────────────────────────────────────────
-// Calendar Styles
+// Calendar & Modals Custom Styling
 // ─────────────────────────────────────────────
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
@@ -674,15 +718,12 @@ const styles = StyleSheet.create({
   calendarContainer: {
     width: '100%',
     maxWidth: 340,
-    backgroundColor: '#1A1A1A',
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: '#E8E8E8',
     padding: 20,
     alignItems: 'center',
   },
   calendarTitle: {
-    color: '#1A1A1A',
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 16,
@@ -694,8 +735,13 @@ const styles = StyleSheet.create({
     width: '100%',
     marginBottom: 16,
   },
-  arrowButton: { padding: 8 },
-  monthYearText: { color: '#1A1A1A', fontSize: 16, fontWeight: '600' },
+  arrowButton: {
+    padding: 8,
+  },
+  monthYearText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
   weekdaysRow: {
     flexDirection: 'row',
     width: '100%',
@@ -703,13 +749,16 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   weekdayText: {
-    color: '#6B7280',
     width: '14.28%',
     textAlign: 'center',
     fontSize: 12,
     fontWeight: '600',
   },
-  daysGrid: { flexDirection: 'row', flexWrap: 'wrap', width: '100%' },
+  daysGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    width: '100%',
+  },
   dayCell: {
     width: '14.28%',
     aspectRatio: 1,
@@ -718,16 +767,24 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginVertical: 2,
   },
-  selectedDayCell: { backgroundColor: '#0D8A72' },
-  dayText: { color: '#4A4A4A', fontSize: 14 },
-  selectedDayText: { color: '#1A1A1A', fontWeight: 'bold' },
+  selectedDayCell: {
+    // dynamically set in component
+  },
+  dayText: {
+    fontSize: 14,
+  },
+  selectedDayText: {
+    fontWeight: 'bold',
+  },
   closeCalendarButton: {
     marginTop: 16,
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E8E8E8',
   },
-  closeCalendarText: { color: '#6B7280', fontWeight: '600', fontSize: 14 },
+  closeCalendarText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
 });

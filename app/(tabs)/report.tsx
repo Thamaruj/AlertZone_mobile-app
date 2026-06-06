@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTheme } from '../../config/themeContext';
 import {
   ActivityIndicator,
   Alert,
@@ -52,7 +53,7 @@ const CATEGORIES = [
 
 type Category = typeof CATEGORIES[number];
 
-const DARK_MAP_STYLE: any[] = [];
+import { DARK_MAP_STYLE } from '../../config/mapStyle';
 
 
 const DEFAULT_COORDS = { latitude: 6.8900, longitude: 79.8950 };
@@ -69,20 +70,21 @@ function CategoryModal({
   onSelect: (cat: Category) => void;
   onClose: () => void;
 }) {
+  const { colors } = useTheme();
   return (
     <Modal visible={visible} animationType="slide" transparent={false}>
-      <View style={{ flex: 1, backgroundColor: '#F5F5F5' }}>
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
         <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
           <View className="px-5 pt-14 pb-2 flex-row items-center gap-3">
             <Pressable onPress={onClose} className="active:opacity-70 p-2">
-              <Ionicons name="arrow-back" size={24} color="#0D8A72" />
+              <Ionicons name="arrow-back" size={24} color={colors.primary} />
             </Pressable>
-            <Text className="text-[#1A1A1A] text-xl font-bold">Select Category</Text>
+            <Text className="text-xl font-bold" style={{ color: colors.text }}>Select Category</Text>
           </View>
 
           <View className="px-5 mt-4 mb-6">
-            <Text className="text-[#1A1A1A] text-xl font-bold mb-1">What type of issue?</Text>
-            <Text className="text-[#6B7280] text-sm leading-5">
+            <Text className="text-xl font-bold mb-1" style={{ color: colors.text }}>What type of issue?</Text>
+            <Text className="text-sm leading-5" style={{ color: colors.textSecondary }}>
               Choose the category that best describes the public concern.
             </Text>
           </View>
@@ -97,23 +99,23 @@ function CategoryModal({
               >
                 <View
                   className="rounded-2xl p-4"
-                  style={{ backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E8E8E8' }}
+                  style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}
                 >
                   <View className="w-10 h-10 rounded-xl items-center justify-center mb-3" style={{ backgroundColor: cat.bg }}>
                     <Ionicons name={cat.icon as any} size={22} color={cat.color} />
                   </View>
-                  <Text className="text-[#1A1A1A] font-bold text-sm mb-1">{cat.label}</Text>
-                  <Text className="text-[#6B7280] text-xs leading-4">{cat.examples}</Text>
+                  <Text className="font-bold text-sm mb-1" style={{ color: colors.text }}>{cat.label}</Text>
+                  <Text className="text-xs leading-4" style={{ color: colors.textSecondary }}>{cat.examples}</Text>
                 </View>
               </Pressable>
             ))}
           </View>
 
           <View className="mx-5 mt-4 p-4 rounded-2xl flex-row gap-3"
-            style={{ backgroundColor: '#F0FDF4', borderWidth: 1, borderColor: '#BBF7D0' }}>
-            <Ionicons name="information-circle-outline" size={20} color="#059669" />
-            <Text className="text-[#4B5563] text-xs flex-1 leading-5">
-              <Text className="text-[#059669] font-semibold">Emergency?</Text> Please call local emergency
+            style={{ backgroundColor: colors.successBg, borderWidth: 1, borderColor: colors.successBorder }}>
+            <Ionicons name="information-circle-outline" size={20} color={colors.successText} />
+            <Text className="text-xs flex-1 leading-5" style={{ color: colors.textSecondary }}>
+              <Text className="font-semibold" style={{ color: colors.successText }}>Emergency?</Text> Please call local emergency
               services immediately. This portal is for non-urgent infrastructure reporting.
             </Text>
           </View>
@@ -151,6 +153,7 @@ function FullScreenMapModal({
   onSelectSuggestion: (feat: any) => void;
   isSuggesting: boolean;
 }) {
+  const { colors, isDark } = useTheme();
   const fullMapRef = useRef<MapView>(null);
 
   // Smoothly animate map when coordinates change
@@ -169,7 +172,7 @@ function FullScreenMapModal({
 
   return (
     <Modal visible={visible} animationType="fade" transparent={false}>
-      <View style={{ flex: 1, backgroundColor: '#F5F5F5' }}>
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
         <MapView
           ref={fullMapRef}
           provider={PROVIDER_GOOGLE}
@@ -180,7 +183,7 @@ function FullScreenMapModal({
             longitudeDelta: 0.005,
           }}
           onLongPress={(e) => onCoordsChange(e.nativeEvent.coordinate)}
-          customMapStyle={DARK_MAP_STYLE}
+          customMapStyle={isDark ? DARK_MAP_STYLE : []}
         >
           <Marker
             coordinate={coords}
@@ -193,36 +196,38 @@ function FullScreenMapModal({
         {/* Floating Search Bar */}
         <View style={{ position: 'absolute', top: 50, left: 20, right: 20, zIndex: 10 }}>
           <View className="flex-row gap-2 mb-2">
-            <Pressable onPress={onClose} className="bg-white p-3 rounded-xl active:opacity-70 shadow-lg border border-[#E8E8E8]">
-              <Ionicons name="arrow-back" size={20} color="#0D8A72" />
+            <Pressable onPress={onClose} className="p-3 rounded-xl active:opacity-70 shadow-lg border" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
+              <Ionicons name="arrow-back" size={20} color={colors.primary} />
             </Pressable>
-            <View className="flex-1 bg-white rounded-xl px-4 flex-row items-center border border-[#E8E8E8] shadow-lg">
-              <Ionicons name="search" size={16} color="#9CA3AF" />
+            <View className="flex-1 rounded-xl px-4 flex-row items-center border shadow-lg" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
+              <Ionicons name="search" size={16} color={colors.textSecondary} />
               <TextInput
                 placeholder="Search location..."
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={colors.textMuted}
                 value={searchQuery}
                 onChangeText={onSearchChange}
                 onSubmitEditing={onSearchSubmit}
-                className="flex-1 text-[#1A1A1A] text-sm ml-2 py-2.5"
+                className="flex-1 text-sm ml-2 py-2.5"
+                style={{ color: colors.text }}
               />
-              {isSuggesting && <ActivityIndicator size="small" color="#0D8A72" />}
+              {isSuggesting && <ActivityIndicator size="small" color={colors.primary} />}
             </View>
           </View>
 
           {/* Suggestions Dropdown */}
           {suggestions.length > 0 && (
-            <View className="bg-white rounded-xl overflow-hidden border border-[#E8E8E8] shadow-2xl">
+            <View className="rounded-xl overflow-hidden border shadow-2xl" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
               {suggestions.map((item, idx) => (
                 <Pressable
                   key={idx}
                   onPress={() => onSelectSuggestion(item)}
-                  className="flex-row items-center p-3 active:bg-[#F3F4F6] border-b border-[#E8E8E8]"
+                  className="flex-row items-center p-3 active:opacity-70 border-b"
+                  style={{ borderColor: colors.border }}
                 >
-                  <Ionicons name="location-outline" size={16} color="#6B7280" className="mr-3" />
+                  <Ionicons name="location-outline" size={16} color={colors.textSecondary} className="mr-3" />
                   <View className="flex-1">
-                    <Text className="text-[#1A1A1A] text-sm font-medium" numberOfLines={1}>{item.properties.name}</Text>
-                    <Text className="text-gray-500 text-[10px]" numberOfLines={1}>
+                    <Text className="text-sm font-medium" style={{ color: colors.text }} numberOfLines={1}>{item.properties.name}</Text>
+                    <Text className="text-[10px]" style={{ color: colors.textSecondary }} numberOfLines={1}>
                       {[item.properties.city, item.properties.country].filter(Boolean).join(', ')}
                     </Text>
                   </View>
@@ -233,17 +238,18 @@ function FullScreenMapModal({
         </View>
 
         <View style={{ position: 'absolute', bottom: 40, left: 20, right: 20 }}>
-          <View className="bg-white p-4 rounded-2xl border border-[#E8E8E8] shadow-xl">
-            <Text className="text-[#1A1A1A] font-bold mb-1">Adjust Location</Text>
-            <Text className="text-[#0D8A72] text-xs font-semibold mb-2" numberOfLines={1}>
+          <View className="p-4 rounded-2xl border shadow-xl" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
+            <Text className="font-bold mb-1" style={{ color: colors.text }}>Adjust Location</Text>
+            <Text className="text-xs font-semibold mb-2" style={{ color: colors.primary }} numberOfLines={1}>
               <Ionicons name="location" size={12} /> {locationAddress}
             </Text>
-            <Text className="text-gray-500 text-[10px] mb-3">
+            <Text className="text-xs mb-3" style={{ color: colors.textSecondary }}>
               Hold/long-press anywhere on the map to drop the pin there.
             </Text>
             <Pressable
               onPress={onClose}
-              className="bg-[#0D8A72] py-3 rounded-xl items-center active:opacity-80"
+              className="py-3 rounded-xl items-center active:opacity-80"
+              style={{ backgroundColor: colors.primary }}
             >
               <Text className="text-white font-bold">Confirm Position</Text>
             </Pressable>
@@ -270,56 +276,58 @@ function SuccessScreen({
   onDashboard: () => void;
   onMyReports: () => void;
 }) {
+  const { colors } = useTheme();
   return (
-    <View style={{ flex: 1, backgroundColor: '#F5F5F5' }}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       <View className="flex-1 items-center justify-center px-8">
         <View className="mb-8">
           <View
             className="w-36 h-36 rounded-full items-center justify-center"
             style={{
-              backgroundColor: '#E6F7F3',
+              backgroundColor: colors.primary + '15',
               borderWidth: 3,
-              borderColor: '#0D8A72',
-              shadowColor: '#0D8A72',
+              borderColor: colors.primary,
+              shadowColor: colors.primary,
               shadowOffset: { width: 0, height: 0 },
               shadowOpacity: 0.2,
               shadowRadius: 20,
               elevation: 10,
             }}
           >
-            <Ionicons name="shield-checkmark" size={72} color="#0D8A72" />
+            <Ionicons name="shield-checkmark" size={72} color={colors.primary} />
           </View>
         </View>
 
-        <Text className="text-[#1A1A1A] text-2xl font-bold text-center mb-3">
+        <Text className="text-2xl font-bold text-center mb-3" style={{ color: colors.text }}>
           Report Submitted{'\n'}Successfully!
         </Text>
-        <Text className="text-[#6B7280] text-sm text-center leading-6 mb-2">
+        <Text className="text-sm text-center leading-6 mb-2" style={{ color: colors.textSecondary }}>
           Your report has been received and is being{'\n'}reviewed by our safety team.
         </Text>
-        <Text className="text-[#0D8A72] font-bold mb-8">Ref ID: {refId}</Text>
+        <Text className="font-bold mb-8" style={{ color: colors.primary }}>Ref ID: {refId}</Text>
 
-        <View className="w-full bg-white rounded-2xl p-4 mb-8"
-          style={{ borderWidth: 1, borderColor: '#E8E8E8' }}>
-          <Text className="text-gray-500 text-[10px] uppercase font-bold tracking-wide mb-2">Reference Details</Text>
-          <Text className="text-[#1A1A1A] text-sm"><Text className="text-[#6B7280]">Type: </Text>{category}</Text>
-          <Text className="text-[#1A1A1A] text-sm mt-1 leading-5">
-            <Text className="text-[#6B7280]">Location: </Text>{locationAddress}
+        <View className="w-full rounded-2xl p-4 mb-8"
+          style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
+          <Text className="text-[10px] uppercase font-bold tracking-wide mb-2" style={{ color: colors.textSecondary }}>Reference Details</Text>
+          <Text className="text-sm" style={{ color: colors.text }}><Text style={{ color: colors.textSecondary }}>Type: </Text>{category}</Text>
+          <Text className="text-sm mt-1 leading-5" style={{ color: colors.text }}>
+            <Text style={{ color: colors.textSecondary }}>Location: </Text>{locationAddress}
           </Text>
         </View>
 
         <Pressable
           onPress={onDashboard}
-          className="w-full bg-[#0D8A72] py-4 rounded-2xl items-center mb-3 active:opacity-80"
+          className="w-full py-4 rounded-2xl items-center mb-3 active:opacity-80"
+          style={{ backgroundColor: colors.primary }}
         >
           <Text className="text-white font-bold text-base">Back to Dashboard</Text>
         </Pressable>
         <Pressable
           onPress={onMyReports}
           className="w-full py-4 rounded-2xl items-center active:opacity-70"
-          style={{ borderWidth: 1, borderColor: '#0D8A72' }}
+          style={{ borderWidth: 1, borderColor: colors.primary, backgroundColor: colors.card }}
         >
-          <Text className="text-[#0D8A72] font-semibold text-base">Track My Report</Text>
+          <Text className="font-semibold text-base" style={{ color: colors.primary }}>Track My Report</Text>
         </Pressable>
       </View>
     </View>
@@ -838,8 +846,10 @@ export default function ReportScreen() {
 
   const canSubmit = !!selectedCategory && description.trim().length > 10;
 
+  const { colors, isDark } = useTheme();
+
   return (
-    <View style={{ flex: 1, backgroundColor: '#F5F5F5' }}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       <KeyboardAvoidingView
         behavior="padding"
         keyboardVerticalOffset={Platform.OS === 'android' ? 30 : 0}
@@ -855,17 +865,17 @@ export default function ReportScreen() {
         >
           {/* ── Header ── */}
           <View className="px-5 mb-5">
-            <Text className="text-[#1A1A1A] text-2xl font-bold">New Report</Text>
-            <Text className="text-[#6B7280] text-sm mt-1">Help make your community safer</Text>
+            <Text className="text-2xl font-bold" style={{ color: colors.text }}>New Report</Text>
+            <Text className="text-sm mt-1" style={{ color: colors.textSecondary }}>Help make your community safer</Text>
           </View>
 
           {/* ── 1. Location ── */}
           <View className="px-5 mb-5">
             <View className="flex-row justify-between items-center mb-3">
-              <Text className="text-[#1A1A1A] font-bold text-base">Location</Text>
+              <Text className="font-bold text-base" style={{ color: colors.text }}>Location</Text>
               <View className="flex-row items-center gap-1.5">
                 {locLoading ? (
-                  <ActivityIndicator size="small" color="#0D8A72" />
+                  <ActivityIndicator size="small" color={colors.primary} />
                 ) : (
                   <>
                     <View className="w-2 h-2 rounded-full" style={{ backgroundColor: gpsGranted ? '#059669' : '#DC2626' }} />
@@ -880,39 +890,42 @@ export default function ReportScreen() {
             {/* Location Search Bar */}
             <View style={{ zIndex: 5 }}>
               <View className="flex-row gap-2 mb-1">
-                <View className="flex-1 bg-white rounded-xl px-4 py-2 flex-row items-center border border-[#E8E8E8]">
-                  <Ionicons name="search" size={16} color="#9CA3AF" />
+                <View className="flex-1 rounded-xl px-4 py-2 flex-row items-center border" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
+                  <Ionicons name="search" size={16} color={colors.textSecondary} />
                   <TextInput
                     placeholder="Search for a location..."
-                    placeholderTextColor="#9CA3AF"
+                    placeholderTextColor={colors.textMuted}
                     value={searchQuery}
                     onChangeText={setSearchQuery}
                     onSubmitEditing={searchLocation}
-                    className="flex-1 text-[#1A1A1A] text-sm ml-2 py-2"
+                    className="flex-1 text-sm ml-2 py-2"
+                    style={{ color: colors.text }}
                   />
-                  {isSuggesting && <ActivityIndicator size="small" color="#0D8A72" />}
+                  {isSuggesting && <ActivityIndicator size="small" color={colors.primary} />}
                 </View>
                 <Pressable
                   onPress={searchLocation}
-                  className="bg-[#E8E8E8] w-12 items-center justify-center rounded-xl active:opacity-70"
+                  className="w-12 items-center justify-center rounded-xl active:opacity-70"
+                  style={{ backgroundColor: colors.border }}
                 >
-                  <Ionicons name="arrow-forward" size={20} color="#0D8A72" />
+                  <Ionicons name="arrow-forward" size={20} color={colors.primary} />
                 </Pressable>
               </View>
 
               {/* Suggestions Dropdown */}
               {suggestions.length > 0 && (
-                <View className="bg-white rounded-xl overflow-hidden border border-[#E8E8E8] mt-1 shadow-2xl">
+                <View className="rounded-xl overflow-hidden border mt-1 shadow-2xl" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
                   {suggestions.map((item, idx) => (
                     <Pressable
                       key={idx}
                       onPress={() => selectSuggestion(item)}
-                      className="flex-row items-center p-3 active:bg-[#F3F4F6] border-b border-[#E8E8E8]"
+                      className="flex-row items-center p-3 active:opacity-70 border-b"
+                      style={{ borderColor: colors.border }}
                     >
-                      <Ionicons name="location-outline" size={16} color="#6B7280" className="mr-3" />
+                      <Ionicons name="location-outline" size={16} color={colors.textSecondary} className="mr-3" />
                       <View className="flex-1">
-                        <Text className="text-[#1A1A1A] text-sm font-medium" numberOfLines={1}>{item.properties.name}</Text>
-                        <Text className="text-gray-500 text-[10px]" numberOfLines={1}>
+                        <Text className="text-sm font-medium" style={{ color: colors.text }} numberOfLines={1}>{item.properties.name}</Text>
+                        <Text className="text-[10px]" style={{ color: colors.textSecondary }} numberOfLines={1}>
                           {[item.properties.city, item.properties.country].filter(Boolean).join(', ')}
                         </Text>
                       </View>
@@ -923,7 +936,7 @@ export default function ReportScreen() {
             </View>
 
             {/* Interactive MapView */}
-            <View className="rounded-2xl overflow-hidden my-3" style={{ height: 200, borderWidth: 1, borderColor: '#E8E8E8' }}>
+            <View className="rounded-2xl overflow-hidden my-3" style={{ height: 200, borderWidth: 1, borderColor: colors.border }}>
               <MapView
                 ref={mapRef}
                 provider={PROVIDER_GOOGLE}
@@ -935,7 +948,7 @@ export default function ReportScreen() {
                   longitudeDelta: 0.005,
                 }}
                 onLongPress={(e) => handleMarkerDragEnd(e.nativeEvent.coordinate)}
-                customMapStyle={DARK_MAP_STYLE}
+                customMapStyle={isDark ? DARK_MAP_STYLE : []}
                 showsUserLocation={gpsGranted}
                 showsMyLocationButton={false}
               >
@@ -951,14 +964,14 @@ export default function ReportScreen() {
               <View className="absolute bottom-3 right-3 gap-2">
                 <Pressable
                   onPress={() => setFullMapVisible(true)}
-                  style={{ backgroundColor: '#FFFFFF', borderRadius: 8, padding: 8 }}
-                  className="active:opacity-80 border border-[#E8E8E8]"
+                  style={{ backgroundColor: colors.card, borderRadius: 8, padding: 8 }}
+                  className="active:opacity-80 border border-transparent"
                 >
-                  <Ionicons name="expand" size={16} color="#0D8A72" />
+                  <Ionicons name="expand" size={16} color={colors.primary} />
                 </Pressable>
                 <Pressable
                   onPress={recenter}
-                  style={{ backgroundColor: '#0D8A72', borderRadius: 8, padding: 8 }}
+                  style={{ backgroundColor: colors.primary, borderRadius: 8, padding: 8 }}
                   className="active:opacity-80 shadow-md"
                 >
                   <Ionicons name="navigate" size={16} color="#FFFFFF" />
@@ -967,35 +980,35 @@ export default function ReportScreen() {
             </View>
 
             {/* Address bar */}
-            <View className="flex-row items-center gap-2 bg-white rounded-xl px-4 py-4"
-              style={{ borderWidth: 1, borderColor: '#E8E8E8' }}>
-              <Ionicons name="location" size={16} color="#0D8A72" />
-              <Text className="text-[#1A1A1A] text-sm flex-1" numberOfLines={2}>{locationAddress}</Text>
+            <View className="flex-row items-center gap-2 rounded-xl px-4 py-4"
+              style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
+              <Ionicons name="location" size={16} color={colors.primary} />
+              <Text className="text-sm flex-1" style={{ color: colors.text }} numberOfLines={2}>{locationAddress}</Text>
             </View>
-            <Text className="text-gray-500 text-[10px] mt-2 ml-1">
+            <Text className="text-xs mt-2 ml-1" style={{ color: colors.textMuted }}>
               * Hold/long-press anywhere on the map to drop the pin there.
             </Text>
           </View>
 
           {/* ── 2. Category ── */}
           <View className="px-5 mb-5">
-            <Text className="text-[#1A1A1A] font-bold text-base mb-3">Category</Text>
+            <Text className="font-bold text-base mb-3" style={{ color: colors.text }}>Category</Text>
             <Pressable onPress={() => setCategoryModalVisible(true)} className="active:opacity-80">
               <View
-                className="flex-row items-center justify-between bg-white rounded-2xl px-4 py-4"
-                style={{ borderWidth: 1, borderColor: selectedCategory ? '#0D8A72' : '#E8E8E8' }}
+                className="flex-row items-center justify-between rounded-2xl px-4 py-4"
+                style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: selectedCategory ? colors.primary : colors.border }}
               >
                 {selectedCategory ? (
                   <View className="flex-row items-center gap-3">
                     <View className="w-8 h-8 rounded-lg items-center justify-center" style={{ backgroundColor: selectedCategory.bg }}>
                       <Ionicons name={selectedCategory.icon as any} size={18} color={selectedCategory.color} />
                     </View>
-                    <Text className="text-[#1A1A1A] font-semibold">{selectedCategory.label}</Text>
+                    <Text className="font-semibold" style={{ color: colors.text }}>{selectedCategory.label}</Text>
                   </View>
                 ) : (
-                  <Text className="text-gray-500">Select Category</Text>
+                  <Text style={{ color: colors.textMuted }}>Select Category</Text>
                 )}
-                <Ionicons name="chevron-forward" size={18} color="#6B7280" />
+                <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
               </View>
             </Pressable>
           </View>
@@ -1003,12 +1016,12 @@ export default function ReportScreen() {
           {/* ── 3. Images ── */}
           <View className="px-5 mb-5">
             <View className="flex-row justify-between items-center mb-3">
-              <Text className="text-[#1A1A1A] font-bold text-base">Add Evidence (Photos)</Text>
-              <Text className="text-gray-500 text-xs">{images.length}/3</Text>
+              <Text className="font-bold text-base" style={{ color: colors.text }}>Add Evidence (Photos)</Text>
+              <Text style={{ color: colors.textSecondary, fontSize: 12 }}>{images.length}/3</Text>
             </View>
             <View className="flex-row gap-3">
               {images.map((uri, index) => (
-                <View key={index} className="w-[30%] aspect-square rounded-xl overflow-hidden border border-[#E8E8E8]">
+                <View key={index} className="w-[30%] aspect-square rounded-xl overflow-hidden border" style={{ borderColor: colors.border }}>
                   <RNImage source={{ uri }} style={{ flex: 1 }} />
                   <Pressable
                     onPress={() => removeImage(index)}
@@ -1021,34 +1034,35 @@ export default function ReportScreen() {
               {images.length < 3 && (
                 <Pressable
                   onPress={pickImages}
-                  className="w-[30%] aspect-square rounded-xl items-center justify-center bg-white border-2 border-dashed border-[#E8E8E8] active:opacity-70"
+                  className="w-[30%] aspect-square rounded-xl items-center justify-center border-2 border-dashed active:opacity-70"
+                  style={{ backgroundColor: colors.card, borderColor: colors.border }}
                 >
-                  <Ionicons name="camera-outline" size={24} color="#6B7280" />
-                  <Text className="text-[#6B7280] text-[10px] mt-1">Add Photo</Text>
+                  <Ionicons name="camera-outline" size={24} color={colors.textSecondary} />
+                  <Text className="text-[10px] mt-1" style={{ color: colors.textSecondary }}>Add Photo</Text>
                 </Pressable>
               )}
             </View>
-            <Text className="text-gray-600 text-[10px] mt-2">Max 3 images. Max 2MB per image. Auto-compression applied.</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 10, marginTop: 8 }}>Max 3 images. Max 2MB per image. Auto-compression applied.</Text>
           </View>
 
           {/* ── 4. Description ── */}
           <View className="px-5 mb-6">
-            <Text className="text-[#1A1A1A] font-bold text-base mb-3">Description</Text>
+            <Text className="font-bold text-base mb-3" style={{ color: colors.text }}>Description</Text>
             <View
-              className="bg-white rounded-2xl px-4 py-3"
-              style={{ borderWidth: 1, borderColor: '#E8E8E8', minHeight: 120 }}
+              className="rounded-2xl px-4 py-3"
+              style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, minHeight: 120 }}
             >
               <TextInput
                 placeholder="Describe the issue in detail…"
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={colors.textMuted}
                 value={description}
                 onChangeText={(t) => setDescription(t.slice(0, 500))}
                 multiline
                 textAlignVertical="top"
-                style={{ color: '#1A1A1A', fontSize: 14, lineHeight: 22, minHeight: 100 }}
+                style={{ color: colors.text, fontSize: 14, lineHeight: 22, minHeight: 100 }}
               />
             </View>
-            <Text className="text-gray-600 text-xs mt-2 text-right">{description.length}/500</Text>
+            <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 8, textAlign: 'right' }}>{description.length}/500</Text>
           </View>
 
           {/* ── Submit ── */}
@@ -1057,18 +1071,18 @@ export default function ReportScreen() {
               onPress={handleSubmit}
               disabled={loading}
               className="py-4 rounded-2xl items-center active:opacity-80"
-              style={{ backgroundColor: (selectedCategory && description.trim().length >= 10) ? '#0D8A72' : '#E8E8E8' }}
+              style={{ backgroundColor: (selectedCategory && description.trim().length >= 10) ? colors.primary : colors.border }}
             >
               {loading ? (
                 <ActivityIndicator color="#FFFFFF" />
               ) : (
-                <Text className="font-bold text-base" style={{ color: canSubmit ? '#FFFFFF' : '#9CA3AF' }}>
+                <Text className="font-bold text-base" style={{ color: canSubmit ? '#FFFFFF' : colors.textMuted }}>
                   Submit Report
                 </Text>
               )}
             </Pressable>
             {!canSubmit && (
-              <Text className="text-gray-600 text-xs text-center mt-2">
+              <Text className="text-xs text-center mt-2" style={{ color: colors.textMuted }}>
                 Select a category and add a description to continue
               </Text>
             )}

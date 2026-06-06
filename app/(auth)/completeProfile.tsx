@@ -21,9 +21,11 @@ import { useAuth } from '../../config/authConfig';
 // Firebase Imports
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
+import { useTheme } from '../../config/themeContext';
 
 export default function CompleteProfileScreen() {
   const router = useRouter();
+  const { colors, isDark } = useTheme();
   const { user, profile, refreshProfile, logout } = useAuth();
 
   // Loading and profile states
@@ -90,8 +92,6 @@ export default function CompleteProfileScreen() {
   }, [user]);
 
   const validatePhone = (phoneNum: string) => {
-    // Simple validation for Sri Lankan phone numbers:
-    // Starts with +94 and has 9 digits, or starts with 0 and has 9 digits (total 10 digits).
     const regex = /^(?:\+94|0)?7[0-9]{8}$/;
     return regex.test(phoneNum.replace(/\s+/g, ''));
   };
@@ -184,15 +184,21 @@ export default function CompleteProfileScreen() {
 
   if (fetchingProfile) {
     return (
-      <LinearGradient colors={['#F5F5F5', '#FAFAFA', '#F5F5F5']} className="flex-1 items-center justify-center">
-        <ActivityIndicator color="#0D8A72" size="large" />
-        <Text className="text-[#6B7280] mt-4 text-center">Loading details...</Text>
+      <LinearGradient
+        colors={[colors.background, colors.card, colors.background]}
+        className="flex-1 items-center justify-center"
+      >
+        <ActivityIndicator color={colors.primary} size="large" />
+        <Text className="mt-4 text-center" style={{ color: colors.textSecondary }}>Loading details...</Text>
       </LinearGradient>
     );
   }
 
   return (
-    <LinearGradient colors={['#F5F5F5', '#FAFAFA', '#F5F5F5']} className="flex-1">
+    <LinearGradient
+      colors={[colors.background, colors.card, colors.background]}
+      className="flex-1"
+    >
       <KeyboardAvoidingView
         behavior="padding"
         keyboardVerticalOffset={Platform.OS === 'android' ? 30 : 0}
@@ -207,8 +213,8 @@ export default function CompleteProfileScreen() {
             {/* Header */}
             <View className="items-center mb-6">
               <Image source={require('../../assets/images/iconAlerZone-Bg-none.png')} className="w-20 h-20" resizeMode="contain" />
-              <Text className="text-[#1A1A1A] text-3xl font-bold mt-4">Complete Profile</Text>
-              <Text className="text-[#6B7280] mt-1 text-center">
+              <Text className="text-3xl font-bold mt-4" style={{ color: colors.text }}>Complete Profile</Text>
+              <Text className="mt-1 text-center" style={{ color: colors.textSecondary }}>
                 Please provide these required details to access the application.
               </Text>
             </View>
@@ -216,19 +222,26 @@ export default function CompleteProfileScreen() {
             {/* Inputs Section */}
             <View className="space-y-4">
               {/* Full Name */}
-              <View className={`bg-[#FFFFFF] border rounded-2xl p-1 flex-row items-center mt-3 ${
-                isNameFocused ? 'border-[#0D8A72]' : 'border-[#E8E8E8]'
-              }`}>
-                <View className="px-4 py-3 border-r border-[#E8E8E8] justify-center items-center">
-                  <Ionicons name="person-outline" size={20} color="#059669" />
+              <View
+                className="border rounded-2xl p-1 flex-row items-center mt-3"
+                style={{
+                  backgroundColor: colors.card,
+                  borderColor: isNameFocused ? colors.primary : colors.border
+                }}
+              >
+                <View
+                  className="px-4 py-3 border-r justify-center items-center"
+                  style={{ borderRightColor: colors.border }}
+                >
+                  <Ionicons name="person-outline" size={20} color={colors.primary} />
                 </View>
                 <View className="ml-3 flex-1">
-                  <Text className="text-[#6B7280] text-[10px] uppercase font-bold">Full Name:</Text>
+                  <Text className="text-[10px] uppercase font-bold" style={{ color: colors.textSecondary }}>Full Name:</Text>
                   <TextInput
                     placeholder="John Doe"
-                    placeholderTextColor="#6B7280"
-                    className="text-[#1A1A1A] text-base p-0 mt-0.5"
-                    style={{ paddingLeft: 0, marginLeft: 0 }}
+                    placeholderTextColor={colors.textSecondary}
+                    className="text-base p-0 mt-0.5"
+                    style={{ color: colors.text, paddingLeft: 0, marginLeft: 0 }}
                     returnKeyType="next"
                     onSubmitEditing={() => phoneRef.current?.focus()}
                     onFocus={() => setIsNameFocused(true)}
@@ -241,20 +254,27 @@ export default function CompleteProfileScreen() {
               </View>
 
               {/* Phone Number */}
-              <View className={`bg-[#FFFFFF] border rounded-2xl p-1 flex-row items-center mt-3 ${
-                isPhoneFocused ? 'border-[#0D8A72]' : 'border-[#E8E8E8]'
-              }`}>
-                <View className="px-4 py-3 border-r border-[#E8E8E8] justify-center items-center">
-                  <Ionicons name="call-outline" size={20} color="#059669" />
+              <View
+                className="border rounded-2xl p-1 flex-row items-center mt-3"
+                style={{
+                  backgroundColor: colors.card,
+                  borderColor: isPhoneFocused ? colors.primary : colors.border
+                }}
+              >
+                <View
+                  className="px-4 py-3 border-r justify-center items-center"
+                  style={{ borderRightColor: colors.border }}
+                >
+                  <Ionicons name="call-outline" size={20} color={colors.primary} />
                 </View>
                 <View className="ml-3 flex-1">
-                  <Text className="text-[#6B7280] text-[10px] uppercase font-bold">Phone Number:</Text>
+                  <Text className="text-[10px] uppercase font-bold" style={{ color: colors.textSecondary }}>Phone Number:</Text>
                   <TextInput
                     ref={phoneRef}
                     placeholder="07XXXXXXXX"
-                    placeholderTextColor="#6B7280"
-                    className="text-[#1A1A1A] text-base p-0 mt-0.5"
-                    style={{ paddingLeft: 0, marginLeft: 0 }}
+                    placeholderTextColor={colors.textSecondary}
+                    className="text-base p-0 mt-0.5"
+                    style={{ color: colors.text, paddingLeft: 0, marginLeft: 0 }}
                     keyboardType="phone-pad"
                     returnKeyType="next"
                     onSubmitEditing={() => nicRef.current?.focus()}
@@ -268,20 +288,27 @@ export default function CompleteProfileScreen() {
               </View>
 
               {/* NIC */}
-              <View className={`bg-[#FFFFFF] border rounded-2xl p-1 flex-row items-center mt-3 ${
-                isNicFocused ? 'border-[#0D8A72]' : 'border-[#E8E8E8]'
-              }`}>
-                <View className="px-4 py-3 border-r border-[#E8E8E8] justify-center items-center">
-                  <Ionicons name="card-outline" size={20} color="#059669" />
+              <View
+                className="border rounded-2xl p-1 flex-row items-center mt-3"
+                style={{
+                  backgroundColor: colors.card,
+                  borderColor: isNicFocused ? colors.primary : colors.border
+                }}
+              >
+                <View
+                  className="px-4 py-3 border-r justify-center items-center"
+                  style={{ borderRightColor: colors.border }}
+                >
+                  <Ionicons name="card-outline" size={20} color={colors.primary} />
                 </View>
                 <View className="ml-3 flex-1">
-                  <Text className="text-[#6B7280] text-[10px] uppercase font-bold">NIC Number:</Text>
+                  <Text className="text-[10px] uppercase font-bold" style={{ color: colors.textSecondary }}>NIC Number:</Text>
                   <TextInput
                     ref={nicRef}
                     placeholder="199912345678 or 991234567V"
-                    placeholderTextColor="#6B7280"
-                    className="text-[#1A1A1A] text-base p-0 mt-0.5"
-                    style={{ paddingLeft: 0, marginLeft: 0 }}
+                    placeholderTextColor={colors.textSecondary}
+                    className="text-base p-0 mt-0.5"
+                    style={{ color: colors.text, paddingLeft: 0, marginLeft: 0 }}
                     returnKeyType="done"
                     onFocus={() => setIsNicFocused(true)}
                     onBlur={() => setIsNicFocused(false)}
@@ -296,18 +323,25 @@ export default function CompleteProfileScreen() {
               {/* Province Selector */}
               <Pressable
                 onPress={() => !loading && setProvinceModalVisible(true)}
-                className="bg-[#FFFFFF] border border-[#E8E8E8] rounded-2xl p-2 flex-row items-center mt-3 active:opacity-80"
+                className="border rounded-2xl p-2 flex-row items-center mt-3 active:opacity-80"
+                style={{ backgroundColor: colors.card, borderColor: colors.border }}
               >
-                <View className="px-4 py-3 border-r border-[#E8E8E8] justify-center items-center">
-                  <Ionicons name="map-outline" size={20} color="#059669" />
+                <View
+                  className="px-4 py-3 border-r justify-center items-center"
+                  style={{ borderRightColor: colors.border }}
+                >
+                  <Ionicons name="map-outline" size={20} color={colors.primary} />
                 </View>
                 <View className="ml-3 flex-1">
-                  <Text className="text-[#6B7280] text-[10px] uppercase font-bold">Province:</Text>
-                  <Text className={`text-base mt-0.5 ${province ? 'text-[#1A1A1A]' : 'text-[#6B7280]'}`}>
+                  <Text className="text-[10px] uppercase font-bold" style={{ color: colors.textSecondary }}>Province:</Text>
+                  <Text
+                    className="text-base mt-0.5"
+                    style={{ color: province ? colors.text : colors.textSecondary }}
+                  >
                     {province || 'Select Province'}
                   </Text>
                 </View>
-                <Ionicons name="chevron-down-outline" size={20} color="#059669" style={{ marginRight: 8 }} />
+                <Ionicons name="chevron-down-outline" size={20} color={colors.primary} style={{ marginRight: 8 }} />
               </Pressable>
 
               {/* District Selector */}
@@ -320,18 +354,29 @@ export default function CompleteProfileScreen() {
                   }
                   setDistrictModalVisible(true);
                 }}
-                className={`bg-[#FFFFFF] border border-[#E8E8E8] rounded-2xl p-2 flex-row items-center mt-3 active:opacity-80 ${!province ? 'opacity-50' : ''}`}
+                className="border rounded-2xl p-2 flex-row items-center mt-3 active:opacity-80"
+                style={{
+                  backgroundColor: colors.card,
+                  borderColor: colors.border,
+                  opacity: !province ? 0.5 : 1
+                }}
               >
-                <View className="px-4 py-3 border-r border-[#E8E8E8] justify-center items-center">
-                  <Ionicons name="navigate-outline" size={20} color="#059669" />
+                <View
+                  className="px-4 py-3 border-r justify-center items-center"
+                  style={{ borderRightColor: colors.border }}
+                >
+                  <Ionicons name="navigate-outline" size={20} color={colors.primary} />
                 </View>
                 <View className="ml-3 flex-1">
-                  <Text className="text-[#6B7280] text-[10px] uppercase font-bold">District:</Text>
-                  <Text className={`text-base mt-0.5 ${district ? 'text-[#1A1A1A]' : 'text-[#6B7280]'}`}>
+                  <Text className="text-[10px] uppercase font-bold" style={{ color: colors.textSecondary }}>District:</Text>
+                  <Text
+                    className="text-base mt-0.5"
+                    style={{ color: district ? colors.text : colors.textSecondary }}
+                  >
                     {district || 'Select District'}
                   </Text>
                 </View>
-                <Ionicons name="chevron-down-outline" size={20} color="#059669" style={{ marginRight: 8 }} />
+                <Ionicons name="chevron-down-outline" size={20} color={colors.primary} style={{ marginRight: 8 }} />
               </Pressable>
 
               {/* LGA Selector */}
@@ -344,38 +389,55 @@ export default function CompleteProfileScreen() {
                   }
                   setLgaModalVisible(true);
                 }}
-                className={`bg-[#FFFFFF] border border-[#E8E8E8] rounded-2xl p-2 flex-row items-center mt-3 active:opacity-80 ${!district ? 'opacity-50' : ''}`}
+                className="border rounded-2xl p-2 flex-row items-center mt-3 active:opacity-80"
+                style={{
+                  backgroundColor: colors.card,
+                  borderColor: colors.border,
+                  opacity: !district ? 0.5 : 1
+                }}
               >
-                <View className="px-4 py-3 border-r border-[#E8E8E8] justify-center items-center">
-                  <Ionicons name="business-outline" size={20} color="#059669" />
+                <View
+                  className="px-4 py-3 border-r justify-center items-center"
+                  style={{ borderRightColor: colors.border }}
+                >
+                  <Ionicons name="business-outline" size={20} color={colors.primary} />
                 </View>
                 <View className="ml-3 flex-1">
-                  <Text className="text-[#6B7280] text-[10px] uppercase font-bold">Local Government Authority:</Text>
-                  <Text className={`text-base mt-0.5 ${lga ? 'text-[#1A1A1A]' : 'text-[#6B7280]'}`}>
+                  <Text className="text-[10px] uppercase font-bold" style={{ color: colors.textSecondary }}>Local Government Authority:</Text>
+                  <Text
+                    className="text-base mt-0.5"
+                    style={{ color: lga ? colors.text : colors.textSecondary }}
+                  >
                     {lga || 'Select Local Government'}
                   </Text>
                 </View>
-                <Ionicons name="chevron-down-outline" size={20} color="#059669" style={{ marginRight: 8 }} />
+                <Ionicons name="chevron-down-outline" size={20} color={colors.primary} style={{ marginRight: 8 }} />
               </Pressable>
             </View>
 
             {/* Save Buttons */}
             <View className="mt-8 space-y-3">
               <Pressable
-                className={`p-4 rounded-full shadow-lg items-center active:opacity-80 ${loading ? 'bg-[#0D8A72]/50' : 'bg-[#0D8A72]'}`}
+                className="p-4 rounded-full shadow-lg items-center active:opacity-80"
+                style={{ backgroundColor: loading ? (isDark ? '#4CC2D180' : '#0D8A7280') : colors.primary }}
                 onPress={handleSaveProfile}
                 disabled={loading}
               >
-                {loading ? <ActivityIndicator color="#122D36" /> : <Text className="text-[#122D36] text-center font-bold text-lg">Save Profile</Text>}
+                {loading ? (
+                  <ActivityIndicator color={isDark ? '#122D36' : '#FFFFFF'} />
+                ) : (
+                  <Text className="text-center font-bold text-lg" style={{ color: isDark ? '#122D36' : '#FFFFFF' }}>Save Profile</Text>
+                )}
               </Pressable>
 
               <Pressable
                 onPress={handleLogout}
                 disabled={loading}
-                className="bg-transparent border border-red-500 p-4 rounded-full flex-row justify-center items-center active:opacity-75 mt-3"
+                className="bg-transparent border p-4 rounded-full flex-row justify-center items-center active:opacity-75 mt-3"
+                style={{ borderColor: colors.dangerText }}
               >
-                <Ionicons name="log-out-outline" size={20} color="#EF4444" style={{ marginRight: 6 }} />
-                <Text className="text-red-500 font-bold text-base">Cancel & Log Out</Text>
+                <Ionicons name="log-out-outline" size={20} color={colors.dangerText} style={{ marginRight: 6 }} />
+                <Text className="font-bold text-base" style={{ color: colors.dangerText }}>Cancel & Log Out</Text>
               </Pressable>
             </View>
           </View>

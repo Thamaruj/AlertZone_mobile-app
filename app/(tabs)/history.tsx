@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useTheme } from '../../config/themeContext';
 import {
   View,
   Text,
@@ -127,6 +128,7 @@ interface CalendarProps {
 }
 
 function CalendarModal({ value, onChange, onClose, title }: CalendarProps) {
+  const { colors, isDark } = useTheme();
   const [currentYear, setCurrentYear] = useState(value ? value.getFullYear() : new Date().getFullYear());
   const [currentMonth, setCurrentMonth] = useState(value ? value.getMonth() : new Date().getMonth());
   const [selectedDay, setSelectedDay] = useState<number | null>(value ? value.getDate() : null);
@@ -163,21 +165,21 @@ function CalendarModal({ value, onChange, onClose, title }: CalendarProps) {
 
   return (
     <Modal transparent visible animationType="fade">
-      <View style={styles.modalOverlay}>
-        <View style={styles.calendarContainer}>
-          <Text style={styles.calendarTitle}>{title}</Text>
+      <View style={[styles.modalOverlay, { backgroundColor: colors.modalBackdrop }]}>
+        <View style={[styles.calendarContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Text style={[styles.calendarTitle, { color: colors.text }]}>{title}</Text>
           <View style={styles.calendarHeader}>
             <Pressable onPress={handlePrevMonth} style={styles.arrowButton}>
-              <Ionicons name="chevron-back" size={20} color="#0D8A72" />
+              <Ionicons name="chevron-back" size={20} color={colors.primary} />
             </Pressable>
-            <Text style={styles.monthYearText}>{months[currentMonth]} {currentYear}</Text>
+            <Text style={[styles.monthYearText, { color: colors.text }]}>{months[currentMonth]} {currentYear}</Text>
             <Pressable onPress={handleNextMonth} style={styles.arrowButton}>
-              <Ionicons name="chevron-forward" size={20} color="#0D8A72" />
+              <Ionicons name="chevron-forward" size={20} color={colors.primary} />
             </Pressable>
           </View>
           <View style={styles.weekdaysRow}>
             {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d) => (
-              <Text key={d} style={styles.weekdayText}>{d}</Text>
+              <Text key={d} style={[styles.weekdayText, { color: colors.textMuted }]}>{d}</Text>
             ))}
           </View>
           <View style={styles.daysGrid}>
@@ -188,10 +190,10 @@ function CalendarModal({ value, onChange, onClose, title }: CalendarProps) {
                   key={cell.key}
                   disabled={cell.day === null}
                   onPress={() => cell.day && handleDaySelect(cell.day)}
-                  style={[styles.dayCell, isSelected && styles.selectedDayCell]}
+                  style={[styles.dayCell, isSelected && { backgroundColor: colors.primary }]}
                 >
                   {cell.day && (
-                    <Text style={[styles.dayText, isSelected && styles.selectedDayText]}>
+                    <Text style={[styles.dayText, { color: isSelected ? '#FFFFFF' : colors.text }]}>
                       {cell.day}
                     </Text>
                   )}
@@ -199,8 +201,8 @@ function CalendarModal({ value, onChange, onClose, title }: CalendarProps) {
               );
             })}
           </View>
-          <Pressable onPress={onClose} style={styles.closeCalendarButton}>
-            <Text style={styles.closeCalendarText}>Cancel</Text>
+          <Pressable onPress={onClose} style={[styles.closeCalendarButton, { borderColor: colors.border }]}>
+            <Text style={[styles.closeCalendarText, { color: colors.textSecondary }]}>Cancel</Text>
           </Pressable>
         </View>
       </View>
@@ -212,21 +214,22 @@ function CalendarModal({ value, onChange, onClose, title }: CalendarProps) {
 // Report Detail Modal
 // ─────────────────────────────────────────────
 function ReportDetailModal({ report, onClose }: { report: Report | null; onClose: () => void }) {
+  const { colors } = useTheme();
   if (!report) return null;
   const cfg = STATUS_CONFIG[report.status] ?? STATUS_CONFIG.PENDING;
   const timelineIndex = TIMELINE_STATUSES.indexOf(report.status);
 
   return (
     <Modal visible={!!report} animationType="slide" transparent={false}>
-      <View style={{ flex: 1, backgroundColor: '#F5F5F5' }}>
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
         <ScrollView contentContainerStyle={{ paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
 
           {/* Header */}
-          <View className="px-5 pt-14 pb-4 flex-row items-center gap-3" style={{ backgroundColor: '#FFFFFF' }}>
+          <View className="px-5 pt-14 pb-4 flex-row items-center gap-3" style={{ backgroundColor: colors.card, borderBottomWidth: 1, borderBottomColor: colors.border }}>
             <Pressable onPress={onClose} className="active:opacity-70">
-              <Ionicons name="arrow-back" size={24} color="#1A1A1A" />
+              <Ionicons name="arrow-back" size={24} color={colors.text} />
             </Pressable>
-            <Text style={{ color: '#1A1A1A', fontSize: 18, fontWeight: '700', flex: 1 }}>Report Details</Text>
+            <Text style={{ color: colors.text, fontSize: 18, fontWeight: '700', flex: 1 }}>Report Details</Text>
             <View className="px-3 py-1 rounded-full" style={{ backgroundColor: cfg.bg }}>
               <Text className="text-xs font-bold" style={{ color: cfg.color }}>{cfg.label}</Text>
             </View>
@@ -241,19 +244,19 @@ function ReportDetailModal({ report, onClose }: { report: Report | null; onClose
 
           {/* Title + meta */}
           <View className="px-5 mb-4" style={{ marginTop: report.imageUrls?.[0] ? 0 : 16 }}>
-            <Text style={{ color: '#0D8A72', fontSize: 11, fontWeight: '700', marginBottom: 4 }}>Ref: {report.id}</Text>
-            <Text style={{ color: '#1A1A1A', fontSize: 22, fontWeight: '700' }}>{report.title}</Text>
+            <Text style={{ color: colors.primary, fontSize: 11, fontWeight: '700', marginBottom: 4 }}>Ref: {report.id}</Text>
+            <Text style={{ color: colors.text, fontSize: 22, fontWeight: '700' }}>{report.title}</Text>
             <View className="flex-row items-center mt-2 gap-2">
-              <Ionicons name={report.categoryIcon as any} size={13} color="#9CA3AF" />
-              <Text style={{ color: '#6B7280', fontSize: 12 }}>{formatDate(report.createdAt)}</Text>
+              <Ionicons name={report.categoryIcon as any} size={13} color={colors.textSecondary} />
+              <Text style={{ color: colors.textSecondary, fontSize: 12 }}>{formatDate(report.createdAt)}</Text>
             </View>
           </View>
 
           <View className="px-5 gap-3 mb-4">
 
             {/* Status Timeline */}
-            <View style={{ backgroundColor: '#FFFFFF', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#E8E8E8' }}>
-              <Text style={{ color: '#1A1A1A', fontWeight: '700', marginBottom: 16 }}>Status Timeline</Text>
+            <View style={{ backgroundColor: colors.card, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.border }}>
+              <Text style={{ color: colors.text, fontWeight: '700', marginBottom: 16 }}>Status Timeline</Text>
 
               {report.status === 'REJECTED' ? (
                 <>
@@ -272,12 +275,12 @@ function ReportDetailModal({ report, onClose }: { report: Report | null; onClose
                     );
                   })}
                   <View className="flex-row items-center">
-                    <View className="w-8 h-8 rounded-full items-center justify-center mr-3" style={{ backgroundColor: '#FEE2E2' }}>
-                      <Ionicons name="close-circle-outline" size={16} color="#DC2626" />
+                    <View className="w-8 h-8 rounded-full items-center justify-center mr-3" style={{ backgroundColor: colors.dangerBg }}>
+                      <Ionicons name="close-circle-outline" size={16} color={colors.dangerText} />
                     </View>
                     <View className="flex-1">
-                      <Text style={{ color: '#DC2626', fontWeight: '600', fontSize: 13 }}>Rejected</Text>
-                      <Text style={{ color: '#9CA3AF', fontSize: 12 }}>Current status</Text>
+                      <Text style={{ color: colors.dangerText, fontWeight: '600', fontSize: 13 }}>Rejected</Text>
+                      <Text style={{ color: colors.textMuted, fontSize: 12 }}>Current status</Text>
                     </View>
                     <View className="w-2 h-2 rounded-full bg-[#DC2626]" />
                   </View>
@@ -291,18 +294,18 @@ function ReportDetailModal({ report, onClose }: { report: Report | null; onClose
                     <View key={s} className="flex-row items-center mb-3">
                       <View style={{ alignItems: 'center', marginRight: 12 }}>
                         <View className="w-8 h-8 rounded-full items-center justify-center"
-                          style={{ backgroundColor: done ? sc.bg : '#F5F5F5' }}>
-                          <Ionicons name={sc.icon as any} size={16} color={done ? sc.color : '#D1D5DB'} />
+                          style={{ backgroundColor: done ? sc.bg : colors.background }}>
+                          <Ionicons name={sc.icon as any} size={16} color={done ? sc.color : colors.border} />
                         </View>
                         {i < TIMELINE_STATUSES.length - 1 && (
-                          <View style={{ width: 2, height: 16, marginTop: 2, backgroundColor: done ? sc.color + '40' : '#E8E8E8' }} />
+                          <View style={{ width: 2, height: 16, marginTop: 2, backgroundColor: done ? sc.color + '40' : colors.border }} />
                         )}
                       </View>
                       <View className="flex-1">
-                        <Text className="text-sm font-semibold" style={{ color: done ? sc.color : '#D1D5DB' }}>
+                        <Text className="text-sm font-semibold" style={{ color: done ? sc.color : colors.border }}>
                           {sc.label}
                         </Text>
-                        {isCurrent && <Text style={{ color: '#9CA3AF', fontSize: 12 }}>Current status</Text>}
+                        {isCurrent && <Text style={{ color: colors.textMuted, fontSize: 12 }}>Current status</Text>}
                       </View>
                       {isCurrent && <View className="w-2 h-2 rounded-full" style={{ backgroundColor: sc.color }} />}
                       {done && !isCurrent && <Ionicons name="checkmark" size={14} color={sc.color} />}
@@ -313,28 +316,28 @@ function ReportDetailModal({ report, onClose }: { report: Report | null; onClose
             </View>
 
             {/* Location */}
-            <View style={{ backgroundColor: '#FFFFFF', borderRadius: 16, padding: 16, flexDirection: 'row', alignItems: 'flex-start', gap: 12, borderWidth: 1, borderColor: '#E8E8E8' }}>
-              <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: '#E6F7F3', alignItems: 'center', justifyContent: 'center' }}>
-                <Ionicons name="location-outline" size={16} color="#0D8A72" />
+            <View style={{ backgroundColor: colors.card, borderRadius: 16, padding: 16, flexDirection: 'row', alignItems: 'flex-start', gap: 12, borderWidth: 1, borderColor: colors.border }}>
+              <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: colors.primary + '15', alignItems: 'center', justifyContent: 'center' }}>
+                <Ionicons name="location-outline" size={16} color={colors.primary} />
               </View>
               <View className="flex-1">
-                <Text style={{ color: '#9CA3AF', fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>Location</Text>
-                <Text style={{ color: '#1A1A1A', fontSize: 13, lineHeight: 20 }}>{report.location?.address ?? 'Unknown'}</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>Location</Text>
+                <Text style={{ color: colors.text, fontSize: 13, lineHeight: 20 }}>{report.location?.address ?? 'Unknown'}</Text>
                 {(report.location?.province || report.location?.district || report.location?.localGovernmentArea) && (
-                  <View style={{ marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: '#F0F0F0', gap: 4 }}>
+                  <View style={{ marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: colors.border, gap: 4 }}>
                     {report.location?.province && (
-                      <Text style={{ color: '#4A4A4A', fontSize: 12 }}>
-                        <Text style={{ color: '#9CA3AF', fontWeight: '600' }}>Province: </Text>{report.location.province}
+                      <Text style={{ color: colors.textSecondary, fontSize: 12 }}>
+                        <Text style={{ color: colors.textMuted, fontWeight: '600' }}>Province: </Text>{report.location.province}
                       </Text>
                     )}
                     {report.location?.district && (
-                      <Text style={{ color: '#4A4A4A', fontSize: 12 }}>
-                        <Text style={{ color: '#9CA3AF', fontWeight: '600' }}>District: </Text>{report.location.district}
+                      <Text style={{ color: colors.textSecondary, fontSize: 12 }}>
+                        <Text style={{ color: colors.textMuted, fontWeight: '600' }}>District: </Text>{report.location.district}
                       </Text>
                     )}
                     {report.location?.localGovernmentArea && (
-                      <Text style={{ color: '#4A4A4A', fontSize: 12 }}>
-                        <Text style={{ color: '#9CA3AF', fontWeight: '600' }}>LGA: </Text>{report.location.localGovernmentArea}
+                      <Text style={{ color: colors.textSecondary, fontSize: 12 }}>
+                        <Text style={{ color: colors.textMuted, fontWeight: '600' }}>LGA: </Text>{report.location.localGovernmentArea}
                       </Text>
                     )}
                   </View>
@@ -343,16 +346,16 @@ function ReportDetailModal({ report, onClose }: { report: Report | null; onClose
             </View>
 
             {/* Description */}
-            <View style={{ backgroundColor: '#FFFFFF', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#E8E8E8' }}>
-              <Text style={{ color: '#9CA3AF', fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>Description</Text>
-              <Text style={{ color: '#1A1A1A', fontSize: 13, lineHeight: 22 }}>{report.description}</Text>
+            <View style={{ backgroundColor: colors.card, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.border }}>
+              <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>Description</Text>
+              <Text style={{ color: colors.text, fontSize: 13, lineHeight: 22 }}>{report.description}</Text>
             </View>
 
             {/* Upvotes */}
-            <View style={{ backgroundColor: '#FFFFFF', borderRadius: 16, padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderColor: '#E8E8E8' }}>
+            <View style={{ backgroundColor: colors.card, borderRadius: 16, padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderColor: colors.border }}>
               <View className="flex-row items-center gap-2">
-                <Ionicons name="arrow-up-circle-outline" size={20} color="#0D8A72" />
-                <Text style={{ color: '#1A1A1A', fontWeight: '600' }}>{report.upvoteCount} community upvotes</Text>
+                <Ionicons name="arrow-up-circle-outline" size={20} color={colors.primary} />
+                <Text style={{ color: colors.text, fontWeight: '600' }}>{report.upvoteCount} community upvotes</Text>
               </View>
             </View>
 
@@ -365,20 +368,20 @@ function ReportDetailModal({ report, onClose }: { report: Report | null; onClose
                   params: { lat: report.location.latitude, lng: report.location.longitude, id: report.id }
                 });
               }}
-              style={{ backgroundColor: '#FFFFFF', borderRadius: 16, padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1, borderColor: '#0D8A72' }}
+              style={{ backgroundColor: colors.card, borderRadius: 16, padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1, borderColor: colors.primary }}
               className="active:opacity-70"
             >
-              <Ionicons name="map-outline" size={20} color="#0D8A72" />
-              <Text style={{ color: '#0D8A72', fontWeight: '700' }}>View on Map</Text>
+              <Ionicons name="map-outline" size={20} color={colors.primary} />
+              <Text style={{ color: colors.primary, fontWeight: '700' }}>View on Map</Text>
             </Pressable>
 
             {/* Resolution / Rejection note */}
             {report.resolutionNote && (
-              <View style={{ backgroundColor: '#FFFFFF', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#E8E8E8' }}>
-                <Text style={{ color: '#9CA3AF', fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
+              <View style={{ backgroundColor: colors.card, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.border }}>
+                <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
                   {report.status === 'REJECTED' ? 'Rejection Reason' : 'Resolution Note'}
                 </Text>
-                <Text style={{ color: '#1A1A1A', fontSize: 13, lineHeight: 22 }}>{report.resolutionNote}</Text>
+                <Text style={{ color: colors.text, fontSize: 13, lineHeight: 22 }}>{report.resolutionNote}</Text>
               </View>
             )}
           </View>
@@ -393,6 +396,7 @@ function ReportDetailModal({ report, onClose }: { report: Report | null; onClose
 // Report Card
 // ─────────────────────────────────────────────
 function ReportCard({ report, onPress }: { report: Report; onPress: () => void }) {
+  const { colors } = useTheme();
   const cfg = STATUS_CONFIG[report.status] ?? STATUS_CONFIG.PENDING;
   return (
     <Pressable
@@ -401,10 +405,10 @@ function ReportCard({ report, onPress }: { report: Report; onPress: () => void }
         flexDirection: 'row',
         alignItems: 'center',
         padding: 12,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: colors.card,
         borderRadius: 14,
         borderWidth: 1,
-        borderColor: '#E8E8E8',
+        borderColor: colors.border,
         marginBottom: 10,
       }}
       className="active:opacity-85"
@@ -416,7 +420,7 @@ function ReportCard({ report, onPress }: { report: Report; onPress: () => void }
           height: 60,
           borderRadius: 12,
           overflow: 'hidden',
-          backgroundColor: '#F5F5F5',
+          backgroundColor: colors.background,
           marginRight: 12,
           justifyContent: 'center',
           alignItems: 'center',
@@ -442,22 +446,22 @@ function ReportCard({ report, onPress }: { report: Report; onPress: () => void }
 
       {/* Title & Details */}
       <View style={{ flex: 1, marginRight: 8 }}>
-        <Text style={{ color: '#1A1A1A', fontWeight: 'bold', fontSize: 14 }} numberOfLines={1}>
+        <Text style={{ color: colors.text, fontWeight: 'bold', fontSize: 14 }} numberOfLines={1}>
           {report.title}
         </Text>
-        <Text style={{ color: '#6B7280', fontSize: 11, marginTop: 2 }}>
+        <Text style={{ color: colors.textSecondary, fontSize: 11, marginTop: 2 }}>
           {report.location?.address ?? 'Sri Lanka'}
         </Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-            <Ionicons name="time-outline" size={12} color="#9CA3AF" />
-            <Text style={{ color: '#9CA3AF', fontSize: 11 }}>
+            <Ionicons name="time-outline" size={12} color={colors.textSecondary} />
+            <Text style={{ color: colors.textSecondary, fontSize: 11 }}>
               {formatDate(report.createdAt)}
             </Text>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-            <Ionicons name="arrow-up-circle-outline" size={12} color="#9CA3AF" />
-            <Text style={{ color: '#9CA3AF', fontSize: 11 }}>
+            <Ionicons name="arrow-up-circle-outline" size={12} color={colors.textSecondary} />
+            <Text style={{ color: colors.textSecondary, fontSize: 11 }}>
               {report.upvoteCount ?? 0} upvotes
             </Text>
           </View>
@@ -469,7 +473,7 @@ function ReportCard({ report, onPress }: { report: Report; onPress: () => void }
         <View style={{ backgroundColor: cfg.bg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12 }}>
           <Text style={{ color: cfg.color, fontSize: 10, fontWeight: 'bold' }}>{cfg.label}</Text>
         </View>
-        <Ionicons name="chevron-forward" size={16} color="#D1D5DB" />
+        <Ionicons name="chevron-forward" size={16} color={colors.border} />
       </View>
     </Pressable>
   );
@@ -507,6 +511,7 @@ export default function HistoryScreen() {
   const router = useRouter();
   const { onScroll } = useScrollContext();
   const { user, profile, refreshProfile } = useAuth();
+  const { colors } = useTheme();
   const gamificationBusy = useRef(false);
 
   const [reports, setReports]           = useState<Report[]>([]);
@@ -691,7 +696,7 @@ export default function HistoryScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#F5F5F5' }}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       <ScrollView
         onScroll={onScroll}
         scrollEventThrottle={16}
@@ -706,19 +711,19 @@ export default function HistoryScreen() {
               style={{ width: 28, height: 28 }}
               resizeMode="contain"
             />
-            <Text style={{ color: '#1A1A1A', fontSize: 20, fontWeight: '700', letterSpacing: -0.3 }}>My Reports</Text>
+            <Text style={{ color: colors.text, fontSize: 20, fontWeight: '700', letterSpacing: -0.3 }}>My Reports</Text>
           </View>
           <View className="flex-row items-center gap-2">
             <Pressable
               onPress={() => router.push('/archive' as any)}
-              style={{ backgroundColor: '#FFFFFF', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderColor: '#E8E8E8' }}
+              style={{ backgroundColor: colors.card, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderColor: colors.border }}
               className="active:opacity-75"
             >
-              <Ionicons name="archive-outline" size={14} color="#0D8A72" />
-              <Text style={{ color: '#0D8A72', fontSize: 12, fontWeight: '700' }}>Archive</Text>
+              <Ionicons name="archive-outline" size={14} color={colors.primary} />
+              <Text style={{ color: colors.primary, fontSize: 12, fontWeight: '700' }}>Archive</Text>
             </Pressable>
-            <View style={{ backgroundColor: '#FFFFFF', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1, borderColor: '#E8E8E8' }}>
-              <Text style={{ color: '#6B7280', fontSize: 12, fontWeight: '700' }}>
+            <View style={{ backgroundColor: colors.card, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1, borderColor: colors.border }}>
+              <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '700' }}>
                 {filtered.length}
               </Text>
             </View>
@@ -727,7 +732,7 @@ export default function HistoryScreen() {
 
         {/* ── Status Filter Tabs ── */}
         <View className="mb-1">
-          <Text style={{ color: '#9CA3AF', fontSize: 11, fontWeight: '700', paddingHorizontal: 20, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>Status</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', paddingHorizontal: 20, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>Status</Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -742,17 +747,17 @@ export default function HistoryScreen() {
                   onPress={() => setActiveFilter(tab)}
                   className="flex-row items-center px-4 py-2 rounded-full gap-1.5"
                   style={{
-                    backgroundColor: isActive ? '#0D8A72' : '#FFFFFF',
+                    backgroundColor: isActive ? colors.primary : colors.card,
                     borderWidth: 1,
-                    borderColor: isActive ? '#0D8A72' : '#E8E8E8',
+                    borderColor: isActive ? colors.primary : colors.border,
                   }}
                 >
-                  <Text className="text-sm font-semibold" style={{ color: isActive ? '#FFFFFF' : '#6B7280' }}>
+                  <Text className="text-sm font-semibold" style={{ color: isActive ? '#FFFFFF' : colors.textSecondary }}>
                     {tab}
                   </Text>
                   <View className="px-1.5 py-0.5 rounded-full"
-                    style={{ backgroundColor: isActive ? 'rgba(255,255,255,0.2)' : '#F0F0F0' }}>
-                    <Text className="text-[10px] font-bold" style={{ color: isActive ? '#FFFFFF' : '#0D8A72' }}>
+                    style={{ backgroundColor: isActive ? 'rgba(255,255,255,0.2)' : colors.border }}>
+                    <Text className="text-[10px] font-bold" style={{ color: isActive ? '#FFFFFF' : colors.primary }}>
                       {count}
                     </Text>
                   </View>
@@ -764,7 +769,7 @@ export default function HistoryScreen() {
 
         {/* ── Date Filter ── */}
         <View className="mb-4">
-          <Text style={{ color: '#9CA3AF', fontSize: 11, fontWeight: '700', paddingHorizontal: 20, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>Date Filter</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', paddingHorizontal: 20, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>Date Filter</Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -778,12 +783,12 @@ export default function HistoryScreen() {
                   onPress={() => setActiveDateFilter(df.id)}
                   className="px-4 py-2 rounded-full"
                   style={{
-                    backgroundColor: isActive ? '#0D8A72' : '#FFFFFF',
+                    backgroundColor: isActive ? colors.primary : colors.card,
                     borderWidth: 1,
-                    borderColor: isActive ? '#0D8A72' : '#E8E8E8',
+                    borderColor: isActive ? colors.primary : colors.border,
                   }}
                 >
-                  <Text className="text-xs font-semibold" style={{ color: isActive ? '#FFFFFF' : '#6B7280' }}>
+                  <Text className="text-xs font-semibold" style={{ color: isActive ? '#FFFFFF' : colors.textSecondary }}>
                     {df.label}
                   </Text>
                 </Pressable>
@@ -794,9 +799,9 @@ export default function HistoryScreen() {
 
         {/* ── Custom Date Range Picker ── */}
         {activeDateFilter === 'custom' && (
-          <View style={{ marginHorizontal: 20, marginBottom: 16, padding: 16, borderRadius: 16, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E8E8E8' }}>
+          <View style={{ marginHorizontal: 20, marginBottom: 16, padding: 16, borderRadius: 16, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
             <View className="flex-row justify-between items-center mb-3">
-              <Text style={{ color: '#1A1A1A', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 }}>Select Date Range</Text>
+              <Text style={{ color: colors.text, fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 }}>Select Date Range</Text>
               {(customStartDate || customEndDate) && (
                 <Pressable onPress={clearCustomRange} className="active:opacity-75">
                   <Text style={{ color: '#DC2626', fontSize: 12, fontWeight: '600' }}>Reset</Text>
@@ -806,30 +811,30 @@ export default function HistoryScreen() {
             <View className="flex-row gap-3">
               <Pressable
                 onPress={() => setShowStartPicker(true)}
-                style={{ flex: 1, padding: 12, borderRadius: 12, backgroundColor: '#F5F5F5', borderWidth: 1, borderColor: '#E8E8E8', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
+                style={{ flex: 1, padding: 12, borderRadius: 12, backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
                 className="active:opacity-75"
               >
                 <View>
-                  <Text style={{ color: '#9CA3AF', fontSize: 10, fontWeight: '700', textTransform: 'uppercase' }}>Start Date</Text>
-                  <Text style={{ color: '#1A1A1A', fontSize: 13, fontWeight: '600', marginTop: 2 }}>
+                  <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '700', textTransform: 'uppercase' }}>Start Date</Text>
+                  <Text style={{ color: colors.text, fontSize: 13, fontWeight: '600', marginTop: 2 }}>
                     {customStartDate ? customStartDate.toLocaleDateString('en-GB') : 'Select...'}
                   </Text>
                 </View>
-                <Ionicons name="calendar-outline" size={16} color="#0D8A72" />
+                <Ionicons name="calendar-outline" size={16} color={colors.primary} />
               </Pressable>
 
               <Pressable
                 onPress={() => setShowEndPicker(true)}
-                style={{ flex: 1, padding: 12, borderRadius: 12, backgroundColor: '#F5F5F5', borderWidth: 1, borderColor: '#E8E8E8', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
+                style={{ flex: 1, padding: 12, borderRadius: 12, backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
                 className="active:opacity-75"
               >
                 <View>
-                  <Text style={{ color: '#9CA3AF', fontSize: 10, fontWeight: '700', textTransform: 'uppercase' }}>End Date</Text>
-                  <Text style={{ color: '#1A1A1A', fontSize: 13, fontWeight: '600', marginTop: 2 }}>
+                  <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '700', textTransform: 'uppercase' }}>End Date</Text>
+                  <Text style={{ color: colors.text, fontSize: 13, fontWeight: '600', marginTop: 2 }}>
                     {customEndDate ? customEndDate.toLocaleDateString('en-GB') : 'Select...'}
                   </Text>
                 </View>
-                <Ionicons name="calendar-outline" size={16} color="#0D8A72" />
+                <Ionicons name="calendar-outline" size={16} color={colors.primary} />
               </Pressable>
             </View>
           </View>
@@ -839,18 +844,18 @@ export default function HistoryScreen() {
         <View className="px-5">
           {firestoreLoading ? (
             <View className="items-center py-16">
-              <ActivityIndicator color="#0D8A72" size="large" />
-              <Text style={{ color: '#9CA3AF', marginTop: 16, fontSize: 13 }}>Loading your reports…</Text>
+              <ActivityIndicator color={colors.primary} size="large" />
+              <Text style={{ color: colors.textMuted, marginTop: 16, fontSize: 13 }}>Loading your reports…</Text>
             </View>
           ) : filtered.length === 0 ? (
-            <View style={{ alignItems: 'center', paddingVertical: 48, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E8E8E8', borderRadius: 20, padding: 24 }}>
-              <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: '#F5F5F5', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-                <Ionicons name="document-outline" size={28} color="#D1D5DB" />
+            <View style={{ alignItems: 'center', paddingVertical: 48, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderRadius: 20, padding: 24 }}>
+              <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+                <Ionicons name="document-outline" size={28} color={colors.border} />
               </View>
-              <Text style={{ color: '#1A1A1A', fontWeight: '700', fontSize: 15 }}>
+              <Text style={{ color: colors.text, fontWeight: '700', fontSize: 15 }}>
                 {activeFilter === 'All' ? 'No reports found' : `No ${activeFilter} reports`}
               </Text>
-              <Text style={{ color: '#9CA3AF', fontSize: 13, marginTop: 4, textAlign: 'center', lineHeight: 20 }}>
+              <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 4, textAlign: 'center', lineHeight: 20 }}>
                 {activeFilter === 'All' && activeDateFilter === 'all'
                   ? 'Submit your first report using the + button'
                   : 'Try adjusting your filters'}
@@ -860,8 +865,8 @@ export default function HistoryScreen() {
             <>
               {/* Results count */}
               <View className="flex-row justify-between items-center mb-3">
-                <Text style={{ color: '#9CA3AF', fontSize: 12 }}>
-                  Showing <Text style={{ color: '#0D8A72', fontWeight: '700' }}>{visibleReports.length}</Text> of <Text style={{ color: '#1A1A1A', fontWeight: '600' }}>{filtered.length}</Text> reports
+                <Text style={{ color: colors.textMuted, fontSize: 12 }}>
+                  Showing <Text style={{ color: colors.primary, fontWeight: '700' }}>{visibleReports.length}</Text> of <Text style={{ color: colors.text, fontWeight: '600' }}>{filtered.length}</Text> reports
                 </Text>
               </View>
 
@@ -877,12 +882,12 @@ export default function HistoryScreen() {
               {hasMore && (
                 <Pressable
                   onPress={() => setVisibleCount((c) => c + LOAD_MORE_SIZE)}
-                  style={{ marginTop: 8, marginBottom: 16, paddingVertical: 16, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#E8E8E8', backgroundColor: '#FFFFFF' }}
+                  style={{ marginTop: 8, marginBottom: 16, paddingVertical: 16, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card }}
                   className="active:opacity-75"
                 >
                   <View className="flex-row items-center gap-2">
-                    <Ionicons name="chevron-down-circle-outline" size={20} color="#0D8A72" />
-                    <Text style={{ color: '#0D8A72', fontWeight: '700', fontSize: 13 }}>
+                    <Ionicons name="chevron-down-circle-outline" size={20} color={colors.primary} />
+                    <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 13 }}>
                       Load More ({Math.min(LOAD_MORE_SIZE, filtered.length - visibleCount)} more)
                     </Text>
                   </View>
@@ -892,7 +897,7 @@ export default function HistoryScreen() {
               {/* End indicator */}
               {!hasMore && filtered.length > INITIAL_PAGE_SIZE && (
                 <View className="items-center py-4">
-                  <Text style={{ color: '#D1D5DB', fontSize: 12 }}>All {filtered.length} reports shown</Text>
+                  <Text style={{ color: colors.border, fontSize: 12 }}>All {filtered.length} reports shown</Text>
                 </View>
               )}
             </>
@@ -925,6 +930,8 @@ export default function HistoryScreen() {
     </View>
   );
 }
+
+
 
 // ─────────────────────────────────────────────
 // Calendar Styles
