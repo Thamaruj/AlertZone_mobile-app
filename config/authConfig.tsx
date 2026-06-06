@@ -123,6 +123,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Logout
   const logout = async () => {
+    try {
+      await AsyncStorage.setItem('justLoggedOut', 'true');
+    } catch (e) {
+      console.error('Error setting justLoggedOut flag:', e);
+    }
     await signOut(auth);
     setProfile(null);
     await AsyncStorage.removeItem('cachedProfile');
@@ -163,6 +168,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               console.log('🔄 Session expired: password changed on another device.');
               await AsyncStorage.removeItem('lastPasswordChangeLocal');
               await AsyncStorage.removeItem('cachedProfile');
+              try {
+                await AsyncStorage.setItem('justLoggedOut', 'true');
+              } catch (e) {
+                console.error('Error setting justLoggedOut flag during password mismatch:', e);
+              }
               await signOut(auth);
               setProfile(null);
               Toast.show({

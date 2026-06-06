@@ -4,7 +4,6 @@ import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Image,
   KeyboardAvoidingView,
   Modal,
@@ -54,7 +53,7 @@ export default function LoginScreen() {
             setRememberMe(true);
             AsyncStorage.setItem('rememberMeEmail', data.email);
           }
-        } catch (e) {
+        } catch {
           setEmail(json);
           setRememberMe(true);
           AsyncStorage.setItem('rememberMeEmail', json);
@@ -85,12 +84,26 @@ export default function LoginScreen() {
       const storedCreds = await SecureStore.getItemAsync('biometricCredentials');
       if (storedCreds) {
         setHasBiometricSetup(true);
+
+        // Skip automatic prompt if the user has just logged out or session expired
+        try {
+          const justLoggedOut = await AsyncStorage.getItem('justLoggedOut');
+          if (justLoggedOut === 'true') {
+            await AsyncStorage.removeItem('justLoggedOut');
+            console.log('Skipping automatic biometric prompt as user just logged out/session expired.');
+            return;
+          }
+        } catch (e) {
+          console.error('Error handling justLoggedOut flag in loginScreen:', e);
+        }
+
         // Automatically prompt biometrics if it was previously configured
         setTimeout(() => {
           handleBiometricAuth();
         }, 800);
       }
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
 
@@ -423,7 +436,7 @@ export default function LoginScreen() {
 
             {/* 5. Footer */}
             <View className="flex-row justify-center mt-10">
-              <Text className="text-gray-400">Don't have an account? </Text>
+              <Text className="text-gray-400">Don&apos;t have an account? </Text>
               <Pressable onPress={() => router.push("/(auth)/signupScreen")} className="active:opacity-70">
                 <Text className="text-[#4CC2D1] font-bold">Create Account</Text>
               </Pressable>

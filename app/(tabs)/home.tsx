@@ -5,9 +5,8 @@ import {
   ScrollView,
   Pressable,
   Image,
-  FlatList,
-  ActivityIndicator,
   RefreshControl,
+  Modal,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -36,6 +35,7 @@ interface ReportPin {
   image?: string;
   createdAt: any;
   distance?: number;
+  upvoteCount?: number;
 }
 
 
@@ -120,6 +120,91 @@ function NearbyCard({ item, onPress }: { item: ReportPin; onPress: () => void })
             <Text className="text-gray-500 text-xs ml-1" numberOfLines={1}>{item.distance ? formatDistance(item.distance) : 'Nearby'}</Text>
           </View>
         </View>
+      </View>
+    </Pressable>
+  );
+}
+
+function NearbyListRow({ item, onPress }: { item: ReportPin; onPress: () => void }) {
+  const statusColor = STATUS_COLOR[item.status] || '#F59E0B';
+  const statusBg = statusColor + '1e';
+  
+  return (
+    <Pressable
+      onPress={onPress}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 12,
+        backgroundColor: '#111E27',
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: '#1E3347',
+        marginBottom: 10,
+      }}
+      className="active:opacity-85"
+    >
+      {/* Image / Icon preview */}
+      <View
+        style={{
+          width: 60,
+          height: 60,
+          borderRadius: 12,
+          overflow: 'hidden',
+          backgroundColor: '#0D1F2D',
+          marginRight: 12,
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        {item.image ? (
+          <Image source={{ uri: item.image }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+        ) : (
+          <View
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 10,
+              backgroundColor: item.categoryColor + '22',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Ionicons name={item.categoryIcon as any} size={18} color={item.categoryColor} />
+          </View>
+        )}
+      </View>
+
+      {/* Title & Details */}
+      <View style={{ flex: 1, marginRight: 8 }}>
+        <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 14 }} numberOfLines={1}>
+          {item.title}
+        </Text>
+        <Text style={{ color: '#5A7D8A', fontSize: 11, marginTop: 2 }}>
+          {item.address || 'Sri Lanka'}
+        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+            <Ionicons name="location-outline" size={12} color="#4CC2D1" />
+            <Text style={{ color: '#4CC2D1', fontSize: 11, fontWeight: '600' }}>
+              {item.distance ? formatDistance(item.distance) : 'Nearby'}
+            </Text>
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+            <Ionicons name="arrow-up-circle-outline" size={12} color="#5A7D8A" />
+            <Text style={{ color: '#5A7D8A', fontSize: 11 }}>
+              {item.upvoteCount ?? 0} upvotes
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Status Pill & Arrow */}
+      <View style={{ alignItems: 'flex-end', gap: 6 }}>
+        <View style={{ backgroundColor: statusBg, borderWidth: 1, borderColor: statusColor, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12 }}>
+          <Text style={{ color: statusColor, fontSize: 10, fontWeight: 'bold' }}>{item.status}</Text>
+        </View>
+        <Ionicons name="chevron-forward" size={16} color="#2D4F5C" />
       </View>
     </Pressable>
   );
@@ -212,6 +297,8 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
   const [upvotedCount, setUpvotedCount] = useState(0);
+  const [nearbyFilter, setNearbyFilter] = useState<'ALL' | 'PENDING' | 'ASSIGNED' | 'FIXING'>('ALL');
+  const [isListViewVisible, setIsListViewVisible] = useState(false);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -232,6 +319,11 @@ export default function HomeScreen() {
 
   const radiusKm = profile?.alertRadius ? parseInt(profile.alertRadius.replace(/[^0-9]/g, '')) || 5 : 5;
   const firstName = profile?.fullName ? profile.fullName.split(' ')[0] : 'Citizen';
+
+  const filteredNearbyIssues = nearbyIssues.filter(issue => {
+    if (nearbyFilter === 'ALL') return true;
+    return issue.status === nearbyFilter;
+  });
 
   // 1. Fetch location
   useEffect(() => {
@@ -258,22 +350,26 @@ export default function HomeScreen() {
       orderBy('createdAt', 'desc')
     );
     const unsub = onSnapshot(q, (snap) => {
-      const pins: ReportPin[] = snap.docs.map(d => {
-        const data = d.data();
-        return {
-          id: d.id,
-          title: data.title ?? data.category ?? 'Report',
-          categoryId: data.categoryId ?? 'road_traffic',
-          categoryIcon: data.categoryIcon ?? 'warning-outline',
-          categoryColor: data.categoryColor ?? '#4CC2D1',
-          latitude: data.location?.latitude,
-          longitude: data.location?.longitude,
-          status: data.status ?? 'PENDING',
-          address: data.location?.address ?? '',
-          image: data.imageUrls && data.imageUrls.length > 0 ? data.imageUrls[0] : undefined,
-          createdAt: data.createdAt,
-        } as ReportPin;
-      }).filter(p => p.latitude && p.longitude);
+      const pins: ReportPin[] = snap.docs
+        .map(d => {
+          const data = d.data();
+          if (data.status === 'RESOLVED' || data.status === 'REJECTED') return null;
+          return {
+            id: d.id,
+            title: data.title ?? data.category ?? 'Report',
+            categoryId: data.categoryId ?? 'road_traffic',
+            categoryIcon: data.categoryIcon ?? 'warning-outline',
+            categoryColor: data.categoryColor ?? '#4CC2D1',
+            latitude: data.location?.latitude,
+            longitude: data.location?.longitude,
+            status: data.status ?? 'PENDING',
+            address: data.location?.address ?? '',
+            image: data.imageUrls && data.imageUrls.length > 0 ? data.imageUrls[0] : undefined,
+            createdAt: data.createdAt,
+            upvoteCount: data.upvoteCount ?? 0,
+          } as ReportPin;
+        })
+        .filter((p): p is ReportPin => p !== null && p.latitude !== undefined && p.longitude !== undefined);
       
       setReports(pins);
     }, (err) => {
@@ -413,12 +509,6 @@ export default function HomeScreen() {
                 <Text className="text-white text-xl font-bold leading-7">
                   Hello {firstName},{'\n'}Your Voice Matters.
                 </Text>
-                <Pressable onPress={() => router.push('/(tabs)/profile')} className="flex-row items-center mt-2 active:opacity-70">
-                  <Ionicons name="options-outline" size={14} color="#4CC2D1" style={{ marginRight: 4 }} />
-                  <Text className="text-[#4CC2D1] text-xs font-bold tracking-wide">
-                    {radiusKm}KM ALERT RADIUS (EDIT)
-                  </Text>
-                </Pressable>
 
                 <View className="mt-4">
                   <Pressable
@@ -457,6 +547,48 @@ export default function HomeScreen() {
               onAction={() => router.push('/(tabs)/map')}
             />
           </View>
+
+          {/* Filter Chips */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 20, marginBottom: 12 }}
+            className="flex-row"
+          >
+            {(['ALL', 'PENDING', 'ASSIGNED', 'FIXING'] as const).map((status) => {
+              const isActive = nearbyFilter === status;
+              let label = 'All';
+              if (status === 'PENDING') label = 'Pending';
+              else if (status === 'ASSIGNED') label = 'Assigned';
+              else if (status === 'FIXING') label = 'Fixing';
+
+              let activeColor = '#4CC2D1';
+              if (status === 'PENDING') activeColor = '#F59E0B';
+              else if (status === 'ASSIGNED') activeColor = '#60A5FA';
+              else if (status === 'FIXING') activeColor = '#4CC2D1';
+
+              return (
+                <Pressable
+                  key={status}
+                  onPress={() => setNearbyFilter(status)}
+                  style={{
+                    backgroundColor: isActive ? activeColor + '1a' : '#111E27',
+                    borderColor: isActive ? activeColor : '#1E3347',
+                    borderWidth: 1,
+                    paddingHorizontal: 16,
+                    paddingVertical: 8,
+                    borderRadius: 20,
+                    marginRight: 8,
+                  }}
+                  className="active:opacity-85"
+                >
+                  <Text style={{ color: isActive ? activeColor : '#5A7D8A', fontWeight: 'bold', fontSize: 12 }}>
+                    {label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
           
           <ScrollView
             horizontal
@@ -467,20 +599,40 @@ export default function HomeScreen() {
               <View className="flex-row">
                 {[1, 2, 3].map(i => <SkeletonCard key={i} />)}
               </View>
-            ) : nearbyIssues.length > 0 ? (
-              nearbyIssues.map(item => (
+            ) : filteredNearbyIssues.length > 0 ? (
+              filteredNearbyIssues.map(item => (
                 <NearbyCard key={item.id} item={item} onPress={() => openReportDetail(item)} />
               ))
             ) : (
               <View style={{ width: 300 }}>
                 <EmptyState
-                  title="All clear in your area!"
-                  subtitle={`No active reports found within your ${radiusKm}km radius.`}
+                  title="No reports match this status"
+                  subtitle={nearbyFilter === 'ALL' 
+                    ? `No active reports found within your ${radiusKm}km radius.`
+                    : `No active ${nearbyFilter.toLowerCase()} reports inside your alert radius.`}
                   icon="leaf-outline"
                 />
               </View>
             )}
           </ScrollView>
+
+          {/* Action Buttons: View on Map & View List */}
+          <View className="flex-row gap-3 px-5 mt-4">
+            <Pressable
+              onPress={() => router.push('/(tabs)/map')}
+              className="flex-1 flex-row items-center justify-center py-3 bg-[#111E27] border border-[#2D4F5C] rounded-xl active:opacity-80"
+            >
+              <Ionicons name="map-outline" size={16} color="#4CC2D1" style={{ marginRight: 6 }} />
+              <Text className="text-[#4CC2D1] font-bold text-sm">View on Map</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => setIsListViewVisible(true)}
+              className="flex-1 flex-row items-center justify-center py-3 bg-[#4CC2D1] rounded-xl active:opacity-80"
+            >
+              <Ionicons name="list-outline" size={16} color="#071318" style={{ marginRight: 6 }} />
+              <Text className="text-[#071318] font-bold text-sm">View List</Text>
+            </Pressable>
+          </View>
         </View>
 
         {/* ── 5. Latest Updates ── */}
@@ -555,7 +707,7 @@ export default function HomeScreen() {
               <View style={{ flex: 1 }}>
                 <Text style={{ color: 'white', fontWeight: '700', fontSize: 15 }}>My Upvoted Reports</Text>
                 <Text style={{ color: '#5A7D8A', fontSize: 12, marginTop: 2 }}>
-                  Reports you've supported in your community
+                  Reports you&apos;ve supported in your community
                 </Text>
               </View>
               <View style={{ alignItems: 'center' }}>
@@ -568,6 +720,113 @@ export default function HomeScreen() {
         </View>
 
       </ScrollView>
+
+      {/* ── Nearby Issues List Modal ── */}
+      <Modal
+        visible={isListViewVisible}
+        animationType="slide"
+        transparent={false}
+        onRequestClose={() => setIsListViewVisible(false)}
+      >
+        <LinearGradient colors={['#0D1F2D', '#0A1820', '#071318']} style={{ flex: 1 }}>
+          <View style={{ flex: 1, paddingTop: insets.top + 4, paddingBottom: insets.bottom + 8 }}>
+            
+            {/* Header */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#1E3347' }}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: 'white', fontSize: 18, fontWeight: 'bold' }}>Nearby Issues List</Text>
+                <Text style={{ color: '#5A7D8A', fontSize: 12, marginTop: 2 }}>
+                  Showing active issues within {radiusKm}km
+                </Text>
+              </View>
+              <Pressable
+                onPress={() => setIsListViewVisible(false)}
+                style={({ pressed }) => ({
+                  width: 36, height: 36, borderRadius: 18,
+                  backgroundColor: pressed ? '#1E3A44' : '#111E27',
+                  alignItems: 'center', justifyContent: 'center',
+                  borderWidth: 1, borderColor: '#1E3347'
+                })}
+              >
+                <Ionicons name="close" size={20} color="#4CC2D1" />
+              </Pressable>
+            </View>
+
+            {/* Filter Bar in Modal */}
+            <View style={{ paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#111E27' }}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingHorizontal: 20 }}
+              >
+                {(['ALL', 'PENDING', 'ASSIGNED', 'FIXING'] as const).map((status) => {
+                  const isActive = nearbyFilter === status;
+                  let label = 'All';
+                  if (status === 'PENDING') label = 'Pending';
+                  else if (status === 'ASSIGNED') label = 'Assigned';
+                  else if (status === 'FIXING') label = 'Fixing';
+
+                  let activeColor = '#4CC2D1';
+                  if (status === 'PENDING') activeColor = '#F59E0B';
+                  else if (status === 'ASSIGNED') activeColor = '#60A5FA';
+                  else if (status === 'FIXING') activeColor = '#4CC2D1';
+
+                  return (
+                    <Pressable
+                      key={status}
+                      onPress={() => setNearbyFilter(status)}
+                      style={{
+                        backgroundColor: isActive ? activeColor + '1a' : '#111E27',
+                        borderColor: isActive ? activeColor : '#1E3347',
+                        borderWidth: 1,
+                        paddingHorizontal: 16,
+                        paddingVertical: 8,
+                        borderRadius: 20,
+                        marginRight: 8,
+                      }}
+                      className="active:opacity-80"
+                    >
+                      <Text style={{ color: isActive ? activeColor : '#5A7D8A', fontWeight: 'bold', fontSize: 12 }}>
+                        {label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            </View>
+
+            {/* Scrollable vertical list */}
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 14, paddingBottom: 20 }}
+              style={{ flex: 1 }}
+            >
+              {filteredNearbyIssues.length > 0 ? (
+                filteredNearbyIssues.map((item) => (
+                  <NearbyListRow
+                    key={item.id}
+                    item={item}
+                    onPress={() => {
+                      openReportDetail(item);
+                    }}
+                  />
+                ))
+              ) : (
+                <View style={{ marginTop: 40 }}>
+                  <EmptyState
+                    title="No reports match this status"
+                    subtitle={nearbyFilter === 'ALL' 
+                      ? `No active reports found within your ${radiusKm}km radius.`
+                      : `No active ${nearbyFilter.toLowerCase()} reports inside your alert radius.`}
+                    icon="leaf-outline"
+                  />
+                </View>
+              )}
+            </ScrollView>
+            
+          </View>
+        </LinearGradient>
+      </Modal>
 
       <ReportDetailSheet
         reportId={selectedReportId}

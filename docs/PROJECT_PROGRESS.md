@@ -364,6 +364,29 @@ This document tracks the end-to-end development journey of the AlertZone mobile 
     - Fixed an issue where the user still received push notifications after toggling "notifications off" in settings.
     - Refactored the global `useNotifications()` root hook to check the user's `profile.notificationsEnabled` value, automatically calling `unregisterPushNotificationsAsync` (setting the push token to null in Firestore) if toggled off, instead of unconditionally registering the token on startup.
 
+- **[2026-06-06] Biometric Login Logout-Trigger Fix (`loginScreen.tsx`, `authConfig.tsx`):**
+    - Fixed an issue where logging out or session expiration immediately triggered the fingerprint/Face ID biometric prompt on the login screen.
+    - Implemented a transient `justLoggedOut` flag in `AsyncStorage` when explicitly logging out or when a session expires due to a password change.
+    - Modified the login screen biometric mount effect to check, clear, and return early when `justLoggedOut` is detected.
+
+- **[2026-06-06] Upvote & Comment Constraints + Resolved/Rejected Map Exclusion (`ReportDetailSheet.tsx`, `map.tsx`, `home.tsx`):**
+    - Restricted the ability to upvote and comment on issues to only the `PENDING` stage. Tapping upvote or comments on Assigned, Fixing, Resolved, or Rejected reports is disabled and shows a locked indication.
+    - Excluded reports with `RESOLVED` or `REJECTED` status from rendering on the Live Map.
+    - Excluded reports with `RESOLVED` or `REJECTED` status from the Home tab's Nearby Issues and Latest Updates.
+
+- **[2026-06-06] Nearby Issues Filters & Vertical List Modal (`home.tsx`):**
+    - Introduced a status filter bar (All, Pending, Assigned, Fixing) with synced colored active chips under the Nearby Issues section on the Home Screen.
+    - Integrated side-by-side View on Map and View List action buttons below the Nearby Issues horizontal carousel.
+    - Created a full-screen vertical list modal showing nearby issues within the alert radius with their status, distance, upvote count, address, and category details. Tapping list rows opens their full report details.
+- **[2026-06-06] Redundant Category Label Removal in Report Details (`history.tsx`, `archive.tsx`, `ReportDetailSheet.tsx`):**
+    - Removed redundant small category label and bullet point separators from the report details view (both modals and bottom sheets), resolving the double text issue highlighted by the user.
+    - Preserved the category icon and creation date/time (or time-ago relative timestamp) for clear, non-duplicated metadata representation.
+- **[2026-06-06] Report Card Layout Cleanup & Photo Thumbnails (`history.tsx`, `archive.tsx`, `upvoted-reports.tsx`, `home.tsx`):**
+    - Removed the redundant small category text from all report list cards.
+    - Replaced the hardcoded category icons in report card lists with the actual first uploaded photo of the report, falling back to the branded AlertZone logo when no photo exists.
+    - Refactored cards to allow full location addresses to wrap naturally on their own row, removing truncation rules.
+    - Stretched left-side thumbnail boxes dynamically to match the height of cards (`alignSelf: 'stretch'`).
+
 ---
 
-*Last Updated: 2026-06-06 — Google Sign-in Cleanup, Offline Caching, & Preference Sync*
+*Last Updated: 2026-06-06 — Report Card Photo Thumbnails, Address Wrap, Details Category Removal, Nearby Issues Filters & Vertical List*

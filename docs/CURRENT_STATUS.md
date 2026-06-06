@@ -1,7 +1,7 @@
 # Current Status — AlertZone Mobile App
 > **Full Log:** [PROJECT_PROGRESS.md](./PROJECT_PROGRESS.md)
 
-> **Last Updated:** 2026-06-06 (Google Sign-in Cleanup, Offline Caching, and Preferences Sync Fixes)
+> **Last Updated:** 2026-06-06 (Report Card Photo Thumbnails, Address Wrap, Details Category Removal, Nearby Issues Filters & Vertical List, Google Sign-in Cleanup, Caching, Preferences Sync, Biometrics, Upvote Constraints)
 >
 > This document tracks what is done, what is broken, and what remains. Agents MUST read this before starting work.
 
@@ -25,9 +25,9 @@
 ## What IS Working ✅
 
 ### Upvotes & Community Comments (Fully Functional)
-- [x] Vibrantly redesigned, fully pressable upvote banner block (`#0f93f2ff`)
-- [x] Custom interactive confirmation modal for upvoting with optional commenting support
-- [x] Custom retract confirmation modal when removing an upvote
+- [x] Vibrantly redesigned, fully pressable upvote banner block (automatically locked if report is not in pending stage)
+- [x] Custom interactive confirmation modal for upvoting with optional commenting support (restricted to pending stage)
+- [x] Custom retract confirmation modal when removing an upvote (restricted to pending stage)
 - [x] Fully keyboard-avoiding flex layout for the community comments input bar
 - [x] Avatar and user name resolution for comments made by current user, highlighted with `(You)` label and teal border
 - [x] Limit initial comment feed to 5 entries with a custom "View All" toggle button
@@ -45,7 +45,7 @@
 - [x] Auth context provider (`useAuth` hook) with user + profile
 - [x] Auto-redirect to login if not authenticated (tab guard)
 - [x] Remember Me (saves email to AsyncStorage, securely purges raw passwords) ✅
-- [x] Biometric authentication (Fingerprint & Face ID login with SecureStore encryption) ✅
+- [x] Biometric authentication (Fingerprint & Face ID login with SecureStore encryption, automatically bypassed immediately after logout/session expiration) ✅
 - [x] Resolved startup connection loading hang with a Firestore query timeout race ✅
 - [x] Global network status gate (`NetworkStatusGate`) with bottom sheet and manual "Check Connection" retry controls ✅
 - [x] Logout functionality with confirmation modal
@@ -86,14 +86,14 @@
 
 ### Home Screen (`home.tsx`)
 - [ ] Browse Categories — hardcoded array, not from Firestore
-- [x] Nearby Issues — live Firestore subscription filtered to user's alert radius ✅
-- [x] Latest Updates — live Firestore subscription ✅
+- [x] Nearby Issues — live Firestore subscription filtered to user's alert radius (resolved/rejected excluded, status filter chips, View on Map/View List buttons, vertical list modal) ✅
+- [x] Latest Updates — live Firestore subscription (resolved/rejected reports excluded) ✅
 - [x] Notification bell badge — wired to real Firestore unread count ✅
 - [x] **Pull-to-Refresh** — re-fetches GPS location and refreshes nearby issues + updates ✅
 
 ### Map Screen (`map.tsx`) ✅ LIVE
-- [x] Issue pins — live Firestore subscription (`onSnapshot`) ✅
-- [x] Filter chips by category — filters Firestore data in real-time ✅
+- [x] Issue pins — live Firestore subscription (`onSnapshot`, resolved/rejected reports excluded) ✅
+- [x] Filter chips by category — filters active (non-resolved/rejected) Firestore data in real-time ✅
 - [x] Search bar — filters by title or address ✅
 - [x] Category Counts — shows number of reports by type within radius ✅
 - [x] Navigation Support — centers on specific report if params provided ✅

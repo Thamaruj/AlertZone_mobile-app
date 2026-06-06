@@ -6,6 +6,7 @@ import {
   Pressable,
   ActivityIndicator,
   Modal,
+  Image,
   StyleSheet,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -38,6 +39,7 @@ interface Report {
   categoryColor: string;
   status: ReportStatus;
   upvoteCount: number;
+  imageUrls?: string[];
   location: { address: string; latitude: number; longitude: number };
   createdAt: any;
 }
@@ -83,6 +85,22 @@ const LOAD_MORE_SIZE = 20;
 // ─────────────────────────────────────────────
 const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
 const getFirstDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay();
+
+function formatDate(ts: any): string {
+  if (!ts) return '';
+  try {
+    const d = ts?.toDate ? ts.toDate() : new Date(ts);
+    const now = new Date();
+    const diff = Math.floor((now.getTime() - d.getTime()) / 1000);
+    if (diff < 60)  return 'Just now';
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
+    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+  } catch {
+    return '';
+  }
+}
 
 interface CalendarProps {
   value: Date | null;
@@ -179,36 +197,80 @@ function CalendarModal({ value, onChange, onClose, title }: CalendarProps) {
 function ReportCard({ report, onPress }: { report: Report; onPress: () => void }) {
   const cfg = STATUS_CONFIG[report.status] ?? STATUS_CONFIG.PENDING;
   return (
-    <Pressable onPress={onPress} style={{ marginBottom: 12 }}>
-      <View style={{ backgroundColor: '#111E27', borderRadius: 18, overflow: 'hidden', borderWidth: 1, borderColor: '#1E3347' }}>
-        <View style={{ flexDirection: 'row' }}>
-          <View style={{ width: 80, height: 80, alignItems: 'center', justifyContent: 'center', backgroundColor: (report.categoryColor ?? '#4CC2D1') + '18' }}>
-            <Ionicons name={report.categoryIcon as any} size={28} color={report.categoryColor ?? '#4CC2D1'} />
+    <Pressable
+      onPress={onPress}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 12,
+        backgroundColor: '#111E27',
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: '#1E3347',
+        marginBottom: 10,
+      }}
+    >
+      {/* Image / Icon preview */}
+      <View
+        style={{
+          width: 60,
+          height: 60,
+          borderRadius: 12,
+          overflow: 'hidden',
+          backgroundColor: '#0D1F2D',
+          marginRight: 12,
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        {report.imageUrls && report.imageUrls.length > 0 ? (
+          <Image source={{ uri: report.imageUrls[0] }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+        ) : (
+          <View
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 10,
+              backgroundColor: (report.categoryColor ?? '#4CC2D1') + '22',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Image source={require('../assets/images/iconAlerZone-Bg-none.png')} style={{ width: 22, height: 22 }} resizeMode="contain" />
           </View>
-          <View style={{ flex: 1, padding: 12, justifyContent: 'space-between' }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <Text style={{ color: 'white', fontWeight: '700', fontSize: 13, flex: 1, marginRight: 8 }} numberOfLines={1}>
-                {report.title}
-              </Text>
-              <View style={{ backgroundColor: cfg.bg, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 }}>
-                <Text style={{ color: cfg.color, fontSize: 10, fontWeight: '700' }}>{cfg.label}</Text>
-              </View>
-            </View>
-            <Text style={{ color: '#5A7D8A', fontSize: 11, marginTop: 2 }} numberOfLines={1}>{report.category}</Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, flex: 1 }}>
-                <Ionicons name="location-outline" size={11} color="#3A6070" />
-                <Text style={{ color: '#3A5060', fontSize: 11, flex: 1, maxWidth: 140 }} numberOfLines={1}>
-                  {report.location?.address ?? 'Unknown'}
-                </Text>
-              </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-                <Ionicons name="arrow-up-circle-outline" size={12} color="#4CC2D1" />
-                <Text style={{ color: '#4CC2D1', fontSize: 11, fontWeight: '600' }}>{report.upvoteCount}</Text>
-              </View>
-            </View>
+        )}
+      </View>
+
+      {/* Title & Details */}
+      <View style={{ flex: 1, marginRight: 8 }}>
+        <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 14 }} numberOfLines={1}>
+          {report.title}
+        </Text>
+        <Text style={{ color: '#5A7D8A', fontSize: 11, marginTop: 2 }}>
+          {report.location?.address ?? 'Sri Lanka'}
+        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+            <Ionicons name="time-outline" size={12} color="#5A7D8A" />
+            <Text style={{ color: '#5A7D8A', fontSize: 11 }}>
+              {formatDate(report.createdAt)}
+            </Text>
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+            <Ionicons name="arrow-up-circle-outline" size={12} color="#5A7D8A" />
+            <Text style={{ color: '#5A7D8A', fontSize: 11 }}>
+              {report.upvoteCount ?? 0} upvotes
+            </Text>
           </View>
         </View>
+      </View>
+
+      {/* Status Pill & Arrow */}
+      <View style={{ alignItems: 'flex-end', gap: 6 }}>
+        <View style={{ backgroundColor: cfg.bg, borderWidth: 1, borderColor: cfg.color, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12 }}>
+          <Text style={{ color: cfg.color, fontSize: 10, fontWeight: 'bold' }}>{cfg.label}</Text>
+        </View>
+        <Ionicons name="chevron-forward" size={16} color="#2D4F5C" />
       </View>
     </Pressable>
   );
@@ -288,6 +350,7 @@ export default function UpvotedReportsScreen() {
               categoryColor: data.categoryColor ?? '#4CC2D1',
               status: (data.status ?? 'PENDING') as ReportStatus,
               upvoteCount: data.upvoteCount ?? 0,
+              imageUrls: data.imageUrls ?? [],
               location: data.location ?? { address: '', latitude: 0, longitude: 0 },
               createdAt: data.createdAt,
             } as Report;
