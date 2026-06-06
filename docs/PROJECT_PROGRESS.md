@@ -364,6 +364,11 @@ This document tracks the end-to-end development journey of the AlertZone mobile 
     - Fixed an issue where the user still received push notifications after toggling "notifications off" in settings.
     - Refactored the global `useNotifications()` root hook to check the user's `profile.notificationsEnabled` value, automatically calling `unregisterPushNotificationsAsync` (setting the push token to null in Firestore) if toggled off, instead of unconditionally registering the token on startup.
 
+- **[2026-06-06] Biometric Login Logout-Trigger Fix (`loginScreen.tsx`, `authConfig.tsx`):**
+    - Fixed an issue where logging out or session expiration immediately triggered the fingerprint/Face ID biometric prompt on the login screen.
+    - Implemented a transient `justLoggedOut` flag in `AsyncStorage` when explicitly logging out or when a session expires due to a password change.
+    - Modified the login screen biometric mount effect to check, clear, and return early when `justLoggedOut` is detected.
+
 ---
 
-*Last Updated: 2026-06-06 — Google Sign-in Cleanup, Offline Caching, & Preference Sync*
+*Last Updated: 2026-06-06 — Google Sign-in Cleanup, Offline Caching, Preference Sync, & Biometrics Fix*

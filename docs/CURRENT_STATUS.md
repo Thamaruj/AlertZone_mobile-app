@@ -1,7 +1,7 @@
 # Current Status — AlertZone Mobile App
 > **Full Log:** [PROJECT_PROGRESS.md](./PROJECT_PROGRESS.md)
 
-> **Last Updated:** 2026-06-06 (Google Sign-in Cleanup, Offline Caching, and Preferences Sync Fixes)
+> **Last Updated:** 2026-06-06 (Google Sign-in Cleanup, Offline Caching, Preferences Sync, and Biometrics Fixes)
 >
 > This document tracks what is done, what is broken, and what remains. Agents MUST read this before starting work.
 
@@ -45,7 +45,7 @@
 - [x] Auth context provider (`useAuth` hook) with user + profile
 - [x] Auto-redirect to login if not authenticated (tab guard)
 - [x] Remember Me (saves email to AsyncStorage, securely purges raw passwords) ✅
-- [x] Biometric authentication (Fingerprint & Face ID login with SecureStore encryption) ✅
+- [x] Biometric authentication (Fingerprint & Face ID login with SecureStore encryption, automatically bypassed immediately after logout/session expiration) ✅
 - [x] Resolved startup connection loading hang with a Firestore query timeout race ✅
 - [x] Global network status gate (`NetworkStatusGate`) with bottom sheet and manual "Check Connection" retry controls ✅
 - [x] Logout functionality with confirmation modal
