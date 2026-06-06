@@ -850,6 +850,8 @@ export default function ReportScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="interactive"
+          scrollEventThrottle={16}
+          decelerationRate="normal"
         >
           {/* ── Header ── */}
           <View className="px-5 mb-5">

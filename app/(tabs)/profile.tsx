@@ -1234,6 +1234,46 @@ function SecurityModal({
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
   const [confirmPasswordText, setConfirmPasswordText] = useState('');
 
+  // Animation states for Password Confirmation Modal
+  const confirmScaleAnim = useRef(new Animated.Value(0.85)).current;
+  const confirmOpacityAnim = useRef(new Animated.Value(0)).current;
+  const [activePasswordConfirm, setActivePasswordConfirm] = useState(false);
+
+  useEffect(() => {
+    if (showPasswordConfirm) {
+      setActivePasswordConfirm(true);
+      Animated.parallel([
+        Animated.spring(confirmScaleAnim, {
+          toValue: 1,
+          useNativeDriver: true,
+          tension: 120,
+          friction: 8,
+        }),
+        Animated.timing(confirmOpacityAnim, {
+          toValue: 1,
+          duration: 180,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.spring(confirmScaleAnim, {
+          toValue: 0.85,
+          useNativeDriver: true,
+          tension: 150,
+          friction: 10,
+        }),
+        Animated.timing(confirmOpacityAnim, {
+          toValue: 0,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        setActivePasswordConfirm(false);
+      });
+    }
+  }, [showPasswordConfirm]);
+
   // Password Reset States
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -1581,10 +1621,21 @@ function SecurityModal({
         </ScrollView>
 
         {/* Password Confirmation Modal for Biometrics */}
-        <Modal visible={showPasswordConfirm} transparent animationType="fade">
-          <View className="flex-1 items-center justify-center bg-black/75 px-6">
-            <View className="bg-white w-full max-w-sm rounded-3xl p-6 border border-[#E8E8E8] items-center"
-              style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.5, shadowRadius: 15, elevation: 20 }}
+        <Modal visible={activePasswordConfirm} transparent animationType="none">
+          <Animated.View 
+            className="flex-1 items-center justify-center bg-black/75 px-6"
+            style={{ opacity: confirmOpacityAnim }}
+          >
+            <Animated.View 
+              className="bg-white w-full max-w-sm rounded-3xl p-6 border border-[#E8E8E8] items-center"
+              style={{ 
+                shadowColor: '#000', 
+                shadowOffset: { width: 0, height: 10 }, 
+                shadowOpacity: 0.5, 
+                shadowRadius: 15, 
+                elevation: 20,
+                transform: [{ scale: confirmScaleAnim }]
+              }}
             >
               <View className="w-12 h-12 rounded-full bg-white items-center justify-center mb-4 border border-[#0D8A72]/30">
                 <Ionicons name="key-outline" size={24} color="#0D8A72" />
@@ -1618,8 +1669,8 @@ function SecurityModal({
                   <Text className="text-[#F5F5F5] font-bold text-sm">Confirm</Text>
                 </Pressable>
               </View>
-            </View>
-          </View>
+            </Animated.View>
+          </Animated.View>
         </Modal>
         <Toast config={toastConfig} />
       </LinearGradient>

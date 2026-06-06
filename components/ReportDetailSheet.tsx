@@ -16,6 +16,7 @@ import {
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Animated,
   Image,
   KeyboardAvoidingView,
   Linking,
@@ -192,6 +193,46 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
   // Upvote confirmation modal states
   const [upvoteModalType, setUpvoteModalType] = useState<'add' | 'remove' | null>(null);
   const [upvoteCommentText, setUpvoteCommentText] = useState('');
+
+  // Animation states for Upvote Modal
+  const upvoteScaleAnim = useRef(new Animated.Value(0.85)).current;
+  const upvoteOpacityAnim = useRef(new Animated.Value(0)).current;
+  const [activeUpvoteModalType, setActiveUpvoteModalType] = useState<'add' | 'remove' | null>(null);
+
+  useEffect(() => {
+    if (upvoteModalType !== null) {
+      setActiveUpvoteModalType(upvoteModalType);
+      Animated.parallel([
+        Animated.spring(upvoteScaleAnim, {
+          toValue: 1,
+          useNativeDriver: true,
+          tension: 120,
+          friction: 8,
+        }),
+        Animated.timing(upvoteOpacityAnim, {
+          toValue: 1,
+          duration: 180,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.spring(upvoteScaleAnim, {
+          toValue: 0.85,
+          useNativeDriver: true,
+          tension: 150,
+          friction: 10,
+        }),
+        Animated.timing(upvoteOpacityAnim, {
+          toValue: 0,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        setActiveUpvoteModalType(null);
+      });
+    }
+  }, [upvoteModalType]);
 
   // ── Subscribe to report + upvote status + comments ──
   useEffect(() => {
@@ -496,6 +537,9 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ paddingTop: insets.top + 4, paddingBottom: 24 }}
                 style={{ flex: 1 }}
+                scrollEventThrottle={16}
+                decelerationRate="normal"
+                keyboardShouldPersistTaps="handled"
               >
                 {/* ── Header ── */}
                 <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 12, gap: 12 }}>
@@ -996,19 +1040,20 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
 
       {/* ── Upvote/Retract Confirmation Dialog Modal ── */}
       <Modal
-        visible={upvoteModalType !== null}
+        visible={activeUpvoteModalType !== null}
         transparent={true}
-        animationType="fade"
+        animationType="none"
         onRequestClose={() => setUpvoteModalType(null)}
       >
-        <View style={{
+        <Animated.View style={{
           flex: 1,
           backgroundColor: 'rgba(0, 0, 0, 0.5)',
           justifyContent: 'center',
           alignItems: 'center',
           padding: 24,
+          opacity: upvoteOpacityAnim,
         }}>
-          <View style={{
+          <Animated.View style={{
             width: '100%',
             maxWidth: 340,
             backgroundColor: '#FFFFFF',
@@ -1022,8 +1067,9 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
             shadowOpacity: 0.1,
             shadowRadius: 12,
             elevation: 5,
+            transform: [{ scale: upvoteScaleAnim }],
           }}>
-            {upvoteModalType === 'add' ? (
+            {activeUpvoteModalType === 'add' ? (
               <>
                 {/* Header with Close Icon */}
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1170,8 +1216,8 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
                 </View>
               </>
             )}
-          </View>
-        </View>
+          </Animated.View>
+        </Animated.View>
       </Modal>
 
       {/* Mounting Toast component inside the Modal so it overlays native modals */}

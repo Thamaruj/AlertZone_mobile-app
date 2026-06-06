@@ -206,6 +206,8 @@ export default function BadgesScreen() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 60 }}
+        scrollEventThrottle={16}
+        decelerationRate="normal"
       >
         {/* ── Header ── */}
         <View
