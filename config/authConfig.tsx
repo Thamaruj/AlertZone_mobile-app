@@ -53,6 +53,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser]       = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);  // start true — checking auth
+  const [isCachedProfileLoaded, setIsCachedProfileLoaded] = useState(false);
+
+  // Load cached profile on startup
+  useEffect(() => {
+    const loadCachedProfile = async () => {
+      try {
+        const cached = await AsyncStorage.getItem('cachedProfile');
+        if (cached) {
+          setProfile(JSON.parse(cached));
+        }
+      } catch (e) {
+        console.error('⚠️ Error loading cached profile:', e);
+      } finally {
+        setIsCachedProfileLoaded(true);
+      }
+    };
+    loadCachedProfile();
+  }, []);
 
   const isProfileComplete = !!(
     profile &&
@@ -82,7 +100,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const snap = await Promise.race([getDocPromise, timeoutPromise]);
       if (snap.exists()) {
-        setProfile(snap.data() as UserProfile);
+        const data = snap.data() as UserProfile;
+        setProfile(data);
+        await AsyncStorage.setItem('cachedProfile', JSON.stringify(data));
       } else {
         console.warn('⚠️ No user document found in Firestore for uid:', uid);
       }
@@ -105,6 +125,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     await signOut(auth);
     setProfile(null);
+    await AsyncStorage.removeItem('cachedProfile');
   };
 
   // Listen to Firebase auth state changes
@@ -114,6 +135,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!firebaseUser) {
         setProfile(null);
         setLoading(false);
+        AsyncStorage.removeItem('cachedProfile').catch(err => console.error(err));
       }
     });
 
@@ -130,6 +152,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (snapshot.exists()) {
         const data = snapshot.data() as UserProfile & { lastPasswordChange?: string };
         setProfile(data);
+        await AsyncStorage.setItem('cachedProfile', JSON.stringify(data));
 
         try {
           const localVal = await AsyncStorage.getItem('lastPasswordChangeLocal');
@@ -139,6 +162,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             } else if (localVal !== data.lastPasswordChange) {
               console.log('🔄 Session expired: password changed on another device.');
               await AsyncStorage.removeItem('lastPasswordChangeLocal');
+              await AsyncStorage.removeItem('cachedProfile');
               await signOut(auth);
               setProfile(null);
               Toast.show({
@@ -156,6 +180,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         console.warn('⚠️ No user document found in Firestore for uid:', user.uid);
         setProfile(null);
+        await AsyncStorage.removeItem('cachedProfile');
       }
       setLoading(false);
     }, (error) => {
@@ -167,7 +192,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user]);
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, logout, refreshProfile, isProfileComplete }}>
+    <AuthContext.Provider value={{ user, profile, loading: loading || !isCachedProfileLoaded, logout, refreshProfile, isProfileComplete }}>
       {children}
     </AuthContext.Provider>
   );
