@@ -16,6 +16,7 @@ import {
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Animated,
   Image,
   KeyboardAvoidingView,
   Linking,
@@ -32,6 +33,7 @@ import Toast from 'react-native-toast-message';
 import { useAuth, UserProfile } from '../config/authConfig';
 import { toastConfig } from '../config/toastConfig';
 import { db } from '../services/firebase';
+import { useTheme } from '../config/themeContext';
 
 // ─────────────────────────────────────────────
 // Types
@@ -80,11 +82,11 @@ interface Props {
 // Constants
 // ─────────────────────────────────────────────
 const STATUS_CONFIG: Record<ReportStatus, { label: string; color: string; bg: string; icon: string }> = {
-  PENDING: { label: 'Pending', color: '#F59E0B', bg: '#3D2E0A', icon: 'time-outline' },
-  ASSIGNED: { label: 'Assigned', color: '#60A5FA', bg: '#0D1A3D', icon: 'person-add-outline' },
-  FIXING: { label: 'Fixing', color: '#4CC2D1', bg: '#0D2A35', icon: 'construct-outline' },
-  RESOLVED: { label: 'Resolved', color: '#30A89C', bg: '#0D3D35', icon: 'checkmark-circle-outline' },
-  REJECTED: { label: 'Rejected', color: '#E05C5C', bg: '#3D1515', icon: 'close-circle-outline' },
+  PENDING: { label: 'Pending', color: '#D97706', bg: '#FEF3C7', icon: 'time-outline' },
+  ASSIGNED: { label: 'Assigned', color: '#3B82F6', bg: '#DBEAFE', icon: 'person-add-outline' },
+  FIXING: { label: 'Fixing', color: '#0D8A72', bg: '#E6F7F3', icon: 'construct-outline' },
+  RESOLVED: { label: 'Resolved', color: '#059669', bg: '#D1FAE5', icon: 'checkmark-circle-outline' },
+  REJECTED: { label: 'Rejected', color: '#DC2626', bg: '#FEE2E2', icon: 'close-circle-outline' },
 };
 
 const TIMELINE_STATUSES: ReportStatus[] = ['PENDING', 'ASSIGNED', 'FIXING', 'RESOLVED'];
@@ -120,16 +122,17 @@ function CommentCard({
   const isMe = currentUser && comment.uid === currentUser.uid;
   const displayName = isMe ? (currentProfile?.fullName || 'Me') : 'Community Member';
   const avatarUrl = isMe ? currentProfile?.avatarUrl : null;
+  const { colors } = useTheme();
 
   return (
     <View
       style={{
-        backgroundColor: '#0D1F2D',
+        backgroundColor: colors.card,
         borderRadius: 14,
         padding: 12,
         marginBottom: 8,
         borderWidth: 1,
-        borderColor: isMe ? '#4CC2D1' : '#1E3347',
+        borderColor: isMe ? colors.primary : colors.border,
       }}
     >
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -146,25 +149,25 @@ function CommentCard({
                 width: 28,
                 height: 28,
                 borderRadius: 14,
-                backgroundColor: isMe ? '#4CC2D1' : '#1E3A44',
+                backgroundColor: isMe ? colors.successBg : colors.border,
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <Text style={{ color: isMe ? '#071318' : '#4CC2D1', fontSize: 12, fontWeight: '700' }}>
+              <Text style={{ color: isMe ? colors.primary : colors.textSecondary, fontSize: 12, fontWeight: '700' }}>
                 {isMe ? displayName.slice(0, 1).toUpperCase() : '?'}
               </Text>
             </View>
           )}
           <View style={{ flex: 1 }}>
-            <Text style={{ color: isMe ? 'white' : '#5A7D8A', fontSize: 11, fontWeight: '600' }}>
-              {displayName} {isMe && <Text style={{ color: '#4CC2D1', fontSize: 10 }}>(You)</Text>}
+            <Text style={{ color: isMe ? colors.text : colors.textSecondary, fontSize: 11, fontWeight: '600' }}>
+              {displayName} {isMe && <Text style={{ color: colors.primary, fontSize: 10 }}>(You)</Text>}
             </Text>
-            <Text style={{ color: '#3A5060', fontSize: 10, marginTop: 1 }}>{timeAgo(comment.createdAt)}</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 10, marginTop: 1 }}>{timeAgo(comment.createdAt)}</Text>
           </View>
         </View>
       </View>
-      <Text style={{ color: '#CBD5E1', fontSize: 13, lineHeight: 19, marginTop: 8 }}>{comment.body}</Text>
+      <Text style={{ color: colors.text, fontSize: 13, lineHeight: 19, marginTop: 8 }}>{comment.body}</Text>
     </View>
   );
 }
@@ -177,6 +180,24 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
   const insets = useSafeAreaInsets();
   const { user, profile } = useAuth();
   const scrollRef = useRef<ScrollView>(null);
+  const { colors, isDark } = useTheme();
+
+  const getStatusColorConfig = (status: ReportStatus) => {
+    switch (status) {
+      case 'PENDING':
+        return { label: 'Pending', color: colors.warningText, bg: colors.warningBg, icon: 'time-outline' };
+      case 'ASSIGNED':
+        return { label: 'Assigned', color: '#3B82F6', bg: isDark ? 'rgba(59, 130, 246, 0.15)' : '#DBEAFE', icon: 'person-add-outline' };
+      case 'FIXING':
+        return { label: 'Fixing', color: colors.primary, bg: colors.successBg, icon: 'construct-outline' };
+      case 'RESOLVED':
+        return { label: 'Resolved', color: colors.successText, bg: colors.successBg, icon: 'checkmark-circle-outline' };
+      case 'REJECTED':
+        return { label: 'Rejected', color: colors.dangerText, bg: colors.dangerBg, icon: 'close-circle-outline' };
+      default:
+        return { label: 'Pending', color: colors.warningText, bg: colors.warningBg, icon: 'time-outline' };
+    }
+  };
 
   const [report, setReport] = useState<Report | null>(null);
   const [hasUpvoted, setHasUpvoted] = useState(false);
@@ -192,6 +213,46 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
   // Upvote confirmation modal states
   const [upvoteModalType, setUpvoteModalType] = useState<'add' | 'remove' | null>(null);
   const [upvoteCommentText, setUpvoteCommentText] = useState('');
+
+  // Animation states for Upvote Modal
+  const upvoteScaleAnim = useRef(new Animated.Value(0.85)).current;
+  const upvoteOpacityAnim = useRef(new Animated.Value(0)).current;
+  const [activeUpvoteModalType, setActiveUpvoteModalType] = useState<'add' | 'remove' | null>(null);
+
+  useEffect(() => {
+    if (upvoteModalType !== null) {
+      setActiveUpvoteModalType(upvoteModalType);
+      Animated.parallel([
+        Animated.spring(upvoteScaleAnim, {
+          toValue: 1,
+          useNativeDriver: true,
+          tension: 120,
+          friction: 8,
+        }),
+        Animated.timing(upvoteOpacityAnim, {
+          toValue: 1,
+          duration: 180,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.spring(upvoteScaleAnim, {
+          toValue: 0.85,
+          useNativeDriver: true,
+          tension: 150,
+          friction: 10,
+        }),
+        Animated.timing(upvoteOpacityAnim, {
+          toValue: 0,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        setActiveUpvoteModalType(null);
+      });
+    }
+  }, [upvoteModalType]);
 
   // ── Subscribe to report + upvote status + comments ──
   useEffect(() => {
@@ -459,7 +520,7 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
 
   if (!reportId) return null;
 
-  const cfg = report ? (STATUS_CONFIG[report.status] ?? STATUS_CONFIG.PENDING) : null;
+  const cfg = report ? getStatusColorConfig(report.status) : null;
   const timelineIndex = report ? TIMELINE_STATUSES.indexOf(report.status) : -1;
   const displayedComments = showAllComments ? comments : comments.slice(0, 5);
 
@@ -470,7 +531,7 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
       transparent={false}
       onRequestClose={onClose}
     >
-      <LinearGradient colors={['#0D1F2D', '#0A1820', '#071318']} style={{ flex: 1 }}>
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={{ flex: 1 }}
@@ -478,15 +539,15 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
         >
           {loading ? (
             <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-              <ActivityIndicator color="#4CC2D1" size="large" />
-              <Text style={{ color: '#5A7D8A', marginTop: 12, fontSize: 14 }}>Loading report…</Text>
+              <ActivityIndicator color={colors.primary} size="large" />
+              <Text style={{ color: colors.textSecondary, marginTop: 12, fontSize: 14 }}>Loading report…</Text>
             </View>
           ) : !report ? (
             <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-              <Ionicons name="alert-circle-outline" size={40} color="#E05C5C" />
-              <Text style={{ color: '#E05C5C', marginTop: 10 }}>Report not found</Text>
+              <Ionicons name="alert-circle-outline" size={40} color={colors.dangerText} />
+              <Text style={{ color: colors.dangerText, marginTop: 10 }}>Report not found</Text>
               <Pressable onPress={onClose} style={{ marginTop: 16 }}>
-                <Text style={{ color: '#4CC2D1', fontWeight: '600' }}>Go Back</Text>
+                <Text style={{ color: colors.primary, fontWeight: '600' }}>Go Back</Text>
               </Pressable>
             </View>
           ) : (
@@ -496,6 +557,9 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ paddingTop: insets.top + 4, paddingBottom: 24 }}
                 style={{ flex: 1 }}
+                scrollEventThrottle={16}
+                decelerationRate="normal"
+                keyboardShouldPersistTaps="handled"
               >
                 {/* ── Header ── */}
                 <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 12, gap: 12 }}>
@@ -503,17 +567,17 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
                     onPress={onClose}
                     style={({ pressed }) => ({
                       width: 40, height: 40, borderRadius: 20,
-                      backgroundColor: pressed ? '#1E3A44' : '#1E3347',
+                      backgroundColor: pressed ? colors.card : colors.border,
                       alignItems: 'center', justifyContent: 'center',
                     })}
                   >
-                    <Ionicons name="arrow-back" size={20} color="#4CC2D1" />
+                    <Ionicons name="arrow-back" size={20} color={colors.primary} />
                   </Pressable>
                   <View style={{ flex: 1 }}>
-                    <Text style={{ color: '#4CC2D1', fontSize: 10, fontWeight: '700', letterSpacing: 1.5 }}>
+                    <Text style={{ color: colors.primary, fontSize: 10, fontWeight: '700', letterSpacing: 1.5 }}>
                       REF: {report.id}
                     </Text>
-                    <Text style={{ color: 'white', fontSize: 15, fontWeight: '700' }} numberOfLines={1}>
+                    <Text style={{ color: colors.text, fontSize: 15, fontWeight: '700' }} numberOfLines={1}>
                       Issue Details
                     </Text>
                   </View>
@@ -546,7 +610,7 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
                                 style={{
                                   width: i === activeImageIndex ? 20 : 6,
                                   height: 6, borderRadius: 3,
-                                  backgroundColor: i === activeImageIndex ? '#4CC2D1' : 'rgba(255,255,255,0.4)',
+                                  backgroundColor: i === activeImageIndex ? colors.primary : 'rgba(255,255,255,0.4)',
                                 }}
                               />
                             </Pressable>
@@ -555,7 +619,7 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
                         {activeImageIndex > 0 && (
                           <Pressable
                             onPress={() => setActiveImageIndex(activeImageIndex - 1)}
-                            style={{ position: 'absolute', left: 10, top: 84, backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 16, padding: 6 }}
+                            style={{ position: 'absolute', left: 10, top: 84, backgroundColor: colors.modalBackdrop, borderRadius: 16, padding: 6 }}
                           >
                             <Ionicons name="chevron-back" size={20} color="white" />
                           </Pressable>
@@ -563,7 +627,7 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
                         {activeImageIndex < report.imageUrls.length - 1 && (
                           <Pressable
                             onPress={() => setActiveImageIndex(activeImageIndex + 1)}
-                            style={{ position: 'absolute', right: 10, top: 84, backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 16, padding: 6 }}
+                            style={{ position: 'absolute', right: 10, top: 84, backgroundColor: colors.modalBackdrop, borderRadius: 16, padding: 6 }}
                           >
                             <Ionicons name="chevron-forward" size={20} color="white" />
                           </Pressable>
@@ -579,16 +643,16 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                       <View style={{
                         width: 36, height: 36, borderRadius: 10,
-                        backgroundColor: (report.categoryColor ?? '#4CC2D1') + '22',
+                        backgroundColor: (report.categoryColor ?? colors.primary) + '22',
                         alignItems: 'center', justifyContent: 'center',
                       }}>
-                        <Ionicons name={(report.categoryIcon || 'help-circle-outline') as any} size={18} color={report.categoryColor ?? '#4CC2D1'} />
+                        <Ionicons name={(report.categoryIcon || 'help-circle-outline') as any} size={18} color={report.categoryColor ?? colors.primary} />
                       </View>
                       <View>
-                        <Text style={{ color: '#5A7D8A', fontSize: 11 }}>{timeAgo(report.createdAt)}</Text>
+                        <Text style={{ color: colors.textSecondary, fontSize: 11 }}>{timeAgo(report.createdAt)}</Text>
                       </View>
                     </View>
-                    <Text style={{ color: 'white', fontSize: 22, fontWeight: '800', lineHeight: 28, marginTop: 6 }}>
+                    <Text style={{ color: colors.text, fontSize: 22, fontWeight: '800', lineHeight: 28, marginTop: 6 }}>
                       {report.title}
                     </Text>
                   </View>
@@ -598,20 +662,20 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
                     style={{
                       minWidth: 46,
                       height: 46,
-                      backgroundColor: '#0f93f226',
-                      borderColor: '#4CC2D1',
+                      backgroundColor: colors.successBg,
+                      borderColor: colors.primary,
                       borderWidth: 1,
                       alignItems: 'center',
                       justifyContent: 'center',
                       borderRadius: 15
                     }}
                   >
-                    <Text style={{ color: '#4CC2D1', fontWeight: '600', fontSize: 15 }}>
+                    <Text style={{ color: colors.primary, fontWeight: '600', fontSize: 15 }}>
                       Total Upvotes:  {Math.max(0, report.upvoteCount ?? 0)}
                     </Text>
                   </View>
 
-                  {/* ── Upvote Bar (Make whole button pressable + show as of date/time) ── */}
+                  {/* ── Upvote Bar ── */}
                   {(() => {
                     const isOwnReport = report && user && report.uid === user.uid;
                     const isNotPending = report && report.status !== 'PENDING';
@@ -619,43 +683,43 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
 
                     let buttonText = 'Upvote this Issue?';
                     let iconName = 'arrow-up-circle-outline';
-                    let iconColor = '#ffffffff';
-                    let statusBg = '#0a8ac5ff';
-                    let buttonBg = '#0f93f2ff';
-                    let buttonBorder = '#1E3347';
+                    let iconColor = '#FFFFFF';
+                    let statusBg = colors.primary;
+                    let buttonBg = colors.primary;
+                    let buttonBorder = colors.primary;
                     let textStyleColor = '#FFFFFF';
 
                     if (isOwnReport) {
                       buttonText = 'You cannot upvote your own report';
                       iconName = 'lock-closed-outline';
-                      iconColor = '#5A7D8A';
-                      statusBg = '#1E3347';
-                      buttonBg = '#1A2F3B';
-                      buttonBorder = '#223847';
-                      textStyleColor = '#5A7D8A';
+                      iconColor = colors.textSecondary;
+                      statusBg = colors.border;
+                      buttonBg = colors.cardUnearned;
+                      buttonBorder = colors.border;
+                      textStyleColor = colors.textSecondary;
                     } else if (isNotPending) {
-                      buttonBg = '#1A2F3B';
-                      buttonBorder = '#223847';
-                      textStyleColor = '#5A7D8A';
+                      buttonBg = colors.cardUnearned;
+                      buttonBorder = colors.border;
+                      textStyleColor = colors.textSecondary;
                       if (hasUpvoted) {
                         buttonText = 'You have upvoted this issue (Cannot revoke)';
                         iconName = 'checkmark-circle-outline';
-                        iconColor = '#34D399';
-                        statusBg = '#04523630';
+                        iconColor = colors.successText;
+                        statusBg = colors.successBg;
                       } else {
                         buttonText = 'Upvoting is only allowed in pending stage';
                         iconName = 'lock-closed-outline';
-                        iconColor = '#5A7D8A';
-                        statusBg = '#1E3347';
+                        iconColor = colors.textSecondary;
+                        statusBg = colors.border;
                       }
                     } else if (hasUpvoted) {
                       buttonText = 'You upvoted this! Tap to retract.';
                       iconName = 'checkmark-circle';
-                      iconColor = '#34D399';
-                      statusBg = '#045236ff';
-                      buttonBg = 'rgba(15, 147, 242, 0.08)';
-                      buttonBorder = 'rgba(15, 147, 242, 0.3)';
-                      textStyleColor = '#4CC2D1';
+                      iconColor = colors.successText;
+                      statusBg = colors.successText;
+                      buttonBg = colors.successBg;
+                      buttonBorder = colors.successBorder;
+                      textStyleColor = colors.primary;
                     }
 
                     return (
@@ -669,7 +733,7 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
                           backgroundColor: isUpvoteDisabled
                             ? buttonBg
                             : (pressed 
-                                ? (hasUpvoted ? 'rgba(15, 147, 242, 0.18)' : '#007cc0') 
+                                ? (hasUpvoted ? colors.successBorder : colors.primaryPressed) 
                                 : buttonBg),
                           borderRadius: 16,
                           paddingHorizontal: 20,
@@ -711,31 +775,31 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
 
                   {/* ── Location ── */}
                   <View style={{
-                    backgroundColor: '#111E27', borderRadius: 16, padding: 14,
-                    borderWidth: 1, borderColor: '#1E3347',
+                    backgroundColor: colors.card, borderRadius: 16, padding: 14,
+                    borderWidth: 1, borderColor: colors.border,
                     flexDirection: 'row', alignItems: 'flex-start', gap: 12,
                   }}>
-                    <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: '#1E3347', alignItems: 'center', justifyContent: 'center' }}>
-                      <Ionicons name="location-outline" size={18} color="#4CC2D1" />
+                    <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: colors.successBg, alignItems: 'center', justifyContent: 'center' }}>
+                      <Ionicons name="location-outline" size={18} color={colors.primary} />
                     </View>
                     <View style={{ flex: 1 }}>
-                      <Text style={{ color: '#5A7D8A', fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>Location</Text>
-                      <Text style={{ color: 'white', fontSize: 13, lineHeight: 18 }}>{report.location?.address ?? 'Unknown'}</Text>
+                      <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>Location</Text>
+                      <Text style={{ color: colors.text, fontSize: 13, lineHeight: 18 }}>{report.location?.address ?? 'Unknown'}</Text>
                       {(report.location?.province || report.location?.district || report.location?.localGovernmentArea) && (
-                        <View style={{ marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: '#1E3347', gap: 4 }}>
+                        <View style={{ marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: colors.border, gap: 4 }}>
                           {report.location?.province && (
-                            <Text style={{ color: '#CBD5E1', fontSize: 12 }}>
-                              <Text style={{ color: '#5A7D8A', fontWeight: '600' }}>Province: </Text>{report.location.province}
+                            <Text style={{ color: colors.text, fontSize: 12 }}>
+                              <Text style={{ color: colors.textSecondary, fontWeight: '600' }}>Province: </Text>{report.location.province}
                             </Text>
                           )}
                           {report.location?.district && (
-                            <Text style={{ color: '#CBD5E1', fontSize: 12 }}>
-                              <Text style={{ color: '#5A7D8A', fontWeight: '600' }}>District: </Text>{report.location.district}
+                            <Text style={{ color: colors.text, fontSize: 12 }}>
+                              <Text style={{ color: colors.textSecondary, fontWeight: '600' }}>District: </Text>{report.location.district}
                             </Text>
                           )}
                           {report.location?.localGovernmentArea && (
-                            <Text style={{ color: '#CBD5E1', fontSize: 12 }}>
-                              <Text style={{ color: '#5A7D8A', fontWeight: '600' }}>LGA: </Text>{report.location.localGovernmentArea}
+                            <Text style={{ color: colors.text, fontSize: 12 }}>
+                              <Text style={{ color: colors.textSecondary, fontWeight: '600' }}>LGA: </Text>{report.location.localGovernmentArea}
                             </Text>
                           )}
                         </View>
@@ -745,61 +809,61 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
 
                   {/* ── Description ── */}
                   <View style={{
-                    backgroundColor: '#111E27', borderRadius: 16, padding: 14,
-                    borderWidth: 1, borderColor: '#1E3347',
+                    backgroundColor: colors.card, borderRadius: 16, padding: 14,
+                    borderWidth: 1, borderColor: colors.border,
                   }}>
-                    <Text style={{ color: '#5A7D8A', fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Description</Text>
-                    <Text style={{ color: '#CBD5E1', fontSize: 13, lineHeight: 20 }}>{report.description}</Text>
+                    <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Description</Text>
+                    <Text style={{ color: colors.text, fontSize: 13, lineHeight: 20 }}>{report.description}</Text>
                   </View>
 
                   {/* ── Status Timeline ── */}
                   <View style={{
-                    backgroundColor: '#111E27', borderRadius: 16, padding: 14,
-                    borderWidth: 1, borderColor: '#1E3347',
+                    backgroundColor: colors.card, borderRadius: 16, padding: 14,
+                    borderWidth: 1, borderColor: colors.border,
                   }}>
-                    <Text style={{ color: 'white', fontWeight: '700', marginBottom: 12 }}>Status Timeline</Text>
+                    <Text style={{ color: colors.text, fontWeight: '700', marginBottom: 12 }}>Status Timeline</Text>
                     {report.status === 'REJECTED' ? (
                       <>
                         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-                          <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: STATUS_CONFIG.PENDING.bg, alignItems: 'center', justifyContent: 'center', marginRight: 10 }}>
-                            <Ionicons name={STATUS_CONFIG.PENDING.icon as any} size={14} color={STATUS_CONFIG.PENDING.color} />
+                          <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: getStatusColorConfig('PENDING').bg, alignItems: 'center', justifyContent: 'center', marginRight: 10 }}>
+                            <Ionicons name={getStatusColorConfig('PENDING').icon as any} size={14} color={getStatusColorConfig('PENDING').color} />
                           </View>
-                          <Text style={{ color: STATUS_CONFIG.PENDING.color, fontWeight: '600', fontSize: 13, flex: 1 }}>Pending</Text>
-                          <Ionicons name="checkmark" size={14} color={STATUS_CONFIG.PENDING.color} />
+                          <Text style={{ color: getStatusColorConfig('PENDING').color, fontWeight: '600', fontSize: 13, flex: 1 }}>Pending</Text>
+                          <Ionicons name="checkmark" size={14} color={getStatusColorConfig('PENDING').color} />
                         </View>
                         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                          <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: '#3D1515', alignItems: 'center', justifyContent: 'center', marginRight: 10 }}>
-                            <Ionicons name="close-circle-outline" size={14} color="#E05C5C" />
+                          <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: colors.dangerBg, alignItems: 'center', justifyContent: 'center', marginRight: 10 }}>
+                            <Ionicons name="close-circle-outline" size={14} color={colors.dangerText} />
                           </View>
-                          <Text style={{ color: '#E05C5C', fontWeight: '600', fontSize: 13, flex: 1 }}>Rejected</Text>
-                          <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#E05C5C' }} />
+                          <Text style={{ color: colors.dangerText, fontWeight: '600', fontSize: 13, flex: 1 }}>Rejected</Text>
+                          <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.dangerText }} />
                         </View>
                         {report.resolutionNote && (
-                          <View style={{ marginTop: 10, backgroundColor: '#3D1515', borderRadius: 10, padding: 10 }}>
-                            <Text style={{ color: '#E05C5C', fontSize: 11, fontWeight: '700', marginBottom: 4 }}>REJECTION REASON</Text>
-                            <Text style={{ color: '#CBD5E1', fontSize: 12, lineHeight: 17 }}>{report.resolutionNote}</Text>
+                          <View style={{ marginTop: 10, backgroundColor: colors.dangerBg, borderRadius: 10, padding: 10 }}>
+                            <Text style={{ color: colors.dangerText, fontSize: 11, fontWeight: '700', marginBottom: 4 }}>REJECTION REASON</Text>
+                            <Text style={{ color: colors.text, fontSize: 12, lineHeight: 17 }}>{report.resolutionNote}</Text>
                           </View>
                         )}
                       </>
                     ) : (
                       <>
                         {TIMELINE_STATUSES.map((s, i) => {
-                          const sc = STATUS_CONFIG[s];
+                          const sc = getStatusColorConfig(s);
                           const done = timelineIndex >= i;
                           const isCurrent = report.status === s;
                           return (
                             <View key={s} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: i < TIMELINE_STATUSES.length - 1 ? 4 : 0 }}>
                               <View style={{ alignItems: 'center', marginRight: 10 }}>
-                                <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: done ? sc.bg : '#1A2D3D', alignItems: 'center', justifyContent: 'center' }}>
-                                  <Ionicons name={sc.icon as any} size={14} color={done ? sc.color : '#2D4F5C'} />
+                                <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: done ? sc.bg : colors.border, alignItems: 'center', justifyContent: 'center' }}>
+                                  <Ionicons name={sc.icon as any} size={14} color={done ? sc.color : colors.textMuted} />
                                 </View>
                                 {i < TIMELINE_STATUSES.length - 1 && (
-                                  <View style={{ width: 2, height: 12, marginVertical: 2, backgroundColor: done ? sc.color + '50' : '#1E3347' }} />
+                                  <View style={{ width: 2, height: 12, marginVertical: 2, backgroundColor: done ? sc.color + '50' : colors.border }} />
                                 )}
                               </View>
                               <View style={{ flex: 1 }}>
-                                <Text style={{ color: done ? sc.color : '#3A5060', fontWeight: '600', fontSize: 13 }}>{sc.label}</Text>
-                                {isCurrent && <Text style={{ color: '#5A7D8A', fontSize: 11 }}>Current status</Text>}
+                                <Text style={{ color: done ? sc.color : colors.textMuted, fontWeight: '600', fontSize: 13 }}>{sc.label}</Text>
+                                {isCurrent && <Text style={{ color: colors.textSecondary, fontSize: 11 }}>Current status</Text>}
                               </View>
                               {isCurrent && <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: sc.color }} />}
                               {done && !isCurrent && <Ionicons name="checkmark" size={14} color={sc.color} />}
@@ -807,9 +871,9 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
                           );
                         })}
                         {report.resolutionNote && (
-                          <View style={{ marginTop: 10, backgroundColor: '#0D3D35', borderRadius: 10, padding: 10 }}>
-                            <Text style={{ color: '#30A89C', fontSize: 11, fontWeight: '700', marginBottom: 4 }}>RESOLUTION NOTE</Text>
-                            <Text style={{ color: '#CBD5E1', fontSize: 12, lineHeight: 17 }}>{report.resolutionNote}</Text>
+                          <View style={{ marginTop: 10, backgroundColor: colors.successBg, borderRadius: 10, padding: 10 }}>
+                            <Text style={{ color: colors.successText, fontSize: 11, fontWeight: '700', marginBottom: 4 }}>RESOLUTION NOTE</Text>
+                            <Text style={{ color: colors.text, fontSize: 12, lineHeight: 17 }}>{report.resolutionNote}</Text>
                           </View>
                         )}
                       </>
@@ -820,12 +884,12 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
                   <View
                     style={{
                       flexDirection: 'row',
-                      justifyContent: 'space-between', // Pushes the two buttons to the far left and right
+                      justifyContent: 'space-between',
                       alignItems: 'center',
-                      backgroundColor: '#111E27',
-                      padding: 10,
-                      borderRadius: 20,
-                      width: '100%', // Ensures the container spans the full available width
+                      backgroundColor: 'transparent',
+                      paddingVertical: 10,
+                      gap: 12,
+                      width: '100%',
                     }}
                   >
                     <Pressable
@@ -833,13 +897,13 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
                       style={({ pressed }) => ({
                         flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
                         gap: 8, paddingVertical: 14, borderRadius: 16,
-                        backgroundColor: pressed ? '#1E3A44' : '#b5c3ceff',
-                        borderWidth: 1, borderColor: '#2D4F5C',
+                        backgroundColor: pressed ? colors.border : colors.card,
+                        borderWidth: 1, borderColor: colors.border,
                       })}
                     >
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, padding: 10 }}>
-                        <Ionicons name="map-outline" size={18} color="#4CC2D1" />
-                        <Text style={{ color: '#4CC2D1', fontWeight: '700', fontSize: 13 }} numberOfLines={1}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Ionicons name="map-outline" size={18} color={colors.primary} />
+                        <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 13 }} numberOfLines={1}>
                           Show on Map
                         </Text>
                       </View>
@@ -849,12 +913,12 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
                       style={({ pressed }) => ({
                         flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
                         gap: 8, paddingVertical: 14, borderRadius: 16,
-                        backgroundColor: pressed ? '#3BAFBD' : '#4CC2D1',
+                        backgroundColor: pressed ? colors.primaryPressed : colors.primary,
                       })}
                     >
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                        <Ionicons name="navigate" size={18} color="#4CC2D1" />
-                        <Text style={{ color: '#4CC2D1', fontWeight: '700', fontSize: 13 }} numberOfLines={1}>
+                        <Ionicons name="navigate" size={18} color="white" />
+                        <Text style={{ color: 'white', fontWeight: '700', fontSize: 13 }} numberOfLines={1}>
                           Open in Maps
                         </Text>
                       </View>
@@ -864,21 +928,21 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
                   {/* ── Community Comments ── */}
                   <View>
                     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                      <Text style={{ color: 'white', fontWeight: '700', fontSize: 15 }}>
+                      <Text style={{ color: colors.text, fontWeight: '700', fontSize: 15 }}>
                         Community Comments
                       </Text>
-                      <View style={{ backgroundColor: '#1E3347', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10 }}>
-                        <Text style={{ color: '#4CC2D1', fontSize: 11, fontWeight: '700' }}>{comments.length}</Text>
+                      <View style={{ backgroundColor: colors.border, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10 }}>
+                        <Text style={{ color: colors.primary, fontSize: 11, fontWeight: '700' }}>{comments.length}</Text>
                       </View>
                     </View>
 
                     {comments.length === 0 ? (
                       <View style={{
-                        backgroundColor: '#111E27', borderRadius: 16, padding: 20,
-                        alignItems: 'center', borderWidth: 1, borderColor: '#1E3347',
+                        backgroundColor: colors.card, borderRadius: 16, padding: 20,
+                        alignItems: 'center', borderWidth: 1, borderColor: colors.border,
                       }}>
-                        <Ionicons name="chatbubble-outline" size={28} color="#1E3347" />
-                        <Text style={{ color: '#3A5060', fontSize: 12, marginTop: 8, textAlign: 'center' }}>
+                        <Ionicons name="chatbubble-outline" size={28} color={colors.textMuted} />
+                        <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 8, textAlign: 'center' }}>
                           No comments yet.{'\n'}Be the first to share your thoughts.
                         </Text>
                       </View>
@@ -900,13 +964,13 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
                               alignItems: 'center',
                               paddingVertical: 12,
                               marginTop: 4,
-                              backgroundColor: pressed ? '#1E3347' : '#111E27',
+                              backgroundColor: pressed ? colors.border : colors.card,
                               borderRadius: 12,
                               borderWidth: 1,
-                              borderColor: '#1E3347',
+                              borderColor: colors.border,
                             })}
                           >
-                            <Text style={{ color: '#4CC2D1', fontWeight: '700', fontSize: 13 }}>
+                            <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 13 }}>
                               {showAllComments ? 'Show Less' : `View All (${comments.length}) Comments`}
                             </Text>
                           </Pressable>
@@ -934,25 +998,25 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
                   <View style={{
                     paddingBottom: Math.max(insets.bottom, 16),
                     paddingTop: 12, paddingHorizontal: 16,
-                    backgroundColor: '#0A1820',
-                    borderTopWidth: 1, borderTopColor: '#1E3347',
+                    backgroundColor: colors.card,
+                    borderTopWidth: 1, borderTopColor: colors.border,
                   }}>
                     <View style={{
                       flexDirection: 'row', alignItems: 'center', gap: 10,
-                      backgroundColor: isCommentDisabled ? '#0A1820' : '#111E27', borderRadius: 20,
+                      backgroundColor: isCommentDisabled ? colors.cardUnearned : colors.card, borderRadius: 20,
                       paddingHorizontal: 12, paddingVertical: 8,
-                      borderWidth: 1, borderColor: isCommentDisabled ? '#1E3347' : '#4CC2D1',
+                      borderWidth: 1, borderColor: isCommentDisabled ? colors.border : colors.primary,
                       opacity: isCommentDisabled ? 0.7 : 1,
                     }}>
                       <View style={{
                         width: 28, height: 28, borderRadius: 14,
-                        backgroundColor: isCommentDisabled ? '#1A2D3D' : '#1E3A44',
+                        backgroundColor: isCommentDisabled ? colors.border : colors.card,
                         alignItems: 'center', justifyContent: 'center', overflow: 'hidden'
                       }}>
                         {profile?.avatarUrl && !isCommentDisabled ? (
                           <Image source={{ uri: profile.avatarUrl }} style={{ width: 28, height: 28 }} resizeMode="cover" />
                         ) : (
-                          <Ionicons name={isCommentDisabled ? "lock-closed-outline" : "person-outline"} size={14} color={isCommentDisabled ? "#5A7D8A" : "#4CC2D1"} />
+                          <Ionicons name={isCommentDisabled ? "lock-closed-outline" : "person-outline"} size={14} color={isCommentDisabled ? colors.textSecondary : colors.primary} />
                         )}
                       </View>
                       <TextInput
@@ -960,11 +1024,11 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
                         onChangeText={setNewComment}
                         editable={!isCommentDisabled}
                         placeholder={placeholderText}
-                        placeholderTextColor="#5A7D8A"
+                        placeholderTextColor={colors.textSecondary}
                         multiline
                         maxLength={280}
                         style={{
-                          flex: 1, color: isCommentDisabled ? '#5A7D8A' : 'white', fontSize: 14,
+                          flex: 1, color: isCommentDisabled ? colors.textSecondary : colors.text, fontSize: 14,
                           maxHeight: 80,
                           paddingTop: Platform.OS === 'ios' ? 4 : 0,
                           paddingBottom: Platform.OS === 'ios' ? 4 : 0,
@@ -975,14 +1039,14 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
                         disabled={!newComment.trim() || isPostingComment || isCommentDisabled}
                         style={({ pressed }) => ({
                           width: 36, height: 36, borderRadius: 18,
-                          backgroundColor: isCommentDisabled ? '#1E3347' : (newComment.trim() ? (pressed ? '#3BAFBD' : '#4CC2D1') : '#e8e8e8ff'),
+                          backgroundColor: isCommentDisabled ? colors.border : (newComment.trim() ? (pressed ? colors.primaryPressed : colors.primary) : colors.border),
                           alignItems: 'center', justifyContent: 'center',
                         })}
                       >
                         {isPostingComment ? (
-                          <ActivityIndicator size="small" color="#ffffffff" />
+                          <ActivityIndicator size="small" color="#FFFFFF" />
                         ) : (
-                          <Ionicons name="send" size={16} color={isCommentDisabled ? '#5A7D8A' : (newComment.trim() ? '#ffffffff' : '#2D4F5C')} />
+                          <Ionicons name="send" size={16} color={isCommentDisabled ? colors.textSecondary : (newComment.trim() ? '#FFFFFF' : colors.textSecondary)} />
                         )}
                       </Pressable>
                     </View>
@@ -992,66 +1056,68 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
             </View>
           )}
         </KeyboardAvoidingView>
-      </LinearGradient>
+      </View>
 
       {/* ── Upvote/Retract Confirmation Dialog Modal ── */}
       <Modal
-        visible={upvoteModalType !== null}
+        visible={activeUpvoteModalType !== null}
         transparent={true}
-        animationType="fade"
+        animationType="none"
         onRequestClose={() => setUpvoteModalType(null)}
       >
-        <View style={{
+        <Animated.View style={{
           flex: 1,
-          backgroundColor: 'rgba(0, 0, 0, 0.82)',
+          backgroundColor: colors.modalBackdrop,
           justifyContent: 'center',
           alignItems: 'center',
           padding: 24,
+          opacity: upvoteOpacityAnim,
         }}>
-          <View style={{
+          <Animated.View style={{
             width: '100%',
             maxWidth: 340,
-            backgroundColor: '#0A1820',
+            backgroundColor: colors.card,
             borderRadius: 24,
-            borderWidth: 1.5,
-            borderColor: upvoteModalType === 'remove' ? '#E05C5C44' : '#0f93f2ff44',
+            borderWidth: 1,
+            borderColor: colors.border,
             padding: 22,
             gap: 16,
             shadowColor: '#000',
-            shadowOffset: { width: 0, height: 10 },
-            shadowOpacity: 0.5,
-            shadowRadius: 16,
-            elevation: 10,
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: isDark ? 0.3 : 0.1,
+            shadowRadius: 12,
+            elevation: 5,
+            transform: [{ scale: upvoteScaleAnim }],
           }}>
-            {upvoteModalType === 'add' ? (
+            {activeUpvoteModalType === 'add' ? (
               <>
                 {/* Header with Close Icon */}
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: '#0f93f2ff22', alignItems: 'center', justifyContent: 'center' }}>
-                      <Ionicons name="arrow-up-circle" size={20} color="#0f93f2ff" />
+                    <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: colors.successBg, alignItems: 'center', justifyContent: 'center' }}>
+                      <Ionicons name="arrow-up-circle" size={20} color={colors.primary} />
                     </View>
-                    <Text style={{ color: 'white', fontSize: 17, fontWeight: '800' }}>Upvote this issue?</Text>
+                    <Text style={{ color: colors.text, fontSize: 17, fontWeight: '800' }}>Upvote this issue?</Text>
                   </View>
                   <Pressable onPress={() => setUpvoteModalType(null)}>
-                    <Ionicons name="close" size={24} color="#5A7D8A" />
+                    <Ionicons name="close" size={24} color={colors.textSecondary} />
                   </Pressable>
                 </View>
 
-                <Text style={{ color: '#CBD5E1', fontSize: 13, lineHeight: 19 }}>
+                <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 19 }}>
                   Show support for this report to help prioritize it. You can optionally add a community comment too.
                 </Text>
 
                 {/* Optional Comment Input */}
                 <View style={{ gap: 6 }}>
-                  <Text style={{ color: '#5A7D8A', fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                  <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 }}>
                     Optional comment
                   </Text>
                   <View style={{
-                    backgroundColor: '#111E27',
+                    backgroundColor: colors.cardUnearned,
                     borderRadius: 14,
                     borderWidth: 1,
-                    borderColor: '#1E3347',
+                    borderColor: colors.border,
                     paddingHorizontal: 12,
                     paddingVertical: 8,
                   }}>
@@ -1059,11 +1125,11 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
                       value={upvoteCommentText}
                       onChangeText={setUpvoteCommentText}
                       placeholder="Share details, updates, or words of support…"
-                      placeholderTextColor="#3A5060"
+                      placeholderTextColor={colors.textMuted}
                       multiline
                       maxLength={140}
                       style={{
-                        color: 'white',
+                        color: colors.text,
                         fontSize: 13,
                         height: 56,
                         textAlignVertical: 'top',
@@ -1078,7 +1144,7 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
                     <Pressable
                       onPress={() => performUpvote(true, upvoteCommentText)}
                       style={({ pressed }) => ({
-                        backgroundColor: pressed ? '#007cc0' : '#0f93f2ff',
+                        backgroundColor: pressed ? colors.primaryPressed : colors.primary,
                         borderRadius: 14,
                         paddingVertical: 13,
                         alignItems: 'center',
@@ -1092,13 +1158,13 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
                     <Pressable
                       onPress={() => performUpvote(true)}
                       style={({ pressed }) => ({
-                        backgroundColor: pressed ? '#007cc0' : '#0f93f2ff',
+                        backgroundColor: pressed ? colors.primaryPressed : colors.primary,
                         borderRadius: 14,
                         paddingVertical: 13,
                         alignItems: 'center',
                       })}
                     >
-                      <Text style={{ color: '#2ab001ff', fontWeight: '800', fontSize: 14 }}>
+                      <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 14 }}>
                         Just Upvote
                       </Text>
                     </Pressable>
@@ -1107,13 +1173,13 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
                   <Pressable
                     onPress={() => setUpvoteModalType(null)}
                     style={({ pressed }) => ({
-                      backgroundColor: pressed ? 'rgba(255,255,255,0.05)' : 'transparent',
+                      backgroundColor: pressed ? colors.border : 'transparent',
                       borderRadius: 14,
                       paddingVertical: 10,
                       alignItems: 'center',
                     })}
                   >
-                    <Text style={{ color: '#ad1111ff', fontWeight: '600', fontSize: 13, marginTop: 2 }}>
+                    <Text style={{ color: colors.textSecondary, fontWeight: '600', fontSize: 13, marginTop: 2 }}>
                       Cancel
                     </Text>
                   </Pressable>
@@ -1124,17 +1190,17 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
                 {/* Retract Upvote dialog */}
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: '#E05C5C22', alignItems: 'center', justifyContent: 'center' }}>
-                      <Ionicons name="alert-circle" size={20} color="#E05C5C" />
+                    <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: colors.dangerBg, alignItems: 'center', justifyContent: 'center' }}>
+                      <Ionicons name="alert-circle" size={20} color={colors.dangerText} />
                     </View>
-                    <Text style={{ color: 'white', fontSize: 17, fontWeight: '800' }}>Retract your upvote?</Text>
+                    <Text style={{ color: colors.text, fontSize: 17, fontWeight: '800' }}>Retract your upvote?</Text>
                   </View>
                   <Pressable onPress={() => setUpvoteModalType(null)}>
-                    <Ionicons name="close" size={24} color="#5A7D8A" />
+                    <Ionicons name="close" size={24} color={colors.textSecondary} />
                   </Pressable>
                 </View>
 
-                <Text style={{ color: '#CBD5E1', fontSize: 13, lineHeight: 19 }}>
+                <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 19 }}>
                   Are you sure you want to remove your upvote? Your support will be retracted from this incident.
                 </Text>
 
@@ -1143,13 +1209,13 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
                   <Pressable
                     onPress={() => performUpvote(false)}
                     style={({ pressed }) => ({
-                      backgroundColor: pressed ? '#b83b3b' : '#E05C5C',
+                      backgroundColor: pressed ? colors.dangerText + 'BB' : colors.dangerText,
                       borderRadius: 14,
                       paddingVertical: 13,
                       alignItems: 'center',
                     })}
                   >
-                    <Text style={{ color: '#c11212ff', fontWeight: '800', fontSize: 14 }}>
+                    <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 14 }}>
                       Yes, Remove Upvote
                     </Text>
                   </Pressable>
@@ -1157,21 +1223,21 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
                   <Pressable
                     onPress={() => setUpvoteModalType(null)}
                     style={({ pressed }) => ({
-                      backgroundColor: pressed ? 'rgba(255,255,255,0.05)' : 'transparent',
+                      backgroundColor: pressed ? colors.border : 'transparent',
                       borderRadius: 14,
                       paddingVertical: 10,
                       alignItems: 'center',
                     })}
                   >
-                    <Text style={{ color: '#2ab001ff', fontWeight: '600', fontSize: 13 }}>
+                    <Text style={{ color: colors.primary, fontWeight: '600', fontSize: 13 }}>
                       Keep My Upvote
                     </Text>
                   </Pressable>
                 </View>
               </>
             )}
-          </View>
-        </View>
+          </Animated.View>
+        </Animated.View>
       </Modal>
 
       {/* Mounting Toast component inside the Modal so it overlays native modals */}
@@ -1179,3 +1245,4 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
     </Modal>
   );
 }
+

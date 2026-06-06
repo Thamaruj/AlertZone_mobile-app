@@ -1,4 +1,5 @@
 import { AuthProvider } from "@/config/authConfig";
+import { ThemeProvider } from "../config/themeContext";
 import { Stack } from "expo-router";
 import { Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -28,8 +29,10 @@ function AppContent() {
 
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </ThemeProvider>
   );
 }

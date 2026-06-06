@@ -11,7 +11,6 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   collection,
@@ -26,6 +25,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { useAuth } from '../config/authConfig';
+import { useTheme } from '../config/themeContext';
 import { AppNotification, NotificationType } from '../types/notification';
 
 // ─────────────────────────────────────────────
@@ -35,16 +35,13 @@ const TYPE_META: Record<
   NotificationType,
   { color: string; bg: string; icon: string }
 > = {
-  status_change: { color: '#4CC2D1', bg: 'rgba(76, 194, 209, 0.1)', icon: 'construct' },
-  upvote: { color: '#60A5FA', bg: 'rgba(96, 165, 250, 0.1)', icon: 'arrow-up-circle' },
-  badge_earned: { color: '#F59E0B', bg: 'rgba(245, 158, 11, 0.1)', icon: 'trophy' },
-  system: { color: '#E05C5C', bg: 'rgba(224, 92, 92, 0.1)', icon: 'alert-circle' },
+  status_change: { color: '#0D8A72', bg: 'rgba(13, 138, 114, 0.1)', icon: 'construct' },
+  upvote: { color: '#3B82F6', bg: 'rgba(59, 130, 246, 0.1)', icon: 'arrow-up-circle' },
+  badge_earned: { color: '#D97706', bg: 'rgba(217, 119, 6, 0.1)', icon: 'trophy' },
+  system: { color: '#DC2626', bg: 'rgba(220, 38, 38, 0.1)', icon: 'alert-circle' },
   comment: { color: '#A78BFA', bg: 'rgba(167, 139, 250, 0.1)', icon: 'chatbubble-ellipses' },
 };
 
-// ─────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────
 const timeAgo = (createdAt: any) => {
   if (!createdAt) return 'Recently';
   let date: Date;
@@ -76,6 +73,7 @@ export default function NotificationsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const { colors, isDark } = useTheme();
 
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -165,10 +163,8 @@ export default function NotificationsScreen() {
 
   // Actions
   const handleMarkAsRead = async (id: string) => {
-    console.log('🔔 handleMarkAsRead triggered for notification ID:', id);
     try {
       await updateDoc(doc(db, 'notifications', id), { isRead: true });
-      console.log('✅ Firestore updated successfully for notification ID:', id);
     } catch (e) {
       console.error('❌ Error marking notification as read:', e);
     }
@@ -234,7 +230,7 @@ export default function NotificationsScreen() {
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   return (
-    <LinearGradient colors={['#0D1F2D', '#0A1820', '#071318']} style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       {/* Header */}
       <View
         style={{
@@ -242,27 +238,31 @@ export default function NotificationsScreen() {
           paddingBottom: 12,
           paddingHorizontal: 20,
           borderBottomWidth: 1,
-          borderBottomColor: '#1E3347',
+          borderBottomColor: colors.border,
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-between',
         }}
       >
         <View className="flex-row items-center gap-3">
-          <Pressable onPress={() => router.back()} className="w-10 h-10 rounded-full bg-[#1E3A44] items-center justify-center border border-[#2D4F5C] active:opacity-75">
-            <Ionicons name="arrow-back" size={20} color="#4CC2D1" />
+          <Pressable
+            onPress={() => router.back()}
+            className="w-10 h-10 rounded-full items-center justify-center border active:opacity-75"
+            style={{ backgroundColor: colors.card, borderColor: colors.border }}
+          >
+            <Ionicons name="arrow-back" size={20} color={colors.primary} />
           </Pressable>
           <View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <Text className="text-white text-lg font-bold">Notifications</Text>
+              <Text className="text-lg font-bold" style={{ color: colors.text }}>Notifications</Text>
               {unreadCount > 0 && (
-                <View style={{ backgroundColor: '#E05C5C', paddingHorizontal: 6, paddingVertical: 1.5, borderRadius: 10, minWidth: 18, alignItems: 'center', justifyContent: 'center' }}>
-                  <Text style={{ color: 'white', fontSize: 10, fontWeight: '700' }}>{unreadCount}</Text>
+                <View style={{ backgroundColor: '#DC2626', paddingHorizontal: 6, paddingVertical: 1.5, borderRadius: 10, minWidth: 18, alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: '800' }}>{unreadCount}</Text>
                 </View>
               )}
             </View>
             {unreadCount > 0 && (
-              <Text className="text-[#4CC2D1] text-xs font-semibold">{unreadCount} unread messages</Text>
+              <Text className="text-xs font-semibold" style={{ color: colors.primary }}>{unreadCount} unread messages</Text>
             )}
           </View>
         </View>
@@ -272,10 +272,11 @@ export default function NotificationsScreen() {
             <Pressable
               onPress={handleMarkAllAsRead}
               disabled={clearingAll}
-              className="flex-row items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1A302B] border border-[#2D5A4E]/50 active:opacity-75"
+              className="flex-row items-center gap-1.5 px-3 py-1.5 rounded-lg border active:opacity-75"
+              style={{ backgroundColor: colors.successBg, borderColor: colors.successBorder }}
             >
-              <Ionicons name="checkmark-done" size={14} color="#30A89C" />
-              <Text className="text-[#30A89C] text-xs font-bold">Read All</Text>
+              <Ionicons name="checkmark-done" size={14} color={colors.successText} />
+              <Text style={{ color: colors.successText, fontSize: 12, fontWeight: 'bold' }}>Read All</Text>
             </Pressable>
           )}
 
@@ -283,10 +284,11 @@ export default function NotificationsScreen() {
             <Pressable
               onPress={handleClearAll}
               disabled={clearingAll}
-              className="flex-row items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#2D1F20] border border-[#5A2D30]/50 active:opacity-75"
+              className="flex-row items-center gap-1.5 px-3 py-1.5 rounded-lg border active:opacity-75"
+              style={{ backgroundColor: colors.dangerBg, borderColor: colors.dangerBorder }}
             >
-              <Ionicons name="trash-outline" size={14} color="#E05C5C" />
-              <Text className="text-[#E05C5C] text-xs font-bold">Clear All</Text>
+              <Ionicons name="trash-outline" size={14} color={colors.dangerText} />
+              <Text style={{ color: colors.dangerText, fontSize: 12, fontWeight: 'bold' }}>Clear All</Text>
             </Pressable>
           )}
         </View>
@@ -319,15 +321,15 @@ export default function NotificationsScreen() {
                   alignItems: 'center',
                   paddingHorizontal: 16,
                   paddingVertical: 8,
-                  backgroundColor: isActive ? '#1E3A44' : '#111E27',
+                  backgroundColor: colors.card,
                   borderRadius: 20,
                   borderWidth: 1,
-                  borderColor: isActive ? '#4CC2D1' : '#1E3347',
+                  borderColor: isActive ? colors.primary : colors.border,
                 }}
               >
                 <Text
                   style={{
-                    color: isActive ? '#4CC2D1' : '#5A7D8A',
+                    color: isActive ? colors.primary : colors.textSecondary,
                     fontSize: 12,
                     fontWeight: '600',
                   }}
@@ -338,7 +340,7 @@ export default function NotificationsScreen() {
                   <View
                     style={{
                       marginLeft: 6,
-                      backgroundColor: '#E05C5C',
+                      backgroundColor: '#DC2626',
                       borderRadius: 10,
                       paddingHorizontal: 6,
                       paddingVertical: 1,
@@ -347,7 +349,7 @@ export default function NotificationsScreen() {
                       justifyContent: 'center',
                     }}
                   >
-                    <Text style={{ color: 'white', fontSize: 9, fontWeight: '700' }}>
+                    <Text style={{ color: '#FFFFFF', fontSize: 9, fontWeight: '800' }}>
                       {unreadCount}
                     </Text>
                   </View>
@@ -361,15 +363,15 @@ export default function NotificationsScreen() {
       {/* List */}
       {loading ? (
         <View className="flex-1 justify-center items-center">
-          <ActivityIndicator size="large" color="#4CC2D1" />
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
       ) : filteredNotifications.length === 0 ? (
         <View className="flex-1 justify-center items-center px-8">
-          <View className="w-16 h-16 rounded-full bg-[#1E3A44] items-center justify-center mb-4 border border-[#2D4F5C]">
-            <Ionicons name="notifications-off-outline" size={28} color="#4CC2D1" />
+          <View className="w-16 h-16 rounded-full items-center justify-center mb-4 border" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
+            <Ionicons name="notifications-off-outline" size={28} color={colors.primary} />
           </View>
-          <Text className="text-white text-base font-bold mb-1">All caught up!</Text>
-          <Text className="text-gray-500 text-xs text-center leading-5">
+          <Text className="text-base font-bold mb-1" style={{ color: colors.text }}>All caught up!</Text>
+          <Text className="text-xs text-center leading-5" style={{ color: colors.textMuted }}>
             {"You don't have any notifications under this filter at the moment."}
           </Text>
         </View>
@@ -396,7 +398,7 @@ export default function NotificationsScreen() {
           }}
         />
       )}
-    </LinearGradient>
+    </View>
   );
 }
 
@@ -425,6 +427,7 @@ function NotificationCard({
   const meta = TYPE_META[item.type] || TYPE_META.system;
   const animValue = useRef(new Animated.Value(1)).current;
   const [isDeletingLocal, setIsDeletingLocal] = useState(false);
+  const { colors, isDark } = useTheme();
 
   useEffect(() => {
     if (isClearingAll) {
@@ -481,15 +484,17 @@ function NotificationCard({
       }}
     >
       <View
-        className="rounded-2xl bg-[#111E27] border border-[#1E3347] overflow-hidden relative"
+        className="rounded-2xl border overflow-hidden relative"
         style={{
+          backgroundColor: colors.card,
+          borderColor: colors.border,
           borderLeftWidth: item.isRead ? 1 : 4,
-          borderLeftColor: item.isRead ? '#1E3347' : meta.color,
+          borderLeftColor: item.isRead ? colors.border : meta.color,
         }}
       >
         {/* Glow/Dot indicator */}
         {!item.isRead && (
-          <View className="absolute top-4 right-4 w-2 h-2 rounded-full bg-[#E05C5C]" />
+          <View className="absolute top-4 right-4 w-2 h-2 rounded-full bg-[#DC2626]" />
         )}
 
         <Pressable
@@ -504,51 +509,60 @@ function NotificationCard({
           </View>
 
           <View className="flex-1 pr-4">
-            <Text className="text-white font-bold text-sm" numberOfLines={1}>
+            <Text className="font-bold text-sm" style={{ color: colors.text }} numberOfLines={1}>
               {item.title}
             </Text>
-            <Text className="text-gray-400 text-xs mt-1 leading-5">
+            <Text className="text-xs mt-1 leading-5" style={{ color: colors.textSecondary }}>
               {item.body}
             </Text>
             {item.reportId && (
-              <Text className="text-[#4CC2D1] text-[11px] font-semibold mt-1">
+              <Text className="text-[11px] font-semibold mt-1" style={{ color: colors.primary }}>
                 Ref: {item.reportId}
               </Text>
             )}
-            <Text className="text-gray-500 text-[10px] mt-2 font-medium">
+            <Text className="text-[10px] mt-2 font-medium" style={{ color: colors.textMuted }}>
               {timeAgo(item.createdAt)}
             </Text>
           </View>
         </Pressable>
 
         {/* Actions Panel */}
-        <View className="px-4 py-2 border-t border-[#1E3347] flex-row justify-end items-center gap-3 bg-[#0D1F2D]/30">
+        <View
+          className="px-4 py-2 border-t flex-row justify-end items-center gap-3"
+          style={{
+            borderTopColor: colors.border,
+            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)',
+          }}
+        >
           {item.reportId && (
             <Pressable
               onPress={() => onPress(item)}
-              className="flex-row items-center gap-1 py-1 px-2.5 rounded bg-[#1E3A44]/50 border border-[#2D4F5C]/50 active:opacity-75"
+              className="flex-row items-center gap-1 py-1 px-2.5 rounded border active:opacity-75"
+              style={{ backgroundColor: colors.card, borderColor: colors.border }}
             >
-              <Ionicons name="map-outline" size={12} color="#4CC2D1" />
-              <Text className="text-[#4CC2D1] text-[10px] font-bold">View on Map</Text>
+              <Ionicons name="map-outline" size={12} color={colors.primary} />
+              <Text style={{ color: colors.primary, fontSize: 10, fontWeight: 'bold' }}>View on Map</Text>
             </Pressable>
           )}
 
           {!item.isRead && (
             <Pressable
               onPress={() => onMarkAsRead(item.id)}
-              className="flex-row items-center gap-1 py-1 px-2.5 rounded bg-[#1A302B] border border-[#2D5A4E]/50 active:opacity-75"
+              className="flex-row items-center gap-1 py-1 px-2.5 rounded border active:opacity-75"
+              style={{ backgroundColor: colors.successBg, borderColor: colors.successBorder }}
             >
-              <Ionicons name="checkmark" size={12} color="#30A89C" />
-              <Text className="text-[#30A89C] text-[10px] font-bold">Mark as read</Text>
+              <Ionicons name="checkmark" size={12} color={colors.successText} />
+              <Text style={{ color: colors.successText, fontSize: 10, fontWeight: 'bold' }}>Mark as read</Text>
             </Pressable>
           )}
 
           <Pressable
             onPress={handleDeletePress}
-            className="flex-row items-center gap-1 py-1 px-2.5 rounded bg-[#2D1F20] border border-[#5A2D30]/50 active:opacity-75"
+            className="flex-row items-center gap-1 py-1 px-2.5 rounded border active:opacity-75"
+            style={{ backgroundColor: colors.dangerBg, borderColor: colors.dangerBorder }}
           >
-            <Ionicons name="trash-outline" size={12} color="#E05C5C" />
-            <Text className="text-[#E05C5C] text-[10px] font-bold">Delete</Text>
+            <Ionicons name="trash-outline" size={12} color={colors.dangerText} />
+            <Text style={{ color: colors.dangerText, fontSize: 10, fontWeight: 'bold' }}>Delete</Text>
           </Pressable>
         </View>
       </View>

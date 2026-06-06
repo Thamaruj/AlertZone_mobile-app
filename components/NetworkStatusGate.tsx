@@ -326,7 +326,7 @@ export default function NetworkStatusGate() {
 const styles = StyleSheet.create({
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#071318',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
   },
   sheetContainer: {
     position: 'absolute',
@@ -351,7 +351,7 @@ const styles = StyleSheet.create({
     height: 5,
     borderRadius: 3,
     backgroundColor: '#FFFFFF',
-    opacity: 0.25,
+    opacity: 0.4,
     marginBottom: 20,
   },
   content: {
@@ -363,13 +363,13 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 22,
     borderWidth: 3.5,
-    borderColor: '#FFFFFF', // White spinner on red background
+    borderColor: '#FFFFFF',
     borderTopColor: 'transparent',
     marginBottom: 16,
   },
   successIconBg: {
     marginBottom: 12,
-    shadowColor: '#FFFFFF',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.3,
     shadowRadius: 6,

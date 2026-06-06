@@ -11,6 +11,8 @@ import {
   where,
 } from 'firebase/firestore';
 import React, { useEffect, useRef, useState } from 'react';
+import { useTheme } from '../../config/themeContext';
+import { DARK_MAP_STYLE } from '../../config/mapStyle';
 import {
   Pressable,
   ScrollView,
@@ -24,6 +26,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../config/authConfig';
 import { db } from '../../services/firebase';
 import ReportDetailSheet from '../../components/ReportDetailSheet';
+
 
 // ─────────────────────────────────────────────
 // Types
@@ -47,13 +50,13 @@ interface ReportPin {
 // Constants
 // ─────────────────────────────────────────────
 const FILTER_CHIPS = [
-  { id: 'all', label: 'All', icon: 'warning-outline', color: '#F59E0B' },
-  { id: 'road_traffic', label: 'Roads', icon: 'car-outline', color: '#4CC2D1' },
-  { id: 'water_drainage', label: 'Water', icon: 'water-outline', color: '#60A5FA' },
-  { id: 'waste_environment', label: 'Waste', icon: 'trash-outline', color: '#34D399' },
-  { id: 'social_safety', label: 'Safety', icon: 'shield-outline', color: '#A78BFA' },
-  { id: 'bridge_structural', label: 'Structural', icon: 'git-network-outline', color: '#F59E0B' },
-  { id: 'other', label: 'Other', icon: 'help-circle-outline', color: '#94A3B8' },
+  { id: 'all', label: 'All', icon: 'warning-outline', color: '#D97706' },
+  { id: 'road_traffic', label: 'Roads', icon: 'car-outline', color: '#0D8A72' },
+  { id: 'water_drainage', label: 'Water', icon: 'water-outline', color: '#3B82F6' },
+  { id: 'waste_environment', label: 'Waste', icon: 'trash-outline', color: '#059669' },
+  { id: 'social_safety', label: 'Safety', icon: 'shield-outline', color: '#7C3AED' },
+  { id: 'bridge_structural', label: 'Structural', icon: 'git-network-outline', color: '#D97706' },
+  { id: 'other', label: 'Other', icon: 'help-circle-outline', color: '#6B7280' },
 ];
 
 const DEFAULT_REGION = {
@@ -63,24 +66,12 @@ const DEFAULT_REGION = {
   longitudeDelta: 0.05,
 };
 
-const DARK_MAP_STYLE = [
-  { elementType: 'geometry', stylers: [{ color: '#0d1f2d' }] },
-  { elementType: 'labels.text.fill', stylers: [{ color: '#4CC2D1' }] },
-  { elementType: 'labels.text.stroke', stylers: [{ color: '#0a1820' }] },
-  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#1E3A44' }] },
-  { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#071318' }] },
-  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#071318' }] },
-  { featureType: 'poi', elementType: 'geometry', stylers: [{ color: '#0a1820' }] },
-  { featureType: 'transit', elementType: 'geometry', stylers: [{ color: '#1E3A44' }] },
-  { featureType: 'administrative', elementType: 'geometry', stylers: [{ color: '#1E3A44' }] },
-];
-
 const STATUS_COLOR: Record<string, string> = {
-  PENDING: '#F59E0B',
-  ASSIGNED: '#60A5FA',
-  FIXING: '#4CC2D1',
-  RESOLVED: '#30A89C',
-  REJECTED: '#E05C5C',
+  PENDING: '#D97706',
+  ASSIGNED: '#3B82F6',
+  FIXING: '#0D8A72',
+  RESOLVED: '#059669',
+  REJECTED: '#DC2626',
 };
 
 // ─────────────────────────────────────────────
@@ -88,6 +79,7 @@ const STATUS_COLOR: Record<string, string> = {
 // ─────────────────────────────────────────────
 export default function MapScreen() {
   const insets = useSafeAreaInsets();
+  const { colors, isDark } = useTheme();
   const mapRef = useRef<MapView>(null);
   const params = useLocalSearchParams<{ lat?: string; lng?: string; id?: string }>();
   const { user, profile } = useAuth();
@@ -143,7 +135,6 @@ export default function MapScreen() {
     if (params.id) {
       setDetailReportId(params.id);
       
-      // If we don't have lat/lng in params, try to find the report pin and animate to it
       if (!params.lat || !params.lng) {
         const pin = reports.find(r => r.id === params.id);
         if (pin) {
@@ -182,7 +173,7 @@ export default function MapScreen() {
             title: data.title ?? data.category ?? 'Report',
             categoryId: data.categoryId ?? 'road_traffic',
             categoryIcon: data.categoryIcon ?? 'warning-outline',
-            categoryColor: data.categoryColor ?? '#4CC2D1',
+            categoryColor: data.categoryColor ?? '#0D8A72',
             latitude: data.location.latitude,
             longitude: data.location.longitude,
             status: data.status ?? 'PENDING',
@@ -266,13 +257,8 @@ export default function MapScreen() {
   };
 
   const reportsInRadius = reports.filter(pin => {
-    // 1. Definitively bypass radius filter for specifically requested or selected pins
     if (params.id === pin.id || selectedPin?.id === pin.id) return true;
-    
-    // 2. If userLocation isn't ready, fallback to showing all temporarily
     if (!userLocation) return true;
-
-    // 3. Otherwise, check radius
     const dist = getDistance(userLocation.latitude, userLocation.longitude, pin.latitude, pin.longitude);
     return dist <= radiusKm;
   });
@@ -283,9 +269,7 @@ export default function MapScreen() {
   }, {} as Record<string, number>);
 
   const filteredPins = reportsInRadius.filter((pin) => {
-    // Definitively bypass category/search filters for specifically requested or selected pins
     if (params.id === pin.id || selectedPin?.id === pin.id) return true;
-
     const matchesCategory = activeFilter === 'all' || pin.categoryId === activeFilter;
     const matchesSearch = searchText.trim() === '' ||
       pin.title.toLowerCase().includes(searchText.toLowerCase()) ||
@@ -294,23 +278,23 @@ export default function MapScreen() {
   });
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#071318' }}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       <MapView
         ref={mapRef}
         provider={PROVIDER_GOOGLE}
         style={{ flex: 1 }}
         initialRegion={region}
-        customMapStyle={DARK_MAP_STYLE}
         showsUserLocation={locationGranted}
         showsMyLocationButton={false}
         onRegionChangeComplete={setRegion}
+        customMapStyle={isDark ? DARK_MAP_STYLE : []}
       >
         {userLocation && (
           <Circle
             center={userLocation}
             radius={radiusKm * 1000}
-            strokeColor="rgba(224, 92, 92, 0.5)"
-            fillColor="rgba(224, 92, 92, 0.1)"
+            strokeColor={colors.primary + '66'}
+            fillColor={colors.primary + '14'}
             strokeWidth={2}
           />
         )}
@@ -323,10 +307,10 @@ export default function MapScreen() {
             <View style={{
               backgroundColor: pin.categoryColor,
               borderRadius: 20, padding: 6,
-              borderWidth: 2, borderColor: 'white',
-              shadowColor: pin.categoryColor,
+              borderWidth: 2, borderColor: colors.card,
+              shadowColor: '#000',
               shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.5, shadowRadius: 4, elevation: 4,
+              shadowOpacity: 0.2, shadowRadius: 4, elevation: 4,
             }}>
               <Ionicons name={pin.categoryIcon as any} size={16} color="white" />
             </View>
@@ -338,26 +322,33 @@ export default function MapScreen() {
         <View style={{ flexDirection: 'row', gap: 8, marginBottom: 10 }}>
           <View style={{
             flex: 1, flexDirection: 'row', alignItems: 'center',
-            backgroundColor: '#111E27', borderRadius: 14,
+            backgroundColor: colors.card, borderRadius: 14,
             paddingHorizontal: 14, paddingVertical: 10,
-            borderWidth: 1, borderColor: '#1E3347',
-            shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.3, shadowRadius: 8, elevation: 8,
+            borderWidth: 1, borderColor: colors.border,
+            shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.06, shadowRadius: 6, elevation: 4,
           }}>
-            <Ionicons name="search-outline" size={18} color="#3A6070" />
+            <Ionicons name="search-outline" size={18} color={colors.textSecondary} />
             <TextInput
               placeholder="Search location or issue…"
-              placeholderTextColor="#3A6070"
+              placeholderTextColor={colors.textMuted}
               value={searchText}
               onChangeText={setSearchText}
-              style={{ flex: 1, color: 'white', fontSize: 14, marginLeft: 10, padding: 0 }}
+              style={{ flex: 1, color: colors.text, fontSize: 14, marginLeft: 10, padding: 0 }}
             />
           </View>
           <Pressable
             onPress={() => setIsListOpen(!isListOpen)}
-            className="bg-[#111E27] px-4 rounded-xl items-center justify-center active:opacity-70 border border-[#1E3347] shadow-lg"
+            style={{
+              backgroundColor: colors.card, paddingHorizontal: 16, borderRadius: 14,
+              alignItems: 'center', justifyContent: 'center',
+              borderWidth: 1, borderColor: colors.border,
+              shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.06, shadowRadius: 6, elevation: 4,
+            }}
+            className="active:opacity-70"
           >
-            <Ionicons name={isListOpen ? "map-outline" : "list-outline"} size={20} color="#4CC2D1" />
+            <Ionicons name={isListOpen ? "map-outline" : "list-outline"} size={20} color={colors.primary} />
           </Pressable>
         </View>
 
@@ -374,13 +365,15 @@ export default function MapScreen() {
                   style={{
                     flexDirection: 'row', alignItems: 'center', gap: 6,
                     paddingHorizontal: 12, paddingVertical: 7,
-                    backgroundColor: isActive ? '#1E3A44' : 'rgba(17,30,39,0.9)',
+                    backgroundColor: isActive ? colors.card : colors.card + 'EB',
                     borderRadius: 20, borderWidth: 1,
-                    borderColor: isActive ? chip.color : '#1E3347',
+                    borderColor: isActive ? chip.color : colors.border,
+                    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+                    shadowOpacity: 0.04, shadowRadius: 3, elevation: 2,
                   }}
                 >
-                  <Ionicons name={chip.icon as any} size={13} color={isActive ? chip.color : '#5A7D8A'} />
-                  <Text style={{ color: isActive ? chip.color : '#5A7D8A', fontSize: 12, fontWeight: '600' }}>
+                  <Ionicons name={chip.icon as any} size={13} color={isActive ? chip.color : colors.textSecondary} />
+                  <Text style={{ color: isActive ? chip.color : colors.textSecondary, fontSize: 12, fontWeight: '600' }}>
                     {chip.label} {count > 0 ? `(${count})` : ''}
                   </Text>
                 </Pressable>
@@ -391,22 +384,22 @@ export default function MapScreen() {
 
         {isListOpen && (
           <View style={{
-            marginTop: 10, backgroundColor: '#111E27', borderRadius: 18,
-            maxHeight: 350, borderWidth: 1, borderColor: '#1E3347',
-            shadowColor: '#000', shadowOffset: { width: 0, height: 10 },
-            shadowOpacity: 0.5, shadowRadius: 20, elevation: 15,
+            marginTop: 10, backgroundColor: colors.card, borderRadius: 16,
+            maxHeight: 350, borderWidth: 1, borderColor: colors.border,
+            shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.1, shadowRadius: 12, elevation: 8,
             overflow: 'hidden'
           }}>
-            <View style={{ padding: 12, borderBottomWidth: 1, borderBottomColor: '#1E3347', backgroundColor: '#0D1F2D' }}>
-              <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 13 }}>
+            <View style={{ padding: 12, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+              <Text style={{ color: colors.text, fontWeight: 'bold', fontSize: 13 }}>
                 Nearby Reports ({filteredPins.length})
               </Text>
             </View>
             <ScrollView showsVerticalScrollIndicator={false}>
               {filteredPins.length === 0 ? (
                 <View style={{ padding: 30, alignItems: 'center' }}>
-                  <Ionicons name="search-outline" size={30} color="#2D4F5C" />
-                  <Text style={{ color: '#5A7D8A', fontSize: 12, marginTop: 10 }}>No reports found in this area.</Text>
+                  <Ionicons name="search-outline" size={30} color={colors.border} />
+                  <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 10 }}>No reports found in this area.</Text>
                 </View>
               ) : (
                 filteredPins.map((item) => (
@@ -424,22 +417,22 @@ export default function MapScreen() {
                     }}
                     style={({ pressed }) => ({
                       flexDirection: 'row', alignItems: 'center', padding: 14,
-                      backgroundColor: pressed ? '#1E3347' : 'transparent',
-                      borderBottomWidth: 1, borderBottomColor: '#1E3347'
+                      backgroundColor: pressed ? colors.background : 'transparent',
+                      borderBottomWidth: 1, borderBottomColor: colors.border
                     })}
                   >
                     <View style={{
                       width: 36, height: 36, borderRadius: 10,
-                      backgroundColor: item.categoryColor + '22',
+                      backgroundColor: item.categoryColor + '18',
                       alignItems: 'center', justifyContent: 'center', marginRight: 12
                     }}>
                       <Ionicons name={item.categoryIcon as any} size={18} color={item.categoryColor} />
                     </View>
                     <View style={{ flex: 1 }}>
-                      <Text style={{ color: 'white', fontWeight: '600', fontSize: 13 }} numberOfLines={1}>{item.title}</Text>
-                      <Text style={{ color: '#5A7D8A', fontSize: 11, marginTop: 2 }} numberOfLines={1}>{item.address}</Text>
+                      <Text style={{ color: colors.text, fontWeight: '600', fontSize: 13 }} numberOfLines={1}>{item.title}</Text>
+                      <Text style={{ color: colors.textSecondary, fontSize: 11, marginTop: 2 }} numberOfLines={1}>{item.address}</Text>
                     </View>
-                    <Ionicons name="chevron-forward" size={14} color="#2D4F5C" />
+                    <Ionicons name="chevron-forward" size={14} color={colors.border} />
                   </Pressable>
                 ))
               )}
@@ -450,45 +443,45 @@ export default function MapScreen() {
 
       <View style={{ position: 'absolute', bottom: selectedPin ? 280 : 170, left: 16 }}>
         <View style={{
-          backgroundColor: '#111E27', borderRadius: 14,
-          padding: 10, borderWidth: 1, borderColor: '#1E3347',
+          backgroundColor: colors.card, borderRadius: 14,
+          padding: 10, borderWidth: 1, borderColor: colors.border,
           flexDirection: 'row', alignItems: 'center', gap: 10,
-          shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.3, shadowRadius: 8, elevation: 8,
+          shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.06, shadowRadius: 6, elevation: 4,
         }}>
           <View className="items-center mr-2">
-            <Text className="text-gray-500 text-[10px] uppercase font-bold">Radius</Text>
-            <Text className="text-white font-bold text-sm">{radiusKm}km</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '700', textTransform: 'uppercase' }}>Radius</Text>
+            <Text style={{ color: colors.text, fontWeight: '700', fontSize: 13 }}>{radiusKm}km</Text>
           </View>
-          <Pressable onPress={decreaseRadius} className="w-8 h-8 bg-[#1E3347] items-center justify-center rounded-lg active:opacity-70">
-            <Ionicons name="remove" size={18} color="#4CC2D1" />
+          <Pressable onPress={decreaseRadius} style={{ width: 32, height: 32, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center', borderRadius: 8 }} className="active:opacity-70">
+            <Ionicons name="remove" size={18} color={colors.primary} />
           </Pressable>
-          <Pressable onPress={increaseRadius} className="w-8 h-8 bg-[#1E3347] items-center justify-center rounded-lg active:opacity-70">
-            <Ionicons name="add" size={18} color="#4CC2D1" />
+          <Pressable onPress={increaseRadius} style={{ width: 32, height: 32, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center', borderRadius: 8 }} className="active:opacity-70">
+            <Ionicons name="add" size={18} color={colors.primary} />
           </Pressable>
         </View>
       </View>
 
       <View style={{ position: 'absolute', right: 16, bottom: selectedPin ? 260 : 170 }}>
         <Pressable onPress={goToMyLocation} className="active:opacity-80" style={{
-          width: 40, height: 40, backgroundColor: '#4CC2D1',
+          width: 40, height: 40, backgroundColor: colors.primary,
           borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginBottom: 8,
         }}>
-          <Ionicons name="navigate" size={18} color="#071318" />
+          <Ionicons name="navigate" size={18} color="#FFFFFF" />
         </Pressable>
         <Pressable onPress={zoomIn} className="active:opacity-80" style={{
-          width: 40, height: 40, backgroundColor: '#111E27',
+          width: 40, height: 40, backgroundColor: colors.card,
           borderRadius: 10, alignItems: 'center', justifyContent: 'center',
-          borderWidth: 1, borderColor: '#1E3347', marginBottom: 8,
+          borderWidth: 1, borderColor: colors.border, marginBottom: 8,
         }}>
-          <Ionicons name="add" size={20} color="white" />
+          <Ionicons name="add" size={20} color={colors.text} />
         </Pressable>
         <Pressable onPress={zoomOut} className="active:opacity-80" style={{
-          width: 40, height: 40, backgroundColor: '#111E27',
+          width: 40, height: 40, backgroundColor: colors.card,
           borderRadius: 10, alignItems: 'center', justifyContent: 'center',
-          borderWidth: 1, borderColor: '#1E3347',
+          borderWidth: 1, borderColor: colors.border,
         }}>
-          <Ionicons name="remove" size={20} color="white" />
+          <Ionicons name="remove" size={20} color={colors.text} />
         </Pressable>
       </View>
 
@@ -500,49 +493,49 @@ export default function MapScreen() {
           }}
         >
         <View style={{
-          backgroundColor: '#111E27', borderRadius: 20, padding: 16,
-          borderWidth: 1, borderColor: '#1E3347',
-          shadowColor: '#000', shadowOffset: { width: 0, height: 8 },
-          shadowOpacity: 0.4, shadowRadius: 16, elevation: 12,
+          backgroundColor: colors.card, borderRadius: 18, padding: 16,
+          borderWidth: 1, borderColor: colors.border,
+          shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.1, shadowRadius: 12, elevation: 8,
         }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 }}>
             <View style={{
-              backgroundColor: (STATUS_COLOR[selectedPin.status] ?? '#F59E0B') + '22',
+              backgroundColor: (STATUS_COLOR[selectedPin.status] ?? '#D97706') + '14',
               borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3,
-              borderWidth: 1, borderColor: STATUS_COLOR[selectedPin.status] ?? '#F59E0B',
+              borderWidth: 1, borderColor: (STATUS_COLOR[selectedPin.status] ?? '#D97706') + '40',
             }}>
-              <Text style={{ color: STATUS_COLOR[selectedPin.status] ?? '#F59E0B', fontSize: 11, fontWeight: '700' }}>
+              <Text style={{ color: STATUS_COLOR[selectedPin.status] ?? '#D97706', fontSize: 11, fontWeight: '700' }}>
                 {selectedPin.status}
               </Text>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <Text style={{ color: '#5A7D8A', fontSize: 11 }}>Tap for full details</Text>
+              <Text style={{ color: colors.textMuted, fontSize: 11 }}>Tap for full details</Text>
               <Pressable onPress={(e) => { e.stopPropagation?.(); setSelectedPin(null); }} className="active:opacity-70 p-1">
-                <Ionicons name="close" size={20} color="#3A6070" />
+                <Ionicons name="close" size={20} color={colors.textSecondary} />
               </Pressable>
             </View>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <View style={{
               width: 44, height: 44, borderRadius: 12,
-              backgroundColor: selectedPin.categoryColor + '22',
+              backgroundColor: selectedPin.categoryColor + '18',
               alignItems: 'center', justifyContent: 'center', marginRight: 12,
             }}>
               <Ionicons name={selectedPin.categoryIcon as any} size={22} color={selectedPin.categoryColor} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ color: 'white', fontWeight: '700', fontSize: 14 }} numberOfLines={1}>{selectedPin.title}</Text>
-              <Text style={{ color: '#5A7D8A', fontSize: 12, marginTop: 2 }} numberOfLines={1}>{selectedPin.address}</Text>
+              <Text style={{ color: colors.text, fontWeight: '700', fontSize: 14 }} numberOfLines={1}>{selectedPin.title}</Text>
+              <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 2 }} numberOfLines={1}>{selectedPin.address}</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4, gap: 10 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-                  <Ionicons name="arrow-up-circle-outline" size={13} color="#4CC2D1" />
-                  <Text style={{ color: '#4CC2D1', fontSize: 11, fontWeight: '600' }}>{selectedPin.upvoteCount} upvotes</Text>
+                  <Ionicons name="arrow-up-circle-outline" size={13} color={colors.primary} />
+                  <Text style={{ color: colors.primary, fontSize: 11, fontWeight: '600' }}>{selectedPin.upvoteCount} upvotes</Text>
                 </View>
               </View>
             </View>
           </View>
           {selectedPin.description.length > 0 && (
-            <Text style={{ color: '#5A7D8A', fontSize: 12, marginTop: 10, lineHeight: 17 }} numberOfLines={2}>
+            <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 10, lineHeight: 17 }} numberOfLines={2}>
               {selectedPin.description}
             </Text>
           )}
@@ -553,13 +546,15 @@ export default function MapScreen() {
       {!selectedPin && (
         <View style={{
           position: 'absolute', bottom: 110, left: 16, right: 16,
-          backgroundColor: 'rgba(17,30,39,0.99)', borderRadius: 16,
+          backgroundColor: colors.card, borderRadius: 14,
           paddingHorizontal: 16, paddingVertical: 10,
           flexDirection: 'row', alignItems: 'center', gap: 10,
-          borderWidth: 1, borderColor: '#1E3347',
+          borderWidth: 1, borderColor: colors.border,
+          shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.06, shadowRadius: 6, elevation: 4,
         }}>
-          <Ionicons name="information-circle-outline" size={18} color="#ffffff" />
-          <Text style={{ color: '#ffffff', fontSize: 12, flex: 1 }}>
+          <Ionicons name="information-circle-outline" size={18} color={colors.textSecondary} />
+          <Text style={{ color: colors.textSecondary, fontSize: 12, flex: 1 }}>
             {reports.length === 0 ? 'No active reports yet' : `${filteredPins.length} reports in radius · Tap a pin for details`}
           </Text>
         </View>
