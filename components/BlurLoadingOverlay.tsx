@@ -82,7 +82,7 @@ export default function BlurLoadingOverlay({
       animationType="fade"
       statusBarTranslucent={true}
     >
-      <View style={StyleSheet.absoluteFill} className="bg-[#071318]/90">
+      <View style={StyleSheet.absoluteFill} className="bg-[#F5F5F5]/90">
         {/* Quadruple-layered BlurView for extreme blur density */}
         <BlurView intensity={100} tint="dark" style={StyleSheet.absoluteFill} />
         <BlurView intensity={100} tint="dark" style={StyleSheet.absoluteFill} />
@@ -98,9 +98,9 @@ export default function BlurLoadingOverlay({
             <View className="relative w-32 h-32 items-center justify-center mb-8">
               {/* Glowing background */}
               <View
-                className="absolute w-24 h-24 rounded-full bg-[#4CC2D1]/10 border border-[#4CC2D1]/20 shadow-2xl"
+                className="absolute w-24 h-24 rounded-full bg-[#0D8A72]/10 border border-[#0D8A72]/20 shadow-2xl"
                 style={{
-                  shadowColor: '#4CC2D1',
+                  shadowColor: '#0D8A72',
                   shadowOffset: { width: 0, height: 0 },
                   shadowOpacity: 0.6,
                   shadowRadius: 20,
@@ -120,24 +120,24 @@ export default function BlurLoadingOverlay({
 
               {/* Pulsing Icon */}
               <Animated.View style={{ transform: [{ scale: pulse }] }}>
-                <Ionicons name="cloud-upload" size={44} color="#4CC2D1" />
+                <Ionicons name="cloud-upload" size={44} color="#0D8A72" />
               </Animated.View>
             </View>
 
             {/* Status Text Header */}
-            <Text className="text-white text-xl font-bold tracking-wide text-center mb-2">
+            <Text className="text-[#1A1A1A] text-xl font-bold tracking-wide text-center mb-2">
               {statusText}
             </Text>
 
             {/* Sub Status Text Description */}
             {subStatusText ? (
-              <Text className="text-[#4CC2D1] text-xs font-semibold text-center uppercase tracking-widest px-4">
+              <Text className="text-[#0D8A72] text-xs font-semibold text-center uppercase tracking-widest px-4">
                 {subStatusText}
               </Text>
             ) : null}
 
             {/* Premium Instruction Label */}
-            <Text className="text-gray-400 text-sm text-center leading-5 mt-6 px-6">
+            <Text className="text-[#6B7280] text-sm text-center leading-5 mt-6 px-6">
               Please keep the app open. We are encrypting and uploading your submission to AlertZone.
             </Text>
           </View>
@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
     height: 88,
     borderRadius: 44,
     borderWidth: 3,
-    borderColor: '#4CC2D1',
+    borderColor: '#0D8A72',
     borderTopColor: 'transparent',
     borderLeftColor: 'transparent',
   },

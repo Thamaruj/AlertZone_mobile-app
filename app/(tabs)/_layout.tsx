@@ -17,8 +17,8 @@ const TABS = [
   { name: 'profile', label: 'Profile', icon: 'person-outline', iconFocused: 'person' },
 ] as const;
 
-const ACTIVE_COLOR   = '#3ED2FD';
-const INACTIVE_COLOR = '#5A7D8A';
+const ACTIVE_COLOR   = '#0D8A72';
+const INACTIVE_COLOR = '#9CA3AF';
 
 // ─────────────────────────────────────────────
 // Custom Tab Bar
@@ -41,13 +41,15 @@ function CustomTabBar() {
         transform: [{ translateY: tabBarTranslateY }],
       }}
     >
-      <View className="flex-row items-end justify-around bg-[#1E3A44] rounded-[28px] px-2 pt-2.5 pb-3 shadow-2xl"
+      <View className="flex-row items-end justify-around bg-white rounded-[28px] px-2 pt-2.5 pb-3"
         style={{
           shadowColor: '#000',
-          shadowOffset: { width: 0, height: 10 },
-          shadowOpacity: 0.3,
-          shadowRadius: 16,
-          elevation: 12,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.08,
+          shadowRadius: 12,
+          elevation: 8,
+          borderWidth: 1,
+          borderColor: '#F0F0F0',
         }}
       >
         {TABS.map((tab) => {
@@ -60,19 +62,21 @@ function CustomTabBar() {
             key={tab.name}
             onPress={() => router.push(`/(tabs)/${tab.name}`)}
             className="flex-1 items-center justify-end"
-            style={{ marginTop: -60 }} // 🔥 moved here
+            style={{ marginTop: -60 }}
           >
 
             {/* FAB circle */}
             <View
-              className={`w-[54px] h-[54px] rounded-full items-center justify-center ${
-                isActive ? 'bg-[#3ED2FD]' : 'bg-[#4CC2D1]'
-              }`}
+              className={`w-[54px] h-[54px] rounded-full items-center justify-center bg-[#0D8A72]`}
               style={{
-                elevation: 10,
+                elevation: 6,
+                shadowColor: '#0D8A72',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.3,
+                shadowRadius: 8,
               }}
             >
-              <Ionicons name="add" size={30} color="#071318" />
+              <Ionicons name="add" size={30} color="#FFFFFF" />
             </View>
 
             <Text
@@ -119,8 +123,8 @@ export default function TabLayout() {
     // Still checking auth state — show spinner
   if (loading) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#071318', alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator color="#4CC2D1" size="large" />
+      <View style={{ flex: 1, backgroundColor: '#F5F5F5', alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator color="#0D8A72" size="large" />
       </View>
     );
   }

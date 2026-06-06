@@ -184,15 +184,15 @@ export default function CompleteProfileScreen() {
 
   if (fetchingProfile) {
     return (
-      <LinearGradient colors={['#0D1F2D', '#0A1820', '#071318']} className="flex-1 items-center justify-center">
-        <ActivityIndicator color="#4CC2D1" size="large" />
-        <Text className="text-gray-400 mt-4 text-center">Loading details...</Text>
+      <LinearGradient colors={['#F5F5F5', '#FAFAFA', '#F5F5F5']} className="flex-1 items-center justify-center">
+        <ActivityIndicator color="#0D8A72" size="large" />
+        <Text className="text-[#6B7280] mt-4 text-center">Loading details...</Text>
       </LinearGradient>
     );
   }
 
   return (
-    <LinearGradient colors={['#0D1F2D', '#0A1820', '#071318']} className="flex-1">
+    <LinearGradient colors={['#F5F5F5', '#FAFAFA', '#F5F5F5']} className="flex-1">
       <KeyboardAvoidingView
         behavior="padding"
         keyboardVerticalOffset={Platform.OS === 'android' ? 30 : 0}
@@ -207,8 +207,8 @@ export default function CompleteProfileScreen() {
             {/* Header */}
             <View className="items-center mb-6">
               <Image source={require('../../assets/images/iconAlerZone-Bg-none.png')} className="w-20 h-20" resizeMode="contain" />
-              <Text className="text-white text-3xl font-bold mt-4">Complete Profile</Text>
-              <Text className="text-gray-400 mt-1 text-center">
+              <Text className="text-[#1A1A1A] text-3xl font-bold mt-4">Complete Profile</Text>
+              <Text className="text-[#6B7280] mt-1 text-center">
                 Please provide these required details to access the application.
               </Text>
             </View>
@@ -216,18 +216,18 @@ export default function CompleteProfileScreen() {
             {/* Inputs Section */}
             <View className="space-y-4">
               {/* Full Name */}
-              <View className={`bg-[#1E3A44] border rounded-2xl p-1 flex-row items-center mt-3 ${
-                isNameFocused ? 'border-[#4CC2D1]' : 'border-[#2D4F5C]'
+              <View className={`bg-[#FFFFFF] border rounded-2xl p-1 flex-row items-center mt-3 ${
+                isNameFocused ? 'border-[#0D8A72]' : 'border-[#E8E8E8]'
               }`}>
-                <View className="px-4 py-3 border-r border-[#2D4F5C] justify-center items-center">
-                  <Ionicons name="person-outline" size={20} color="#30A89C" />
+                <View className="px-4 py-3 border-r border-[#E8E8E8] justify-center items-center">
+                  <Ionicons name="person-outline" size={20} color="#059669" />
                 </View>
                 <View className="ml-3 flex-1">
-                  <Text className="text-gray-400 text-[10px] uppercase font-bold">Full Name:</Text>
+                  <Text className="text-[#6B7280] text-[10px] uppercase font-bold">Full Name:</Text>
                   <TextInput
                     placeholder="John Doe"
-                    placeholderTextColor="#5A7D8A"
-                    className="text-white text-base p-0 mt-0.5"
+                    placeholderTextColor="#6B7280"
+                    className="text-[#1A1A1A] text-base p-0 mt-0.5"
                     style={{ paddingLeft: 0, marginLeft: 0 }}
                     returnKeyType="next"
                     onSubmitEditing={() => phoneRef.current?.focus()}
@@ -241,19 +241,19 @@ export default function CompleteProfileScreen() {
               </View>
 
               {/* Phone Number */}
-              <View className={`bg-[#1E3A44] border rounded-2xl p-1 flex-row items-center mt-3 ${
-                isPhoneFocused ? 'border-[#4CC2D1]' : 'border-[#2D4F5C]'
+              <View className={`bg-[#FFFFFF] border rounded-2xl p-1 flex-row items-center mt-3 ${
+                isPhoneFocused ? 'border-[#0D8A72]' : 'border-[#E8E8E8]'
               }`}>
-                <View className="px-4 py-3 border-r border-[#2D4F5C] justify-center items-center">
-                  <Ionicons name="call-outline" size={20} color="#30A89C" />
+                <View className="px-4 py-3 border-r border-[#E8E8E8] justify-center items-center">
+                  <Ionicons name="call-outline" size={20} color="#059669" />
                 </View>
                 <View className="ml-3 flex-1">
-                  <Text className="text-gray-400 text-[10px] uppercase font-bold">Phone Number:</Text>
+                  <Text className="text-[#6B7280] text-[10px] uppercase font-bold">Phone Number:</Text>
                   <TextInput
                     ref={phoneRef}
                     placeholder="07XXXXXXXX"
-                    placeholderTextColor="#5A7D8A"
-                    className="text-white text-base p-0 mt-0.5"
+                    placeholderTextColor="#6B7280"
+                    className="text-[#1A1A1A] text-base p-0 mt-0.5"
                     style={{ paddingLeft: 0, marginLeft: 0 }}
                     keyboardType="phone-pad"
                     returnKeyType="next"
@@ -268,19 +268,19 @@ export default function CompleteProfileScreen() {
               </View>
 
               {/* NIC */}
-              <View className={`bg-[#1E3A44] border rounded-2xl p-1 flex-row items-center mt-3 ${
-                isNicFocused ? 'border-[#4CC2D1]' : 'border-[#2D4F5C]'
+              <View className={`bg-[#FFFFFF] border rounded-2xl p-1 flex-row items-center mt-3 ${
+                isNicFocused ? 'border-[#0D8A72]' : 'border-[#E8E8E8]'
               }`}>
-                <View className="px-4 py-3 border-r border-[#2D4F5C] justify-center items-center">
-                  <Ionicons name="card-outline" size={20} color="#30A89C" />
+                <View className="px-4 py-3 border-r border-[#E8E8E8] justify-center items-center">
+                  <Ionicons name="card-outline" size={20} color="#059669" />
                 </View>
                 <View className="ml-3 flex-1">
-                  <Text className="text-gray-400 text-[10px] uppercase font-bold">NIC Number:</Text>
+                  <Text className="text-[#6B7280] text-[10px] uppercase font-bold">NIC Number:</Text>
                   <TextInput
                     ref={nicRef}
                     placeholder="199912345678 or 991234567V"
-                    placeholderTextColor="#5A7D8A"
-                    className="text-white text-base p-0 mt-0.5"
+                    placeholderTextColor="#6B7280"
+                    className="text-[#1A1A1A] text-base p-0 mt-0.5"
                     style={{ paddingLeft: 0, marginLeft: 0 }}
                     returnKeyType="done"
                     onFocus={() => setIsNicFocused(true)}
@@ -296,18 +296,18 @@ export default function CompleteProfileScreen() {
               {/* Province Selector */}
               <Pressable
                 onPress={() => !loading && setProvinceModalVisible(true)}
-                className="bg-[#1E3A44] border border-[#2D4F5C] rounded-2xl p-2 flex-row items-center mt-3 active:opacity-80"
+                className="bg-[#FFFFFF] border border-[#E8E8E8] rounded-2xl p-2 flex-row items-center mt-3 active:opacity-80"
               >
-                <View className="px-4 py-3 border-r border-[#2D4F5C] justify-center items-center">
-                  <Ionicons name="map-outline" size={20} color="#30A89C" />
+                <View className="px-4 py-3 border-r border-[#E8E8E8] justify-center items-center">
+                  <Ionicons name="map-outline" size={20} color="#059669" />
                 </View>
                 <View className="ml-3 flex-1">
-                  <Text className="text-gray-400 text-[10px] uppercase font-bold">Province:</Text>
-                  <Text className={`text-base mt-0.5 ${province ? 'text-white' : 'text-[#5A7D8A]'}`}>
+                  <Text className="text-[#6B7280] text-[10px] uppercase font-bold">Province:</Text>
+                  <Text className={`text-base mt-0.5 ${province ? 'text-[#1A1A1A]' : 'text-[#6B7280]'}`}>
                     {province || 'Select Province'}
                   </Text>
                 </View>
-                <Ionicons name="chevron-down-outline" size={20} color="#30A89C" style={{ marginRight: 8 }} />
+                <Ionicons name="chevron-down-outline" size={20} color="#059669" style={{ marginRight: 8 }} />
               </Pressable>
 
               {/* District Selector */}
@@ -320,18 +320,18 @@ export default function CompleteProfileScreen() {
                   }
                   setDistrictModalVisible(true);
                 }}
-                className={`bg-[#1E3A44] border border-[#2D4F5C] rounded-2xl p-2 flex-row items-center mt-3 active:opacity-80 ${!province ? 'opacity-50' : ''}`}
+                className={`bg-[#FFFFFF] border border-[#E8E8E8] rounded-2xl p-2 flex-row items-center mt-3 active:opacity-80 ${!province ? 'opacity-50' : ''}`}
               >
-                <View className="px-4 py-3 border-r border-[#2D4F5C] justify-center items-center">
-                  <Ionicons name="navigate-outline" size={20} color="#30A89C" />
+                <View className="px-4 py-3 border-r border-[#E8E8E8] justify-center items-center">
+                  <Ionicons name="navigate-outline" size={20} color="#059669" />
                 </View>
                 <View className="ml-3 flex-1">
-                  <Text className="text-gray-400 text-[10px] uppercase font-bold">District:</Text>
-                  <Text className={`text-base mt-0.5 ${district ? 'text-white' : 'text-[#5A7D8A]'}`}>
+                  <Text className="text-[#6B7280] text-[10px] uppercase font-bold">District:</Text>
+                  <Text className={`text-base mt-0.5 ${district ? 'text-[#1A1A1A]' : 'text-[#6B7280]'}`}>
                     {district || 'Select District'}
                   </Text>
                 </View>
-                <Ionicons name="chevron-down-outline" size={20} color="#30A89C" style={{ marginRight: 8 }} />
+                <Ionicons name="chevron-down-outline" size={20} color="#059669" style={{ marginRight: 8 }} />
               </Pressable>
 
               {/* LGA Selector */}
@@ -344,25 +344,25 @@ export default function CompleteProfileScreen() {
                   }
                   setLgaModalVisible(true);
                 }}
-                className={`bg-[#1E3A44] border border-[#2D4F5C] rounded-2xl p-2 flex-row items-center mt-3 active:opacity-80 ${!district ? 'opacity-50' : ''}`}
+                className={`bg-[#FFFFFF] border border-[#E8E8E8] rounded-2xl p-2 flex-row items-center mt-3 active:opacity-80 ${!district ? 'opacity-50' : ''}`}
               >
-                <View className="px-4 py-3 border-r border-[#2D4F5C] justify-center items-center">
-                  <Ionicons name="business-outline" size={20} color="#30A89C" />
+                <View className="px-4 py-3 border-r border-[#E8E8E8] justify-center items-center">
+                  <Ionicons name="business-outline" size={20} color="#059669" />
                 </View>
                 <View className="ml-3 flex-1">
-                  <Text className="text-gray-400 text-[10px] uppercase font-bold">Local Government Authority:</Text>
-                  <Text className={`text-base mt-0.5 ${lga ? 'text-white' : 'text-[#5A7D8A]'}`}>
+                  <Text className="text-[#6B7280] text-[10px] uppercase font-bold">Local Government Authority:</Text>
+                  <Text className={`text-base mt-0.5 ${lga ? 'text-[#1A1A1A]' : 'text-[#6B7280]'}`}>
                     {lga || 'Select Local Government'}
                   </Text>
                 </View>
-                <Ionicons name="chevron-down-outline" size={20} color="#30A89C" style={{ marginRight: 8 }} />
+                <Ionicons name="chevron-down-outline" size={20} color="#059669" style={{ marginRight: 8 }} />
               </Pressable>
             </View>
 
             {/* Save Buttons */}
             <View className="mt-8 space-y-3">
               <Pressable
-                className={`p-4 rounded-full shadow-lg items-center active:opacity-80 ${loading ? 'bg-[#4CC2D1]/50' : 'bg-[#4CC2D1]'}`}
+                className={`p-4 rounded-full shadow-lg items-center active:opacity-80 ${loading ? 'bg-[#0D8A72]/50' : 'bg-[#0D8A72]'}`}
                 onPress={handleSaveProfile}
                 disabled={loading}
               >

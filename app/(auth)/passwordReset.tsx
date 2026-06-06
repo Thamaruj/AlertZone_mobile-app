@@ -68,7 +68,7 @@ export default function ForgotPasswordScreen() {
   };
 
   return (
-    <LinearGradient colors={['#0D1F2D', '#0A1820', '#071318']} className="flex-1">
+    <LinearGradient colors={['#F5F5F5', '#FAFAFA', '#F5F5F5']} className="flex-1">
 
       {/* ✅ behavior="padding" + keyboardVerticalOffset fixes keyboard hiding the input */}
       <KeyboardAvoidingView 
@@ -87,33 +87,33 @@ export default function ForgotPasswordScreen() {
             
             {/* Header Section */}
             <View className="items-center mb-10">
-              <View className="bg-[#1E3A44] p-5 rounded-full border border-[#30A89C] mb-6">
-                <View className="p-2 bg-[#1E3A44] rounded-full items-center justify-center">
-                    <Ionicons name="key-outline" size={50} color="#30A89C" />
+              <View className="bg-[#FFFFFF] p-5 rounded-full border border-[#059669] mb-6">
+                <View className="p-2 bg-[#FFFFFF] rounded-full items-center justify-center">
+                    <Ionicons name="key-outline" size={50} color="#059669" />
                 </View>
               </View>
-              <Text className="text-white text-3xl font-bold">Forgot Password?</Text>
-              <Text className="text-gray-400 text-center mt-3 leading-6 px-4">
+              <Text className="text-[#1A1A1A] text-3xl font-bold">Forgot Password?</Text>
+              <Text className="text-[#6B7280] text-center mt-3 leading-6 px-4">
                 Don't worry! Enter your email and we'll send you a link to reset your password.
               </Text>
             </View>
 
-             <View className={`bg-[#1E3A44] border rounded-2xl py-2 flex-row items-center ${
-              isEmailFocused ? "border-[#4CC2D1]" : "border-[#2D4F5C]"
+             <View className={`bg-[#FFFFFF] border rounded-2xl py-2 flex-row items-center ${
+              isEmailFocused ? "border-[#0D8A72]" : "border-[#E8E8E8]"
             }`}>
 
                 {/* Icon Box */}
-                <View className="px-4 py-3 border-r border-[#2D4F5C] justify-center items-center">
-                <Ionicons name="mail-outline" size={25} color="#30A89C" />
+                <View className="px-4 py-3 border-r border-[#E8E8E8] justify-center items-center">
+                <Ionicons name="mail-outline" size={25} color="#059669" />
                 </View>
 
                 {/* Text Box */}
                 <View className="flex-1 px-3 py-2">
-                <Text className="text-gray-400 text-xs p-0 m-0">E-mail:</Text>
+                <Text className="text-[#6B7280] text-xs p-0 m-0">E-mail:</Text>
                 <TextInput
                     placeholder="Enter your email"
-                    placeholderTextColor="#5A7D8A"
-                    className="text-white text-base p-0 m-0"
+                    placeholderTextColor="#6B7280"
+                    className="text-[#1A1A1A] text-base p-0 m-0"
                     style={{ paddingLeft: 0, marginLeft: 0 }}
                     keyboardType="email-address"
                     autoCapitalize="none"
@@ -133,7 +133,7 @@ export default function ForgotPasswordScreen() {
             {/* Reset Button */}
             <View className="mt-8">
               <Pressable 
-                className={`p-4 rounded-full active:opacity-70 shadow-lg items-center ${loading ? 'bg-[#4CC2D1]/50' : 'bg-[#4CC2D1]'}`}
+                className={`p-4 rounded-full active:opacity-70 shadow-lg items-center ${loading ? 'bg-[#0D8A72]/50' : 'bg-[#0D8A72]'}`}
                 onPress={handleReset}
                 disabled={loading}
               >
@@ -150,8 +150,8 @@ export default function ForgotPasswordScreen() {
               onPress={() => router.replace("/(auth)/loginScreen")}
               className="mt-8 active:opacity-70"
             >
-              <Text className="text-gray-400 text-center">
-                Remember your password? <Text className="text-[#4CC2D1]  font-bold">Log In</Text>
+              <Text className="text-[#6B7280] text-center">
+                Remember your password? <Text className="text-[#0D8A72]  font-bold">Log In</Text>
               </Text>
             </Pressable>
 

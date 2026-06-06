@@ -48,20 +48,20 @@ interface Report {
 // Constants
 // ─────────────────────────────────────────────
 const STATUS_CONFIG: Record<ReportStatus, { label: string; color: string; bg: string }> = {
-  PENDING:  { label: 'Pending',  color: '#F59E0B', bg: '#3D2E0A' },
-  ASSIGNED: { label: 'Assigned', color: '#60A5FA', bg: '#0D1A3D' },
-  FIXING:   { label: 'Fixing',   color: '#4CC2D1', bg: '#0D2A35' },
-  RESOLVED: { label: 'Resolved', color: '#30A89C', bg: '#0D3D35' },
-  REJECTED: { label: 'Rejected', color: '#E05C5C', bg: '#3D1515' },
+  PENDING:  { label: 'Pending',  color: '#D97706', bg: '#FEF3C7' },
+  ASSIGNED: { label: 'Assigned', color: '#3B82F6', bg: '#DBEAFE' },
+  FIXING:   { label: 'Fixing',   color: '#0D8A72', bg: '#E6F7F3' },
+  RESOLVED: { label: 'Resolved', color: '#059669', bg: '#D1FAE5' },
+  REJECTED: { label: 'Rejected', color: '#DC2626', bg: '#FEE2E2' },
 };
 
 const CATEGORIES = [
-  { id: 'all',               label: 'All',          icon: 'grid-outline',        color: '#4CC2D1' },
-  { id: 'road_traffic',      label: 'Roads',         icon: 'car-outline',         color: '#4CC2D1' },
-  { id: 'water_drainage',    label: 'Water',         icon: 'water-outline',       color: '#60A5FA' },
+  { id: 'all',               label: 'All',          icon: 'grid-outline',        color: '#0D8A72' },
+  { id: 'road_traffic',      label: 'Roads',         icon: 'car-outline',         color: '#0D8A72' },
+  { id: 'water_drainage',    label: 'Water',         icon: 'water-outline',       color: '#3B82F6' },
   { id: 'waste_environment', label: 'Waste',         icon: 'trash-outline',       color: '#34D399' },
   { id: 'social_safety',     label: 'Safety',        icon: 'shield-outline',      color: '#A78BFA' },
-  { id: 'bridge_structural', label: 'Structural',    icon: 'git-network-outline', color: '#F59E0B' },
+  { id: 'bridge_structural', label: 'Structural',    icon: 'git-network-outline', color: '#D97706' },
   { id: 'other',             label: 'Other',         icon: 'help-circle-outline', color: '#94A3B8' },
 ] as const;
 
@@ -151,11 +151,11 @@ function CalendarModal({ value, onChange, onClose, title }: CalendarProps) {
           <Text style={styles.calendarTitle}>{title}</Text>
           <View style={styles.calendarHeader}>
             <Pressable onPress={handlePrevMonth} style={styles.arrowButton}>
-              <Ionicons name="chevron-back" size={20} color="#4CC2D1" />
+              <Ionicons name="chevron-back" size={20} color="#0D8A72" />
             </Pressable>
             <Text style={styles.monthYearText}>{months[currentMonth]} {currentYear}</Text>
             <Pressable onPress={handleNextMonth} style={styles.arrowButton}>
-              <Ionicons name="chevron-forward" size={20} color="#4CC2D1" />
+              <Ionicons name="chevron-forward" size={20} color="#0D8A72" />
             </Pressable>
           </View>
           <View style={styles.weekdaysRow}>
@@ -203,10 +203,10 @@ function ReportCard({ report, onPress }: { report: Report; onPress: () => void }
         flexDirection: 'row',
         alignItems: 'center',
         padding: 12,
-        backgroundColor: '#111E27',
+        backgroundColor: '#1A1A1A',
         borderRadius: 16,
         borderWidth: 1,
-        borderColor: '#1E3347',
+        borderColor: '#E8E8E8',
         marginBottom: 10,
       }}
     >
@@ -217,7 +217,7 @@ function ReportCard({ report, onPress }: { report: Report; onPress: () => void }
           height: 60,
           borderRadius: 12,
           overflow: 'hidden',
-          backgroundColor: '#0D1F2D',
+          backgroundColor: '#1A1A1A',
           marginRight: 12,
           justifyContent: 'center',
           alignItems: 'center',
@@ -231,7 +231,7 @@ function ReportCard({ report, onPress }: { report: Report; onPress: () => void }
               width: 36,
               height: 36,
               borderRadius: 10,
-              backgroundColor: (report.categoryColor ?? '#4CC2D1') + '22',
+              backgroundColor: (report.categoryColor ?? '#0D8A72') + '22',
               alignItems: 'center',
               justifyContent: 'center',
             }}
@@ -243,22 +243,22 @@ function ReportCard({ report, onPress }: { report: Report; onPress: () => void }
 
       {/* Title & Details */}
       <View style={{ flex: 1, marginRight: 8 }}>
-        <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 14 }} numberOfLines={1}>
+        <Text style={{ color: '#1A1A1A', fontWeight: 'bold', fontSize: 14 }} numberOfLines={1}>
           {report.title}
         </Text>
-        <Text style={{ color: '#5A7D8A', fontSize: 11, marginTop: 2 }}>
+        <Text style={{ color: '#6B7280', fontSize: 11, marginTop: 2 }}>
           {report.location?.address ?? 'Sri Lanka'}
         </Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-            <Ionicons name="time-outline" size={12} color="#5A7D8A" />
-            <Text style={{ color: '#5A7D8A', fontSize: 11 }}>
+            <Ionicons name="time-outline" size={12} color="#6B7280" />
+            <Text style={{ color: '#6B7280', fontSize: 11 }}>
               {formatDate(report.createdAt)}
             </Text>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-            <Ionicons name="arrow-up-circle-outline" size={12} color="#5A7D8A" />
-            <Text style={{ color: '#5A7D8A', fontSize: 11 }}>
+            <Ionicons name="arrow-up-circle-outline" size={12} color="#6B7280" />
+            <Text style={{ color: '#6B7280', fontSize: 11 }}>
               {report.upvoteCount ?? 0} upvotes
             </Text>
           </View>
@@ -270,7 +270,7 @@ function ReportCard({ report, onPress }: { report: Report; onPress: () => void }
         <View style={{ backgroundColor: cfg.bg, borderWidth: 1, borderColor: cfg.color, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12 }}>
           <Text style={{ color: cfg.color, fontSize: 10, fontWeight: 'bold' }}>{cfg.label}</Text>
         </View>
-        <Ionicons name="chevron-forward" size={16} color="#2D4F5C" />
+        <Ionicons name="chevron-forward" size={16} color="#E8E8E8" />
       </View>
     </Pressable>
   );
@@ -347,7 +347,7 @@ export default function UpvotedReportsScreen() {
               category: data.category ?? '',
               categoryId: data.categoryId ?? 'other',
               categoryIcon: data.categoryIcon ?? 'help-circle-outline',
-              categoryColor: data.categoryColor ?? '#4CC2D1',
+              categoryColor: data.categoryColor ?? '#0D8A72',
               status: (data.status ?? 'PENDING') as ReportStatus,
               upvoteCount: data.upvoteCount ?? 0,
               imageUrls: data.imageUrls ?? [],
@@ -407,7 +407,7 @@ export default function UpvotedReportsScreen() {
   const hasMore = visibleCount < filtered.length;
 
   return (
-    <LinearGradient colors={['#0D1F2D', '#0A1820', '#071318']} style={{ flex: 1 }}>
+    <LinearGradient colors={['#F5F5F5', '#FAFAFA', '#F5F5F5']} style={{ flex: 1 }}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 60 }}
@@ -418,24 +418,24 @@ export default function UpvotedReportsScreen() {
             onPress={() => router.back()}
             style={({ pressed }) => ({
               width: 40, height: 40, borderRadius: 20,
-              backgroundColor: pressed ? '#1E3A44' : '#1E3347',
+              backgroundColor: pressed ? '#FFFFFF' : '#E8E8E8',
               alignItems: 'center', justifyContent: 'center',
             })}
           >
-            <Ionicons name="arrow-back" size={20} color="#4CC2D1" />
+            <Ionicons name="arrow-back" size={20} color="#0D8A72" />
           </Pressable>
           <View style={{ flex: 1 }}>
-            <Text style={{ color: 'white', fontSize: 20, fontWeight: '800' }}>My Upvoted Reports</Text>
-            <Text style={{ color: '#5A7D8A', fontSize: 12, marginTop: 2 }}>{"Issues you've supported in your community"}</Text>
+            <Text style={{ color: '#1A1A1A', fontSize: 20, fontWeight: '800' }}>My Upvoted Reports</Text>
+            <Text style={{ color: '#6B7280', fontSize: 12, marginTop: 2 }}>{"Issues you've supported in your community"}</Text>
           </View>
-          <View style={{ backgroundColor: '#1E3347', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12 }}>
-            <Text style={{ color: '#4CC2D1', fontSize: 12, fontWeight: '700' }}>{filtered.length}</Text>
+          <View style={{ backgroundColor: '#E8E8E8', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12 }}>
+            <Text style={{ color: '#0D8A72', fontSize: 12, fontWeight: '700' }}>{filtered.length}</Text>
           </View>
         </View>
 
         {/* ── Category Filter ── */}
         <View style={{ marginBottom: 12 }}>
-          <Text style={{ color: '#5A7D8A', fontSize: 10, fontWeight: '700', letterSpacing: 1.5, textTransform: 'uppercase', paddingHorizontal: 20, marginBottom: 8 }}>
+          <Text style={{ color: '#6B7280', fontSize: 10, fontWeight: '700', letterSpacing: 1.5, textTransform: 'uppercase', paddingHorizontal: 20, marginBottom: 8 }}>
             Category
           </Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}>
@@ -448,12 +448,12 @@ export default function UpvotedReportsScreen() {
                   style={{
                     flexDirection: 'row', alignItems: 'center', gap: 6,
                     paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20,
-                    backgroundColor: isActive ? '#4CC2D1' : '#111E27',
-                    borderWidth: 1, borderColor: isActive ? '#4CC2D1' : '#1E3347',
+                    backgroundColor: isActive ? '#0D8A72' : '#FFFFFF',
+                    borderWidth: 1, borderColor: isActive ? '#0D8A72' : '#E8E8E8',
                   }}
                 >
-                  <Ionicons name={cat.icon as any} size={13} color={isActive ? '#071318' : cat.color} />
-                  <Text style={{ color: isActive ? '#071318' : '#5A7D8A', fontSize: 12, fontWeight: '600' }}>
+                  <Ionicons name={cat.icon as any} size={13} color={isActive ? '#F5F5F5' : cat.color} />
+                  <Text style={{ color: isActive ? '#F5F5F5' : '#6B7280', fontSize: 12, fontWeight: '600' }}>
                     {cat.label}
                   </Text>
                 </Pressable>
@@ -464,7 +464,7 @@ export default function UpvotedReportsScreen() {
 
         {/* ── Status Filter ── */}
         <View style={{ marginBottom: 16 }}>
-          <Text style={{ color: '#5A7D8A', fontSize: 10, fontWeight: '700', letterSpacing: 1.5, textTransform: 'uppercase', paddingHorizontal: 20, marginBottom: 8 }}>
+          <Text style={{ color: '#6B7280', fontSize: 10, fontWeight: '700', letterSpacing: 1.5, textTransform: 'uppercase', paddingHorizontal: 20, marginBottom: 8 }}>
             Status
           </Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}>
@@ -476,11 +476,11 @@ export default function UpvotedReportsScreen() {
                   onPress={() => setActiveStatus(sf)}
                   style={{
                     paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
-                    backgroundColor: isActive ? '#4CC2D1' : '#111E27',
-                    borderWidth: 1, borderColor: isActive ? '#4CC2D1' : '#1E3347',
+                    backgroundColor: isActive ? '#0D8A72' : '#FFFFFF',
+                    borderWidth: 1, borderColor: isActive ? '#0D8A72' : '#E8E8E8',
                   }}
                 >
-                  <Text style={{ color: isActive ? '#071318' : '#5A7D8A', fontSize: 12, fontWeight: '600' }}>{sf}</Text>
+                  <Text style={{ color: isActive ? '#F5F5F5' : '#6B7280', fontSize: 12, fontWeight: '600' }}>{sf}</Text>
                 </Pressable>
               );
             })}
@@ -489,7 +489,7 @@ export default function UpvotedReportsScreen() {
 
         {/* ── Date Filter ── */}
         <View style={{ marginBottom: 16 }}>
-          <Text style={{ color: '#5A7D8A', fontSize: 10, fontWeight: '700', letterSpacing: 1.5, textTransform: 'uppercase', paddingHorizontal: 20, marginBottom: 8 }}>
+          <Text style={{ color: '#6B7280', fontSize: 10, fontWeight: '700', letterSpacing: 1.5, textTransform: 'uppercase', paddingHorizontal: 20, marginBottom: 8 }}>
             Date Filter
           </Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}>
@@ -501,11 +501,11 @@ export default function UpvotedReportsScreen() {
                   onPress={() => setActiveDateFilter(df.id)}
                   style={{
                     paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
-                    backgroundColor: isActive ? '#4CC2D1' : '#111E27',
-                    borderWidth: 1, borderColor: isActive ? '#4CC2D1' : '#1E3347',
+                    backgroundColor: isActive ? '#0D8A72' : '#FFFFFF',
+                    borderWidth: 1, borderColor: isActive ? '#0D8A72' : '#E8E8E8',
                   }}
                 >
-                  <Text style={{ color: isActive ? '#071318' : '#5A7D8A', fontSize: 12, fontWeight: '600' }}>
+                  <Text style={{ color: isActive ? '#F5F5F5' : '#6B7280', fontSize: 12, fontWeight: '600' }}>
                     {df.label}
                   </Text>
                 </Pressable>
@@ -516,12 +516,12 @@ export default function UpvotedReportsScreen() {
 
         {/* ── Custom Date Range Picker ── */}
         {activeDateFilter === 'custom' && (
-          <View style={{ marginHorizontal: 20, marginBottom: 16, padding: 16, borderRadius: 18, backgroundColor: '#111E27', borderWidth: 1, borderColor: '#1E3347' }}>
+          <View style={{ marginHorizontal: 20, marginBottom: 16, padding: 16, borderRadius: 18, backgroundColor: '#1A1A1A', borderWidth: 1, borderColor: '#E8E8E8' }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <Text style={{ color: 'white', fontSize: 10, fontWeight: '700', letterSpacing: 1.5, textTransform: 'uppercase' }}>Select Date Range</Text>
+              <Text style={{ color: '#1A1A1A', fontSize: 10, fontWeight: '700', letterSpacing: 1.5, textTransform: 'uppercase' }}>Select Date Range</Text>
               {(customStartDate || customEndDate) && (
                 <Pressable onPress={clearCustomRange} style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}>
-                  <Text style={{ color: '#E05C5C', fontSize: 12, fontWeight: '600' }}>Reset</Text>
+                  <Text style={{ color: '#DC2626', fontSize: 12, fontWeight: '600' }}>Reset</Text>
                 </Pressable>
               )}
             </View>
@@ -529,33 +529,33 @@ export default function UpvotedReportsScreen() {
               <Pressable
                 onPress={() => setShowStartPicker(true)}
                 style={({ pressed }) => ({
-                  flex: 1, padding: 12, borderRadius: 12, backgroundColor: '#1E3A44', borderWidth: 1, borderColor: '#2D4F5C',
+                  flex: 1, padding: 12, borderRadius: 12, backgroundColor: '#1A1A1A', borderWidth: 1, borderColor: '#E8E8E8',
                   flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', opacity: pressed ? 0.75 : 1
                 })}
               >
                 <View>
-                  <Text style={{ color: '#5A7D8A', fontSize: 10, fontWeight: '700', textTransform: 'uppercase' }}>Start Date</Text>
-                  <Text style={{ color: 'white', fontSize: 14, fontWeight: '600', marginTop: 2 }}>
+                  <Text style={{ color: '#6B7280', fontSize: 10, fontWeight: '700', textTransform: 'uppercase' }}>Start Date</Text>
+                  <Text style={{ color: '#1A1A1A', fontSize: 14, fontWeight: '600', marginTop: 2 }}>
                     {customStartDate ? customStartDate.toLocaleDateString('en-GB') : 'Select...'}
                   </Text>
                 </View>
-                <Ionicons name="calendar-outline" size={16} color="#4CC2D1" />
+                <Ionicons name="calendar-outline" size={16} color="#0D8A72" />
               </Pressable>
 
               <Pressable
                 onPress={() => setShowEndPicker(true)}
                 style={({ pressed }) => ({
-                  flex: 1, padding: 12, borderRadius: 12, backgroundColor: '#1E3A44', borderWidth: 1, borderColor: '#2D4F5C',
+                  flex: 1, padding: 12, borderRadius: 12, backgroundColor: '#1A1A1A', borderWidth: 1, borderColor: '#E8E8E8',
                   flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', opacity: pressed ? 0.75 : 1
                 })}
               >
                 <View>
-                  <Text style={{ color: '#5A7D8A', fontSize: 10, fontWeight: '700', textTransform: 'uppercase' }}>End Date</Text>
-                  <Text style={{ color: 'white', fontSize: 14, fontWeight: '600', marginTop: 2 }}>
+                  <Text style={{ color: '#6B7280', fontSize: 10, fontWeight: '700', textTransform: 'uppercase' }}>End Date</Text>
+                  <Text style={{ color: '#1A1A1A', fontSize: 14, fontWeight: '600', marginTop: 2 }}>
                     {customEndDate ? customEndDate.toLocaleDateString('en-GB') : 'Select...'}
                   </Text>
                 </View>
-                <Ionicons name="calendar-outline" size={16} color="#4CC2D1" />
+                <Ionicons name="calendar-outline" size={16} color="#0D8A72" />
               </Pressable>
             </View>
           </View>
@@ -565,22 +565,22 @@ export default function UpvotedReportsScreen() {
         <View style={{ paddingHorizontal: 20 }}>
           {loading ? (
             <View style={{ alignItems: 'center', paddingVertical: 60 }}>
-              <ActivityIndicator color="#4CC2D1" size="large" />
-              <Text style={{ color: '#5A7D8A', marginTop: 12, fontSize: 13 }}>Loading your upvoted reports…</Text>
+              <ActivityIndicator color="#0D8A72" size="large" />
+              <Text style={{ color: '#6B7280', marginTop: 12, fontSize: 13 }}>Loading your upvoted reports…</Text>
             </View>
           ) : filtered.length === 0 ? (
             <View style={{
               alignItems: 'center', paddingVertical: 50,
-              backgroundColor: '#111E27', borderRadius: 24, padding: 30,
-              borderWidth: 1, borderColor: '#1E3347',
+              backgroundColor: '#1A1A1A', borderRadius: 24, padding: 30,
+              borderWidth: 1, borderColor: '#E8E8E8',
             }}>
-              <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: '#1E3A44', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
-                <Ionicons name="arrow-up-circle-outline" size={32} color="#4CC2D1" />
+              <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: '#1A1A1A', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
+                <Ionicons name="arrow-up-circle-outline" size={32} color="#0D8A72" />
               </View>
-              <Text style={{ color: 'white', fontWeight: '700', fontSize: 15, textAlign: 'center' }}>
+              <Text style={{ color: '#1A1A1A', fontWeight: '700', fontSize: 15, textAlign: 'center' }}>
                 {reports.length === 0 ? 'No upvoted reports yet' : 'No matches found'}
               </Text>
-              <Text style={{ color: '#5A7D8A', fontSize: 12, textAlign: 'center', marginTop: 6, lineHeight: 18 }}>
+              <Text style={{ color: '#6B7280', fontSize: 12, textAlign: 'center', marginTop: 6, lineHeight: 18 }}>
                 {reports.length === 0
                   ? 'Tap the upvote button on any nearby issue to support it.'
                   : 'Try changing your category or status filter.'}
@@ -590,8 +590,8 @@ export default function UpvotedReportsScreen() {
             <>
               {/* Results count */}
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <Text style={{ color: '#5A7D8A', fontSize: 12 }}>
-                  Showing <Text style={{ color: '#4CC2D1', fontWeight: 'bold' }}>{visibleReports.length}</Text> of <Text style={{ color: 'white', fontWeight: '600' }}>{filtered.length}</Text> reports
+                <Text style={{ color: '#6B7280', fontSize: 12 }}>
+                  Showing <Text style={{ color: '#0D8A72', fontWeight: 'bold' }}>{visibleReports.length}</Text> of <Text style={{ color: '#1A1A1A', fontWeight: '600' }}>{filtered.length}</Text> reports
                 </Text>
               </View>
 
@@ -610,13 +610,13 @@ export default function UpvotedReportsScreen() {
                   style={({ pressed }) => ({
                     marginTop: 8, marginBottom: 16, paddingVertical: 16, borderRadius: 18,
                     alignItems: 'center', justifyContent: 'center',
-                    borderWidth: 1, borderColor: '#2D4F5C', backgroundColor: '#111E27',
+                    borderWidth: 1, borderColor: '#E8E8E8', backgroundColor: '#1A1A1A',
                     opacity: pressed ? 0.75 : 1
                   })}
                 >
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <Ionicons name="chevron-down-circle-outline" size={20} color="#4CC2D1" />
-                    <Text style={{ color: '#4CC2D1', fontWeight: 'bold', fontSize: 14 }}>
+                    <Ionicons name="chevron-down-circle-outline" size={20} color="#0D8A72" />
+                    <Text style={{ color: '#0D8A72', fontWeight: 'bold', fontSize: 14 }}>
                       Load More ({Math.min(LOAD_MORE_SIZE, filtered.length - visibleCount)} more)
                     </Text>
                   </View>
@@ -626,7 +626,7 @@ export default function UpvotedReportsScreen() {
               {/* End indicator */}
               {!hasMore && filtered.length > INITIAL_PAGE_SIZE && (
                 <View style={{ alignItems: 'center', paddingVertical: 16 }}>
-                  <Text style={{ color: '#3A5060', fontSize: 12 }}>All {filtered.length} reports shown</Text>
+                  <Text style={{ color: '#9CA3AF', fontSize: 12 }}>All {filtered.length} reports shown</Text>
                 </View>
               )}
             </>
@@ -674,15 +674,15 @@ const styles = StyleSheet.create({
   calendarContainer: {
     width: '100%',
     maxWidth: 340,
-    backgroundColor: '#111E27',
+    backgroundColor: '#1A1A1A',
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: '#1E3347',
+    borderColor: '#E8E8E8',
     padding: 20,
     alignItems: 'center',
   },
   calendarTitle: {
-    color: '#FFFFFF',
+    color: '#1A1A1A',
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 16,
@@ -695,7 +695,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   arrowButton: { padding: 8 },
-  monthYearText: { color: '#FFFFFF', fontSize: 16, fontWeight: '600' },
+  monthYearText: { color: '#1A1A1A', fontSize: 16, fontWeight: '600' },
   weekdaysRow: {
     flexDirection: 'row',
     width: '100%',
@@ -703,7 +703,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   weekdayText: {
-    color: '#5A7D8A',
+    color: '#6B7280',
     width: '14.28%',
     textAlign: 'center',
     fontSize: 12,
@@ -718,16 +718,16 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginVertical: 2,
   },
-  selectedDayCell: { backgroundColor: '#4CC2D1' },
-  dayText: { color: '#E2E8F0', fontSize: 14 },
-  selectedDayText: { color: '#071318', fontWeight: 'bold' },
+  selectedDayCell: { backgroundColor: '#0D8A72' },
+  dayText: { color: '#4A4A4A', fontSize: 14 },
+  selectedDayText: { color: '#1A1A1A', fontWeight: 'bold' },
   closeCalendarButton: {
     marginTop: 16,
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#2D4F5C',
+    borderColor: '#E8E8E8',
   },
-  closeCalendarText: { color: '#5A7D8A', fontWeight: '600', fontSize: 14 },
+  closeCalendarText: { color: '#6B7280', fontWeight: '600', fontSize: 14 },
 });

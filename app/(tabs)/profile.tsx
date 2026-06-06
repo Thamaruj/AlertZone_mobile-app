@@ -37,17 +37,8 @@ import { registerForPushNotificationsAsync, unregisterPushNotificationsAsync } f
 
 const DEFAULT_COORDS = { latitude: 6.9271, longitude: 79.8612 }; // Colombo default
 
-const DARK_MAP_STYLE = [
-  { elementType: 'geometry', stylers: [{ color: '#0d1f2d' }] },
-  { elementType: 'labels.text.fill', stylers: [{ color: '#4CC2D1' }] },
-  { elementType: 'labels.text.stroke', stylers: [{ color: '#0a1820' }] },
-  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#1E3A44' }] },
-  { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#071318' }] },
-  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#071318' }] },
-  { featureType: 'poi', elementType: 'geometry', stylers: [{ color: '#0a1820' }] },
-  { featureType: 'transit', elementType: 'geometry', stylers: [{ color: '#1E3A44' }] },
-  { featureType: 'administrative', elementType: 'geometry', stylers: [{ color: '#1E3A44' }] },
-];
+const DARK_MAP_STYLE: any[] = [];
+
 
 // ─────────────────────────────────────────────
 // Sub-components (unchanged from original)
@@ -55,17 +46,17 @@ const DARK_MAP_STYLE = [
 
 function StatCard({ label, value, trend, icon }: { label: string; value: string | number; trend?: string; icon: string }) {
   return (
-    <View className="flex-1 bg-[#111E27] rounded-2xl p-3.5"
-      style={{ borderWidth: 1, borderColor: '#1E3347' }}
+    <View className="flex-1 bg-white rounded-2xl p-3.5"
+      style={{ borderWidth: 1, borderColor: '#E8E8E8' }}
     >
       <View className="flex-row justify-between items-start">
-        <Text className="text-gray-500 text-[11px] font-semibold uppercase tracking-wide">{label}</Text>
-        <View className="w-7 h-7 rounded-lg bg-[#1E3347] items-center justify-center">
-          <Ionicons name={icon as any} size={14} color="#4CC2D1" />
+        <Text className="text-[#9CA3AF] text-[11px] font-semibold uppercase tracking-wide">{label}</Text>
+        <View className="w-7 h-7 rounded-lg bg-[#E8E8E8] items-center justify-center">
+          <Ionicons name={icon as any} size={14} color="#0D8A72" />
         </View>
       </View>
-      <Text className="text-white text-2xl font-bold mt-2">{value}</Text>
-      {trend && <Text className="text-[#30A89C] text-[11px] mt-1 font-medium">{trend}</Text>}
+      <Text className="text-[#1A1A1A] text-2xl font-bold mt-2">{value}</Text>
+      {trend && <Text className="text-[#059669] text-[11px] mt-1 font-medium">{trend}</Text>}
     </View>
   );
 }
@@ -76,17 +67,17 @@ function BadgeChip({ badge, earned = true }: { badge: typeof BADGE_DEFINITIONS[0
       <View
         className="w-14 h-14 rounded-2xl items-center justify-center mb-1.5"
         style={{
-          backgroundColor: earned ? badge.bg : '#0A1420',
+          backgroundColor: earned ? badge.bg : '#F9FAFB',
           borderWidth: 1,
-          borderColor: earned ? badge.color + '50' : '#1E3347',
+          borderColor: earned ? badge.color + '50' : '#E8E8E8',
           opacity: earned ? 1 : 0.4,
         }}
       >
-        <Ionicons name={badge.icon as any} size={26} color={earned ? badge.color : '#2D4F5C'} />
+        <Ionicons name={badge.icon as any} size={26} color={earned ? badge.color : '#E8E8E8'} />
       </View>
       <Text
-        className="text-gray-400 text-[10px] text-center leading-3"
-        style={{ color: earned ? '#9CA3AF' : '#3A5060' }}
+        className="text-[#6B7280] text-[10px] text-center leading-3"
+        style={{ color: earned ? '#9CA3AF' : '#9CA3AF' }}
       >
         {badge.name}
       </Text>
@@ -106,10 +97,10 @@ function SettingsRow({ icon, iconBg, iconColor, label, subtitle, onPress, danger
         <Ionicons name={icon as any} size={18} color={iconColor} />
       </View>
       <View className="flex-1">
-        <Text className={`text-sm font-semibold ${danger ? 'text-[#E05C5C]' : 'text-white'}`}>{label}</Text>
-        <Text className="text-gray-500 text-xs mt-0.5">{subtitle}</Text>
+        <Text className={`text-sm font-semibold ${danger ? 'text-[#DC2626]' : 'text-[#1A1A1A]'}`}>{label}</Text>
+        <Text className="text-[#9CA3AF] text-xs mt-0.5">{subtitle}</Text>
       </View>
-      {!danger && <Ionicons name="chevron-forward" size={16} color="#2D4F5C" />}
+      {!danger && <Ionicons name="chevron-forward" size={16} color="#E8E8E8" />}
     </Pressable>
   );
 }
@@ -575,7 +566,7 @@ function PersonalInfoModal({
 
   return (
     <Modal visible={visible} animationType="slide" transparent={false}>
-      <LinearGradient colors={['#0D1F2D', '#0A1820', '#071318']} style={{ flex: 1 }}>
+      <LinearGradient colors={['#F5F5F5', '#FAFAFA', '#F5F5F5']} style={{ flex: 1 }}>
         <ScrollView
           contentContainerStyle={{ paddingBottom: 120 }}
           showsVerticalScrollIndicator={false}
@@ -583,9 +574,9 @@ function PersonalInfoModal({
         >
           {/* Header */}
           <View className="px-5 pt-14 pb-4 flex-row justify-between items-center">
-            <Text className="text-white text-xl font-bold">Personal Information</Text>
+            <Text className="text-[#1A1A1A] text-xl font-bold">Personal Information</Text>
             <Pressable onPress={onClose} className="active:opacity-70">
-              <Ionicons name="close" size={24} color="#5A7D8A" />
+              <Ionicons name="close" size={24} color="#6B7280" />
             </Pressable>
           </View>
 
@@ -599,43 +590,43 @@ function PersonalInfoModal({
                     : require('../../assets/images/iconAlerZone-Bg-none.png')
                 }
                 className="w-32 h-32 rounded-full"
-                style={{ borderWidth: 3, borderColor: '#4CC2D1' }}
+                style={{ borderWidth: 3, borderColor: '#0D8A72' }}
                 resizeMode={profile?.avatarUrl ? 'cover' : 'contain'}
               />
-              <View className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-[#4CC2D1] items-center justify-center"
-                style={{ borderWidth: 2, borderColor: '#0A1820' }}
+              <View className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-[#0D8A72] items-center justify-center"
+                style={{ borderWidth: 2, borderColor: '#1A1A1A' }}
               >
-                <Ionicons name="camera" size={14} color="#071318" />
+                <Ionicons name="camera" size={14} color="#1A1A1A" />
               </View>
             </Pressable>
-            <Text className="text-white font-bold text-lg mt-3">{profile?.fullName}</Text>
-            <Text className="text-gray-400 text-sm">{profile?.role} • Level {profile?.level ?? 1}</Text>
+            <Text className="text-[#1A1A1A] font-bold text-lg mt-3">{profile?.fullName}</Text>
+            <Text className="text-[#6B7280] text-sm">{profile?.role} • Level {profile?.level ?? 1}</Text>
           </View>
 
           {/* Image Options */}
           {showImageOptions && (
-            <View className="mx-5 mb-4 bg-[#1E3A44] rounded-2xl overflow-hidden"
-              style={{ borderWidth: 1, borderColor: '#2D4F5C' }}
+            <View className="mx-5 mb-4 bg-white rounded-2xl overflow-hidden"
+              style={{ borderWidth: 1, borderColor: '#E8E8E8' }}
             >
-              <View className="px-4 py-3 bg-[#11232B] flex-row justify-between items-center border-b border-[#2D4F5C]">
-                <Text className="text-gray-400 text-xs font-semibold uppercase tracking-wider">Photo Options</Text>
-                <Text className="text-[#4CC2D1] text-[10px] font-bold">MAX SIZE: 10MB</Text>
+              <View className="px-4 py-3 bg-[#11232B] flex-row justify-between items-center border-b border-[#E8E8E8]">
+                <Text className="text-[#6B7280] text-xs font-semibold uppercase tracking-wider">Photo Options</Text>
+                <Text className="text-[#0D8A72] text-[10px] font-bold">MAX SIZE: 10MB</Text>
               </View>
-              <Pressable onPress={handleTakePhoto} className="flex-row items-center px-4 py-4 active:bg-[#2D4F5C]">
-                <Ionicons name="camera-outline" size={20} color="#4CC2D1" />
-                <Text className="text-white ml-3 font-medium">Take Photo</Text>
+              <Pressable onPress={handleTakePhoto} className="flex-row items-center px-4 py-4 active:bg-[#E8E8E8]">
+                <Ionicons name="camera-outline" size={20} color="#0D8A72" />
+                <Text className="text-[#1A1A1A] ml-3 font-medium">Take Photo</Text>
               </Pressable>
-              <View className="h-px bg-[#2D4F5C]" />
-              <Pressable onPress={handleUploadGallery} className="flex-row items-center px-4 py-4 active:bg-[#2D4F5C]">
-                <Ionicons name="image-outline" size={20} color="#4CC2D1" />
-                <Text className="text-white ml-3 font-medium">Upload From Gallery</Text>
+              <View className="h-px bg-[#E8E8E8]" />
+              <Pressable onPress={handleUploadGallery} className="flex-row items-center px-4 py-4 active:bg-[#E8E8E8]">
+                <Ionicons name="image-outline" size={20} color="#0D8A72" />
+                <Text className="text-[#1A1A1A] ml-3 font-medium">Upload From Gallery</Text>
               </Pressable>
               {profile?.avatarUrl ? (
                 <>
-                  <View className="h-px bg-[#2D4F5C]" />
-                  <Pressable onPress={handleDeletePhoto} className="flex-row items-center px-4 py-4 active:bg-[#2D4F5C]">
-                    <Ionicons name="trash-outline" size={20} color="#E05C5C" />
-                    <Text className="text-[#E05C5C] ml-3 font-medium">Delete Photo</Text>
+                  <View className="h-px bg-[#E8E8E8]" />
+                  <Pressable onPress={handleDeletePhoto} className="flex-row items-center px-4 py-4 active:bg-[#E8E8E8]">
+                    <Ionicons name="trash-outline" size={20} color="#DC2626" />
+                    <Text className="text-[#DC2626] ml-3 font-medium">Delete Photo</Text>
                   </Pressable>
                 </>
               ) : null}
@@ -644,98 +635,98 @@ function PersonalInfoModal({
 
           {/* Personal Information */}
           <View className="px-5 mb-5">
-            <Text className="text-white font-bold text-base mb-3">Personal Information</Text>
-            <View className="bg-[#111E27] rounded-2xl px-4 py-1"
-              style={{ borderWidth: 1, borderColor: '#1E3347' }}
+            <Text className="text-[#1A1A1A] font-bold text-base mb-3">Personal Information</Text>
+            <View className="bg-white rounded-2xl px-4 py-1"
+              style={{ borderWidth: 1, borderColor: '#E8E8E8' }}
             >
               {/* Email — read only */}
               <View className="flex-row items-center py-3">
-                <View className="w-8 h-8 rounded-lg bg-[#1E3347] items-center justify-center mr-3">
-                  <Ionicons name="mail-outline" size={16} color="#4CC2D1" />
+                <View className="w-8 h-8 rounded-lg bg-[#E8E8E8] items-center justify-center mr-3">
+                  <Ionicons name="mail-outline" size={16} color="#0D8A72" />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-gray-500 text-[10px] uppercase font-bold tracking-wide">Email</Text>
-                  <Text className="text-gray-400 text-sm mt-0.5">{profile?.email}</Text>
+                  <Text className="text-[#9CA3AF] text-[10px] uppercase font-bold tracking-wide">Email</Text>
+                  <Text className="text-[#6B7280] text-sm mt-0.5">{profile?.email}</Text>
                 </View>
-                <View className="px-2 py-0.5 rounded-md bg-[#1E3347]">
-                  <Text className="text-gray-600 text-[10px]">locked</Text>
+                <View className="px-2 py-0.5 rounded-md bg-[#E8E8E8]">
+                  <Text className="text-[#9CA3AF] text-[10px]">locked</Text>
                 </View>
               </View>
 
-              <View className="h-px bg-[#1E3347]" />
+              <View className="h-px bg-[#E8E8E8]" />
 
               {/* Phone */}
               <Pressable
                 onPress={() => openFieldEditor('Phone Number', 'phone', phone)}
                 className="flex-row items-center py-3 active:opacity-80"
               >
-                <View className="w-8 h-8 rounded-lg bg-[#1E3347] items-center justify-center mr-3">
-                  <Ionicons name="call-outline" size={16} color="#4CC2D1" />
+                <View className="w-8 h-8 rounded-lg bg-[#E8E8E8] items-center justify-center mr-3">
+                  <Ionicons name="call-outline" size={16} color="#0D8A72" />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-gray-500 text-[10px] uppercase font-bold tracking-wide">Phone Number</Text>
-                  <Text className={`text-sm mt-0.5 ${phone ? 'text-white' : 'text-gray-500'}`}>
+                  <Text className="text-[#9CA3AF] text-[10px] uppercase font-bold tracking-wide">Phone Number</Text>
+                  <Text className={`text-sm mt-0.5 ${phone ? 'text-[#1A1A1A]' : 'text-[#9CA3AF]'}`}>
                     {phone || 'Add phone number'}
                   </Text>
                 </View>
-                <Ionicons name="create-outline" size={16} color="#4CC2D1" className="mr-2" />
+                <Ionicons name="create-outline" size={16} color="#0D8A72" className="mr-2" />
               </Pressable>
 
-              <View className="h-px bg-[#1E3347]" />
+              <View className="h-px bg-[#E8E8E8]" />
 
               {/* NIC */}
               <Pressable
                 onPress={() => openFieldEditor('NIC Number', 'nic', nic)}
                 className="flex-row items-center py-3 active:opacity-80"
               >
-                <View className="w-8 h-8 rounded-lg bg-[#1E3347] items-center justify-center mr-3">
-                  <Ionicons name="card-outline" size={16} color="#4CC2D1" />
+                <View className="w-8 h-8 rounded-lg bg-[#E8E8E8] items-center justify-center mr-3">
+                  <Ionicons name="card-outline" size={16} color="#0D8A72" />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-gray-500 text-[10px] uppercase font-bold tracking-wide">NIC Number</Text>
-                  <Text className={`text-sm mt-0.5 ${nic ? 'text-white' : 'text-gray-500'}`}>
+                  <Text className="text-[#9CA3AF] text-[10px] uppercase font-bold tracking-wide">NIC Number</Text>
+                  <Text className={`text-sm mt-0.5 ${nic ? 'text-[#1A1A1A]' : 'text-[#9CA3AF]'}`}>
                     {nic || 'Add NIC number'}
                   </Text>
                 </View>
-                <Ionicons name="create-outline" size={16} color="#4CC2D1" className="mr-2" />
+                <Ionicons name="create-outline" size={16} color="#0D8A72" className="mr-2" />
               </Pressable>
 
-              <View className="h-px bg-[#1E3347]" />
+              <View className="h-px bg-[#E8E8E8]" />
 
               {/* Address */}
               <Pressable
                 onPress={() => openFieldEditor('Address', 'address', address)}
                 className="flex-row items-center py-3 active:opacity-80"
               >
-                <View className="w-8 h-8 rounded-lg bg-[#1E3347] items-center justify-center mr-3">
-                  <Ionicons name="location-outline" size={16} color="#4CC2D1" />
+                <View className="w-8 h-8 rounded-lg bg-[#E8E8E8] items-center justify-center mr-3">
+                  <Ionicons name="location-outline" size={16} color="#0D8A72" />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-gray-500 text-[10px] uppercase font-bold tracking-wide">Address</Text>
-                  <Text className={`text-sm mt-0.5 ${address ? 'text-white' : 'text-gray-500'}`} numberOfLines={2}>
+                  <Text className="text-[#9CA3AF] text-[10px] uppercase font-bold tracking-wide">Address</Text>
+                  <Text className={`text-sm mt-0.5 ${address ? 'text-[#1A1A1A]' : 'text-[#9CA3AF]'}`} numberOfLines={2}>
                     {address || 'Add address'}
                   </Text>
                 </View>
-                <Ionicons name="create-outline" size={16} color="#4CC2D1" className="mr-2" />
+                <Ionicons name="create-outline" size={16} color="#0D8A72" className="mr-2" />
               </Pressable>
 
-              <View className="h-px bg-[#1E3347]" />
+              <View className="h-px bg-[#E8E8E8]" />
 
               {/* Province */}
               <Pressable onPress={() => setProvinceModalVisible(true)} className="flex-row items-center py-3 active:opacity-80">
-                <View className="w-8 h-8 rounded-lg bg-[#1E3347] items-center justify-center mr-3">
-                  <Ionicons name="map-outline" size={16} color="#4CC2D1" />
+                <View className="w-8 h-8 rounded-lg bg-[#E8E8E8] items-center justify-center mr-3">
+                  <Ionicons name="map-outline" size={16} color="#0D8A72" />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-gray-500 text-[10px] uppercase font-bold tracking-wide">Province</Text>
-                  <Text className={`text-sm mt-0.5 ${province ? 'text-white' : 'text-gray-500'}`}>
+                  <Text className="text-[#9CA3AF] text-[10px] uppercase font-bold tracking-wide">Province</Text>
+                  <Text className={`text-sm mt-0.5 ${province ? 'text-[#1A1A1A]' : 'text-[#9CA3AF]'}`}>
                     {province || 'Select Province'}
                   </Text>
                 </View>
-                <Ionicons name="chevron-forward" size={16} color="#2D4F5C" />
+                <Ionicons name="chevron-forward" size={16} color="#E8E8E8" />
               </Pressable>
 
-              <View className="h-px bg-[#1E3347]" />
+              <View className="h-px bg-[#E8E8E8]" />
 
               {/* District */}
               <Pressable
@@ -748,19 +739,19 @@ function PersonalInfoModal({
                 }}
                 className={`flex-row items-center py-3 active:opacity-80 ${!province ? 'opacity-50' : ''}`}
               >
-                <View className="w-8 h-8 rounded-lg bg-[#1E3347] items-center justify-center mr-3">
-                  <Ionicons name="navigate-outline" size={16} color="#4CC2D1" />
+                <View className="w-8 h-8 rounded-lg bg-[#E8E8E8] items-center justify-center mr-3">
+                  <Ionicons name="navigate-outline" size={16} color="#0D8A72" />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-gray-500 text-[10px] uppercase font-bold tracking-wide">District</Text>
-                  <Text className={`text-sm mt-0.5 ${district ? 'text-white' : 'text-gray-500'}`}>
+                  <Text className="text-[#9CA3AF] text-[10px] uppercase font-bold tracking-wide">District</Text>
+                  <Text className={`text-sm mt-0.5 ${district ? 'text-[#1A1A1A]' : 'text-[#9CA3AF]'}`}>
                     {district || 'Select District'}
                   </Text>
                 </View>
-                <Ionicons name="chevron-forward" size={16} color="#2D4F5C" />
+                <Ionicons name="chevron-forward" size={16} color="#E8E8E8" />
               </Pressable>
 
-              <View className="h-px bg-[#1E3347]" />
+              <View className="h-px bg-[#E8E8E8]" />
 
               {/* LGA */}
               <Pressable
@@ -773,16 +764,16 @@ function PersonalInfoModal({
                 }}
                 className={`flex-row items-center py-3 active:opacity-80 ${!district ? 'opacity-50' : ''}`}
               >
-                <View className="w-8 h-8 rounded-lg bg-[#1E3347] items-center justify-center mr-3">
-                  <Ionicons name="business-outline" size={16} color="#4CC2D1" />
+                <View className="w-8 h-8 rounded-lg bg-[#E8E8E8] items-center justify-center mr-3">
+                  <Ionicons name="business-outline" size={16} color="#0D8A72" />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-gray-500 text-[10px] uppercase font-bold tracking-wide">Local Government Area</Text>
-                  <Text className={`text-sm mt-0.5 ${lga ? 'text-white' : 'text-gray-500'}`}>
+                  <Text className="text-[#9CA3AF] text-[10px] uppercase font-bold tracking-wide">Local Government Area</Text>
+                  <Text className={`text-sm mt-0.5 ${lga ? 'text-[#1A1A1A]' : 'text-[#9CA3AF]'}`}>
                     {lga || 'Select Local Government'}
                   </Text>
                 </View>
-                <Ionicons name="chevron-forward" size={16} color="#2D4F5C" />
+                <Ionicons name="chevron-forward" size={16} color="#E8E8E8" />
               </Pressable>
             </View>
           </View>
@@ -790,14 +781,14 @@ function PersonalInfoModal({
           {/* Home Location Map */}
           <View className="px-5 mb-5">
             <View className="flex-row justify-between items-center mb-3">
-              <Text className="text-white font-bold text-base">Home Location</Text>
+              <Text className="text-[#1A1A1A] font-bold text-base">Home Location</Text>
               <View className="flex-row items-center gap-1.5">
                 {locLoading ? (
-                  <ActivityIndicator size="small" color="#30A89C" />
+                  <ActivityIndicator size="small" color="#059669" />
                 ) : (
                   <>
-                    <View className="w-2 h-2 rounded-full" style={{ backgroundColor: gpsGranted ? '#30A89C' : '#E05C5C' }} />
-                    <Text className="text-xs font-semibold" style={{ color: gpsGranted ? '#30A89C' : '#E05C5C' }}>
+                    <View className="w-2 h-2 rounded-full" style={{ backgroundColor: gpsGranted ? '#059669' : '#DC2626' }} />
+                    <Text className="text-xs font-semibold" style={{ color: gpsGranted ? '#059669' : '#DC2626' }}>
                       {gpsGranted ? 'GPS Active' : 'GPS Inactive'}
                     </Text>
                   </>
@@ -808,32 +799,32 @@ function PersonalInfoModal({
             {/* Location Search Bar */}
             <View style={{ zIndex: 10 }}>
               <View className="flex-row gap-2 mb-1">
-                <View className="flex-1 bg-[#111E27] rounded-xl px-4 py-2 flex-row items-center border border-[#1E3347]">
-                  <Ionicons name="search" size={16} color="#3A6070" />
+                <View className="flex-1 bg-white rounded-xl px-4 py-2 flex-row items-center border border-[#E8E8E8]">
+                  <Ionicons name="search" size={16} color="#9CA3AF" />
                   <TextInput
                     placeholder="Search home location..."
-                    placeholderTextColor="#3A6070"
+                    placeholderTextColor="#9CA3AF"
                     value={searchQuery}
                     onChangeText={setSearchQuery}
-                    className="flex-1 text-white text-sm ml-2 py-2"
+                    className="flex-1 text-[#1A1A1A] text-sm ml-2 py-2"
                   />
-                  {isSuggesting && <ActivityIndicator size="small" color="#4CC2D1" />}
+                  {isSuggesting && <ActivityIndicator size="small" color="#0D8A72" />}
                 </View>
               </View>
 
               {/* Suggestions Dropdown overlay */}
               {suggestions.length > 0 && (
-                <View className="bg-[#111E27] rounded-xl overflow-hidden border border-[#1E3347] mt-1 shadow-2xl absolute top-12 left-0 right-0 z-50">
+                <View className="bg-white rounded-xl overflow-hidden border border-[#E8E8E8] mt-1 shadow-2xl absolute top-12 left-0 right-0 z-50">
                   {suggestions.map((item, idx) => (
                     <Pressable
                       key={idx}
                       onPress={() => selectSuggestion(item)}
-                      className="flex-row items-center p-3 active:bg-[#1E3347] border-b border-[#1E3347]"
+                      className="flex-row items-center p-3 active:bg-[#E8E8E8] border-b border-[#E8E8E8]"
                     >
-                      <Ionicons name="location-outline" size={16} color="#5A7D8A" className="mr-3" />
+                      <Ionicons name="location-outline" size={16} color="#6B7280" className="mr-3" />
                       <View className="flex-1">
-                        <Text className="text-white text-sm font-medium" numberOfLines={1}>{item.properties.name}</Text>
-                        <Text className="text-gray-500 text-[10px]" numberOfLines={1}>
+                        <Text className="text-[#1A1A1A] text-sm font-medium" numberOfLines={1}>{item.properties.name}</Text>
+                        <Text className="text-[#9CA3AF] text-[10px]" numberOfLines={1}>
                           {[item.properties.city, item.properties.country].filter(Boolean).join(', ')}
                         </Text>
                       </View>
@@ -844,7 +835,7 @@ function PersonalInfoModal({
             </View>
 
             {/* Interactive MapView */}
-            <View className="rounded-2xl overflow-hidden my-3" style={{ height: 220, borderWidth: 1, borderColor: '#1E3347' }}>
+            <View className="rounded-2xl overflow-hidden my-3" style={{ height: 220, borderWidth: 1, borderColor: '#E8E8E8' }}>
               <MapView
                 ref={mapRef}
                 provider={PROVIDER_GOOGLE}
@@ -856,7 +847,7 @@ function PersonalInfoModal({
                   longitudeDelta: 0.005,
                 }}
                 onPress={(e) => handleMapPress(e.nativeEvent.coordinate)}
-                customMapStyle={DARK_MAP_STYLE}
+                
                 showsUserLocation={gpsGranted}
                 showsMyLocationButton={false}
               >
@@ -872,10 +863,10 @@ function PersonalInfoModal({
               <View className="absolute bottom-3 right-3">
                 <Pressable
                   onPress={recenter}
-                  style={{ backgroundColor: '#111E27', borderRadius: 8, padding: 8, borderWidth: 1, borderColor: '#1E3347' }}
+                  style={{ backgroundColor: '#1A1A1A', borderRadius: 8, padding: 8, borderWidth: 1, borderColor: '#E8E8E8' }}
                   className="active:opacity-80"
                 >
-                  <Ionicons name="locate" size={20} color="#4CC2D1" />
+                  <Ionicons name="locate" size={20} color="#0D8A72" />
                 </Pressable>
               </View>
             </View>
@@ -887,20 +878,20 @@ function PersonalInfoModal({
               onPress={handleSave}
               disabled={saving}
               className="flex-1 py-4 rounded-2xl items-center active:opacity-80"
-              style={{ backgroundColor: saving ? 'rgba(76,194,209,0.4)' : '#4CC2D1' }}
+              style={{ backgroundColor: saving ? 'rgba(76,194,209,0.4)' : '#0D8A72' }}
             >
               {saving
-                ? <ActivityIndicator color="#071318" />
-                : <Text className="text-[#071318] font-bold text-base">Save</Text>
+                ? <ActivityIndicator color="#1A1A1A" />
+                : <Text className="text-[#F5F5F5] font-bold text-base">Save</Text>
               }
             </Pressable>
             <Pressable
               onPress={onClose}
               disabled={saving}
               className="flex-1 py-4 rounded-2xl items-center active:opacity-70"
-              style={{ borderWidth: 1, borderColor: '#2D4F5C' }}
+              style={{ borderWidth: 1, borderColor: '#E8E8E8' }}
             >
-              <Text className="text-gray-300 font-semibold text-base">Cancel</Text>
+              <Text className="text-[#4A4A4A] font-semibold text-base">Cancel</Text>
             </Pressable>
           </View>
 
@@ -944,28 +935,28 @@ function PersonalInfoModal({
           {/* Reusable Field Editor Modal */}
           <Modal visible={fieldEditVisible} transparent animationType="fade">
             <View className="flex-1 items-center justify-center bg-black/75 px-6">
-              <View className="bg-[#111E27] w-full max-w-sm rounded-3xl p-6 border border-[#2D4F5C] items-center"
+              <View className="bg-white w-full max-w-sm rounded-3xl p-6 border border-[#E8E8E8] items-center"
                 style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.5, shadowRadius: 15, elevation: 20 }}
               >
-                <View className="w-12 h-12 rounded-full bg-[#1E3A44] items-center justify-center mb-4 border border-[#4CC2D1]/30">
+                <View className="w-12 h-12 rounded-full bg-white items-center justify-center mb-4 border border-[#0D8A72]/30">
                   <Ionicons 
                     name={
                       editingFieldKey === 'phone' ? 'call-outline' :
                       editingFieldKey === 'nic' ? 'card-outline' : 'location-outline'
                     } 
                     size={24} 
-                    color="#4CC2D1" 
+                    color="#0D8A72" 
                   />
                 </View>
-                <Text className="text-white text-lg font-bold text-center mb-2">Edit {editingFieldName}</Text>
-                <Text className="text-gray-400 text-xs text-center leading-4 mb-5">
+                <Text className="text-[#1A1A1A] text-lg font-bold text-center mb-2">Edit {editingFieldName}</Text>
+                <Text className="text-[#6B7280] text-xs text-center leading-4 mb-5">
                   Update your {editingFieldName.toLowerCase()} below. This will not be saved permanently until you save the main profile.
                 </Text>
 
                 {!!editorError && (
-                  <View className="w-full bg-[#3D1515] border border-[#E05C5C]/30 rounded-xl px-4 py-2.5 mb-4 flex-row items-center gap-2">
-                    <Ionicons name="alert-circle-outline" size={16} color="#E05C5C" />
-                    <Text className="text-[#E05C5C] text-xs font-semibold flex-1 leading-4">
+                  <View className="w-full bg-[#FEE2E2] border border-[#DC2626]/30 rounded-xl px-4 py-2.5 mb-4 flex-row items-center gap-2">
+                    <Ionicons name="alert-circle-outline" size={16} color="#DC2626" />
+                    <Text className="text-[#DC2626] text-xs font-semibold flex-1 leading-4">
                       {editorError}
                     </Text>
                   </View>
@@ -978,27 +969,27 @@ function PersonalInfoModal({
                     if (editorError) setEditorError('');
                   }}
                   placeholder={`Enter ${editingFieldName.toLowerCase()}`}
-                  placeholderTextColor="#5A7D8A"
+                  placeholderTextColor="#6B7280"
                   keyboardType={editingFieldKey === 'phone' ? 'phone-pad' : 'default'}
                   autoCapitalize={editingFieldKey === 'nic' ? 'characters' : 'none'}
                   multiline={editingFieldKey === 'address'}
                   numberOfLines={editingFieldKey === 'address' ? 3 : 1}
-                  className="w-full bg-[#1E3A44] border border-[#2D4F5C] rounded-xl px-4 py-3 text-white text-sm mb-5 text-center"
+                  className="w-full bg-white border border-[#E8E8E8] rounded-xl px-4 py-3 text-[#1A1A1A] text-sm mb-5 text-center"
                   style={editingFieldKey === 'address' ? { textAlign: 'left', minHeight: 80 } : undefined}
                   autoFocus
                 />
                 <View className="w-full flex-row gap-3">
                   <Pressable
                     onPress={() => setFieldEditVisible(false)}
-                    className="flex-1 py-3 bg-[#1E3A44] border border-[#2D4F5C] rounded-xl items-center active:opacity-75"
+                    className="flex-1 py-3 bg-white border border-[#E8E8E8] rounded-xl items-center active:opacity-75"
                   >
-                    <Text className="text-gray-400 font-semibold text-sm">Cancel</Text>
+                    <Text className="text-[#6B7280] font-semibold text-sm">Cancel</Text>
                   </Pressable>
                   <Pressable
                     onPress={saveFieldEditor}
-                    className="flex-1 py-3 bg-[#4CC2D1] rounded-xl items-center active:opacity-75"
+                    className="flex-1 py-3 bg-[#0D8A72] rounded-xl items-center active:opacity-75"
                   >
-                    <Text className="text-[#071318] font-bold text-sm">Done</Text>
+                    <Text className="text-[#F5F5F5] font-bold text-sm">Done</Text>
                   </Pressable>
                 </View>
               </View>
@@ -1023,14 +1014,14 @@ function PersonalInfoModal({
             }}
           >
             <View
-              className="bg-[#1E3A44] border border-[#30A89C] rounded-3xl p-8 items-center shadow-2xl"
+              className="bg-white border border-[#059669] rounded-3xl p-8 items-center shadow-2xl"
               style={{ width: '80%', maxWidth: 320 }}
             >
-              <ActivityIndicator size="large" color="#4CC2D1" className="mb-4" />
-              <Text className="text-white text-base font-bold text-center">
+              <ActivityIndicator size="large" color="#0D8A72" className="mb-4" />
+              <Text className="text-[#1A1A1A] text-base font-bold text-center">
                 {uploadLoading ? 'Uploading Photo...' : 'Saving Changes...'}
               </Text>
-              <Text className="text-gray-400 text-xs text-center mt-2 leading-4">
+              <Text className="text-[#6B7280] text-xs text-center mt-2 leading-4">
                 Please wait while we update your AlertZone profile.
               </Text>
             </View>
@@ -1099,7 +1090,7 @@ function AlertPreferencesModal({
 
   return (
     <Modal visible={visible} animationType="slide" transparent={false}>
-      <LinearGradient colors={['#0D1F2D', '#0A1820', '#071318']} style={{ flex: 1 }}>
+      <LinearGradient colors={['#F5F5F5', '#FAFAFA', '#F5F5F5']} style={{ flex: 1 }}>
         <ScrollView
           contentContainerStyle={{ paddingBottom: 60 }}
           showsVerticalScrollIndicator={false}
@@ -1107,47 +1098,47 @@ function AlertPreferencesModal({
         >
           {/* Header */}
           <View className="px-5 pt-14 pb-4 flex-row justify-between items-center">
-            <Text className="text-white text-xl font-bold">Alert Preferences</Text>
+            <Text className="text-[#1A1A1A] text-xl font-bold">Alert Preferences</Text>
             <Pressable onPress={onClose} className="active:opacity-70">
-              <Ionicons name="close" size={24} color="#5A7D8A" />
+              <Ionicons name="close" size={24} color="#6B7280" />
             </Pressable>
           </View>
 
           {/* Description */}
           <View className="px-5 mb-6">
-            <Text className="text-gray-400 text-sm leading-5">
+            <Text className="text-[#6B7280] text-sm leading-5">
               Customize how and when you want to receive alerts on AlertZone.
             </Text>
           </View>
 
           {/* Alert Preferences Form */}
           <View className="px-5 mb-8">
-            <View className="bg-[#111E27] rounded-2xl px-4"
-              style={{ borderWidth: 1, borderColor: '#1E3347' }}
+            <View className="bg-white rounded-2xl px-4"
+              style={{ borderWidth: 1, borderColor: '#E8E8E8' }}
             >
               {/* Notifications Toggle */}
               <View className="flex-row items-center justify-between py-4">
                 <View className="flex-1 pr-4">
-                  <Text className="text-white text-sm font-semibold">Enable Notifications</Text>
-                  <Text className="text-gray-500 text-xs mt-0.5 leading-4">
+                  <Text className="text-[#1A1A1A] text-sm font-semibold">Enable Notifications</Text>
+                  <Text className="text-[#9CA3AF] text-xs mt-0.5 leading-4">
                     Receive real-time push alerts.
                   </Text>
                 </View>
                 <Switch
                   value={notificationsEnabled}
                   onValueChange={setNotificationsEnabled}
-                  trackColor={{ false: '#1E3347', true: '#4CC2D1' }}
+                  trackColor={{ false: '#E8E8E8', true: '#0D8A72' }}
                   thumbColor="white"
                 />
               </View>
 
-              <View className="h-px bg-[#1E3347]" />
+              <View className="h-px bg-[#E8E8E8]" />
 
               {/* Alert Radius */}
               <View className="flex-row items-center justify-between py-4">
                 <View className="flex-1 pr-4">
-                  <Text className="text-white text-sm font-semibold">Alert Radius</Text>
-                  <Text className="text-gray-500 text-xs mt-0.5 leading-4">
+                  <Text className="text-[#1A1A1A] text-sm font-semibold">Alert Radius</Text>
+                  <Text className="text-[#9CA3AF] text-xs mt-0.5 leading-4">
                     Only receive notifications for incidents within this range (1–15 Km).
                   </Text>
                 </View>
@@ -1158,9 +1149,9 @@ function AlertPreferencesModal({
                       const next = Math.max(1, current - 1);
                       setAlertRadius(`${next} Km`);
                     }}
-                    className="w-8 h-8 rounded-lg bg-[#1E3347] items-center justify-center active:opacity-70"
+                    className="w-8 h-8 rounded-lg bg-[#E8E8E8] items-center justify-center active:opacity-70"
                   >
-                    <Ionicons name="remove" size={16} color="#4CC2D1" />
+                    <Ionicons name="remove" size={16} color="#0D8A72" />
                   </Pressable>
                   <TextInput
                     value={alertRadius.replace(/[^0-9]/g, '')}
@@ -1179,7 +1170,7 @@ function AlertPreferencesModal({
                     }}
                     keyboardType="numeric"
                     maxLength={2}
-                    className="text-[#4CC2D1] text-base font-semibold w-8 text-center p-0 m-0"
+                    className="text-[#0D8A72] text-base font-semibold w-8 text-center p-0 m-0"
                   />
                   <Pressable
                     onPress={() => {
@@ -1187,9 +1178,9 @@ function AlertPreferencesModal({
                       const next = Math.min(15, current + 1);
                       setAlertRadius(`${next} Km`);
                     }}
-                    className="w-8 h-8 rounded-lg bg-[#1E3347] items-center justify-center active:opacity-70"
+                    className="w-8 h-8 rounded-lg bg-[#E8E8E8] items-center justify-center active:opacity-70"
                   >
-                    <Ionicons name="add" size={16} color="#4CC2D1" />
+                    <Ionicons name="add" size={16} color="#0D8A72" />
                   </Pressable>
                 </View>
               </View>
@@ -1202,20 +1193,20 @@ function AlertPreferencesModal({
               onPress={handleSave}
               disabled={saving}
               className="flex-1 py-4 rounded-2xl items-center active:opacity-80"
-              style={{ backgroundColor: saving ? 'rgba(76,194,209,0.4)' : '#4CC2D1' }}
+              style={{ backgroundColor: saving ? 'rgba(76,194,209,0.4)' : '#0D8A72' }}
             >
               {saving
-                ? <ActivityIndicator color="#071318" />
-                : <Text className="text-[#071318] font-bold text-base">Save Preferences</Text>
+                ? <ActivityIndicator color="#1A1A1A" />
+                : <Text className="text-[#F5F5F5] font-bold text-base">Save Preferences</Text>
               }
             </Pressable>
             <Pressable
               onPress={onClose}
               disabled={saving}
               className="flex-1 py-4 rounded-2xl items-center active:opacity-70"
-              style={{ borderWidth: 1, borderColor: '#2D4F5C' }}
+              style={{ borderWidth: 1, borderColor: '#E8E8E8' }}
             >
-              <Text className="text-gray-300 font-semibold text-base">Cancel</Text>
+              <Text className="text-[#4A4A4A] font-semibold text-base">Cancel</Text>
             </Pressable>
           </View>
         </ScrollView>
@@ -1422,7 +1413,7 @@ function SecurityModal({
 
   return (
     <Modal visible={visible} animationType="slide" transparent={false}>
-      <LinearGradient colors={['#0D1F2D', '#0A1820', '#071318']} style={{ flex: 1 }}>
+      <LinearGradient colors={['#F5F5F5', '#FAFAFA', '#F5F5F5']} style={{ flex: 1 }}>
         <ScrollView
           contentContainerStyle={{ paddingBottom: 60 }}
           showsVerticalScrollIndicator={false}
@@ -1430,28 +1421,28 @@ function SecurityModal({
         >
           {/* Header */}
           <View className="px-5 pt-14 pb-4 flex-row justify-between items-center">
-            <Text className="text-white text-xl font-bold">Security Settings</Text>
+            <Text className="text-[#1A1A1A] text-xl font-bold">Security Settings</Text>
             <Pressable onPress={onClose} className="active:opacity-70">
-              <Ionicons name="close" size={24} color="#5A7D8A" />
+              <Ionicons name="close" size={24} color="#6B7280" />
             </Pressable>
           </View>
 
           {/* Biometrics Segment */}
           {biometricSupported && (
             <View className="px-5 mb-6">
-              <Text className="text-white font-bold text-base mb-3">Biometrics</Text>
-              <View className="bg-[#111E27] rounded-2xl px-4 py-4 border border-[#1E3347]">
+              <Text className="text-[#1A1A1A] font-bold text-base mb-3">Biometrics</Text>
+              <View className="bg-white rounded-2xl px-4 py-4 border border-[#E8E8E8]">
                 <View className="flex-row items-center justify-between">
                   <View className="flex-1 pr-4">
-                    <Text className="text-white text-sm font-semibold">Biometric Login</Text>
-                    <Text className="text-gray-500 text-xs mt-0.5 leading-4">
+                    <Text className="text-[#1A1A1A] text-sm font-semibold">Biometric Login</Text>
+                    <Text className="text-[#9CA3AF] text-xs mt-0.5 leading-4">
                       Use Fingerprint or Face ID for fast and secure login.
                     </Text>
                   </View>
                   <Switch
                     value={biometricsEnabled}
                     onValueChange={handleBiometricsToggle}
-                    trackColor={{ false: '#1E3347', true: '#4CC2D1' }}
+                    trackColor={{ false: '#E8E8E8', true: '#0D8A72' }}
                     thumbColor="white"
                   />
                 </View>
@@ -1461,36 +1452,36 @@ function SecurityModal({
 
           {/* Password Settings Segment */}
           <View className="px-5 mb-8">
-            <Text className="text-white font-bold text-base mb-3">Password & Security</Text>
+            <Text className="text-[#1A1A1A] font-bold text-base mb-3">Password & Security</Text>
             
             {isEmailUser ? (
-              <View className="bg-[#111E27] rounded-2xl p-4 border border-[#1E3347]">
+              <View className="bg-white rounded-2xl p-4 border border-[#E8E8E8]">
                 {/* Feedback Alerts */}
                 {!!passwordError && (
-                  <View className="w-full bg-[#3D1515] border border-[#E05C5C]/30 rounded-xl px-4 py-2.5 mb-4 flex-row items-center gap-2">
-                    <Ionicons name="alert-circle-outline" size={16} color="#E05C5C" />
-                    <Text className="text-[#E05C5C] text-xs font-semibold flex-1 leading-4">
+                  <View className="w-full bg-[#FEE2E2] border border-[#DC2626]/30 rounded-xl px-4 py-2.5 mb-4 flex-row items-center gap-2">
+                    <Ionicons name="alert-circle-outline" size={16} color="#DC2626" />
+                    <Text className="text-[#DC2626] text-xs font-semibold flex-1 leading-4">
                       {passwordError}
                     </Text>
                   </View>
                 )}
 
                 {!!passwordSuccess && (
-                  <View className="w-full bg-[#1E3A44]/60 border border-[#30A89C]/30 rounded-xl px-4 py-2.5 mb-4 flex-row items-center gap-2">
-                    <Ionicons name="checkmark-circle-outline" size={16} color="#4CC2D1" />
-                    <Text className="text-[#4CC2D1] text-xs font-semibold flex-1 leading-4">
+                  <View className="w-full bg-white/60 border border-[#059669]/30 rounded-xl px-4 py-2.5 mb-4 flex-row items-center gap-2">
+                    <Ionicons name="checkmark-circle-outline" size={16} color="#0D8A72" />
+                    <Text className="text-[#0D8A72] text-xs font-semibold flex-1 leading-4">
                       {passwordSuccess}
                     </Text>
                   </View>
                 )}
 
-                <Text className="text-gray-400 text-xs mb-4">
+                <Text className="text-[#6B7280] text-xs mb-4">
                   To change your password, please fill in the details below.
                 </Text>
 
                 {/* Current Password */}
                 <View className="mb-4">
-                  <Text className="text-gray-500 text-[10px] uppercase font-bold tracking-wide mb-1.5">Current Password</Text>
+                  <Text className="text-[#9CA3AF] text-[10px] uppercase font-bold tracking-wide mb-1.5">Current Password</Text>
                   <TextInput
                     secureTextEntry
                     autoCapitalize="none"
@@ -1499,14 +1490,14 @@ function SecurityModal({
                     value={currentPassword}
                     onChangeText={setCurrentPassword}
                     placeholder="Enter current password"
-                    placeholderTextColor="#5A7D8A"
-                    className="w-full bg-[#1E3A44] border border-[#2D4F5C] rounded-xl px-4 py-3 text-white text-sm"
+                    placeholderTextColor="#6B7280"
+                    className="w-full bg-white border border-[#E8E8E8] rounded-xl px-4 py-3 text-[#1A1A1A] text-sm"
                   />
                 </View>
 
                 {/* New Password */}
                 <View className="mb-4">
-                  <Text className="text-gray-500 text-[10px] uppercase font-bold tracking-wide mb-1.5">New Password</Text>
+                  <Text className="text-[#9CA3AF] text-[10px] uppercase font-bold tracking-wide mb-1.5">New Password</Text>
                   <TextInput
                     secureTextEntry
                     autoCapitalize="none"
@@ -1515,14 +1506,14 @@ function SecurityModal({
                     value={newPassword}
                     onChangeText={setNewPassword}
                     placeholder="Min 6 characters"
-                    placeholderTextColor="#5A7D8A"
-                    className="w-full bg-[#1E3A44] border border-[#2D4F5C] rounded-xl px-4 py-3 text-white text-sm"
+                    placeholderTextColor="#6B7280"
+                    className="w-full bg-white border border-[#E8E8E8] rounded-xl px-4 py-3 text-[#1A1A1A] text-sm"
                   />
                 </View>
 
                 {/* Confirm New Password */}
                 <View className="mb-5">
-                  <Text className="text-gray-500 text-[10px] uppercase font-bold tracking-wide mb-1.5">Confirm New Password</Text>
+                  <Text className="text-[#9CA3AF] text-[10px] uppercase font-bold tracking-wide mb-1.5">Confirm New Password</Text>
                   <TextInput
                     secureTextEntry
                     autoCapitalize="none"
@@ -1531,47 +1522,47 @@ function SecurityModal({
                     value={confirmNewPassword}
                     onChangeText={setConfirmNewPassword}
                     placeholder="Re-enter new password"
-                    placeholderTextColor="#5A7D8A"
-                    className="w-full bg-[#1E3A44] border border-[#2D4F5C] rounded-xl px-4 py-3 text-white text-sm"
+                    placeholderTextColor="#6B7280"
+                    className="w-full bg-white border border-[#E8E8E8] rounded-xl px-4 py-3 text-[#1A1A1A] text-sm"
                   />
                 </View>
 
                 <Pressable
                   onPress={handlePasswordResetSubmit}
                   disabled={passwordResetLoading}
-                  className="w-full py-3.5 bg-[#4CC2D1] rounded-xl items-center active:opacity-75 mb-3"
+                  className="w-full py-3.5 bg-[#0D8A72] rounded-xl items-center active:opacity-75 mb-3"
                 >
                   {passwordResetLoading ? (
-                    <ActivityIndicator size="small" color="#071318" />
+                    <ActivityIndicator size="small" color="#1A1A1A" />
                   ) : (
-                    <Text className="text-[#071318] font-bold text-sm">Update Password</Text>
+                    <Text className="text-[#F5F5F5] font-bold text-sm">Update Password</Text>
                   )}
                 </Pressable>
 
-                <View className="h-px bg-[#1E3347] my-3" />
+                <View className="h-px bg-[#E8E8E8] my-3" />
 
                 {/* Forgot Password Action */}
                 <View className="items-center py-2">
-                  <Text className="text-gray-500 text-xs mb-2">Forgot your password?</Text>
+                  <Text className="text-[#9CA3AF] text-xs mb-2">Forgot your password?</Text>
                   <Pressable
                     onPress={handleForgotPassword}
                     disabled={forgotPasswordLoading}
                     className="active:opacity-70"
                   >
                     {forgotPasswordLoading ? (
-                      <ActivityIndicator size="small" color="#4CC2D1" />
+                      <ActivityIndicator size="small" color="#0D8A72" />
                     ) : (
-                      <Text className="text-[#4CC2D1] font-semibold text-sm">Send Password Reset Link</Text>
+                      <Text className="text-[#0D8A72] font-semibold text-sm">Send Password Reset Link</Text>
                     )}
                   </Pressable>
                 </View>
 
               </View>
             ) : (
-              <View className="bg-[#111E27] rounded-2xl p-4 border border-[#1E3347] items-center">
-                <Ionicons name="logo-google" size={36} color="#4CC2D1" className="mb-2" />
-                <Text className="text-white text-sm font-semibold mb-1 text-center">Google Authentication Linked</Text>
-                <Text className="text-gray-500 text-xs text-center leading-4">
+              <View className="bg-white rounded-2xl p-4 border border-[#E8E8E8] items-center">
+                <Ionicons name="logo-google" size={36} color="#0D8A72" className="mb-2" />
+                <Text className="text-[#1A1A1A] text-sm font-semibold mb-1 text-center">Google Authentication Linked</Text>
+                <Text className="text-[#9CA3AF] text-xs text-center leading-4">
                   You are logged in with Google. Password configuration and reset operations are managed by Google.
                 </Text>
               </View>
@@ -1582,9 +1573,9 @@ function SecurityModal({
           <View className="px-5">
             <Pressable
               onPress={onClose}
-              className="w-full py-4 bg-[#1E3A44] border border-[#2D4F5C] rounded-2xl items-center active:opacity-75"
+              className="w-full py-4 bg-white border border-[#E8E8E8] rounded-2xl items-center active:opacity-75"
             >
-              <Text className="text-gray-300 font-semibold text-base">Close</Text>
+              <Text className="text-[#4A4A4A] font-semibold text-base">Close</Text>
             </Pressable>
           </View>
         </ScrollView>
@@ -1592,14 +1583,14 @@ function SecurityModal({
         {/* Password Confirmation Modal for Biometrics */}
         <Modal visible={showPasswordConfirm} transparent animationType="fade">
           <View className="flex-1 items-center justify-center bg-black/75 px-6">
-            <View className="bg-[#111E27] w-full max-w-sm rounded-3xl p-6 border border-[#2D4F5C] items-center"
+            <View className="bg-white w-full max-w-sm rounded-3xl p-6 border border-[#E8E8E8] items-center"
               style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.5, shadowRadius: 15, elevation: 20 }}
             >
-              <View className="w-12 h-12 rounded-full bg-[#1E3A44] items-center justify-center mb-4 border border-[#4CC2D1]/30">
-                <Ionicons name="key-outline" size={24} color="#4CC2D1" />
+              <View className="w-12 h-12 rounded-full bg-white items-center justify-center mb-4 border border-[#0D8A72]/30">
+                <Ionicons name="key-outline" size={24} color="#0D8A72" />
               </View>
-              <Text className="text-white text-lg font-bold text-center mb-2">Verify Password</Text>
-              <Text className="text-gray-400 text-xs text-center leading-4 mb-5">
+              <Text className="text-[#1A1A1A] text-lg font-bold text-center mb-2">Verify Password</Text>
+              <Text className="text-[#6B7280] text-xs text-center leading-4 mb-5">
                 Confirm your password to securely link your credentials for fingerprint and Face ID login.
               </Text>
               <TextInput
@@ -1608,23 +1599,23 @@ function SecurityModal({
                 autoCorrect={false}
                 spellCheck={false}
                 placeholder="Enter current password"
-                placeholderTextColor="#5A7D8A"
+                placeholderTextColor="#6B7280"
                 value={confirmPasswordText}
                 onChangeText={setConfirmPasswordText}
-                className="w-full bg-[#1E3A44] border border-[#2D4F5C] rounded-xl px-4 py-3 text-white text-sm mb-5 text-center"
+                className="w-full bg-white border border-[#E8E8E8] rounded-xl px-4 py-3 text-[#1A1A1A] text-sm mb-5 text-center"
               />
               <View className="w-full flex-row gap-3">
                 <Pressable
                   onPress={() => setShowPasswordConfirm(false)}
-                  className="flex-1 py-3 bg-[#1E3A44] border border-[#2D4F5C] rounded-xl items-center active:opacity-75"
+                  className="flex-1 py-3 bg-white border border-[#E8E8E8] rounded-xl items-center active:opacity-75"
                 >
-                  <Text className="text-gray-400 font-semibold text-sm">Cancel</Text>
+                  <Text className="text-[#6B7280] font-semibold text-sm">Cancel</Text>
                 </Pressable>
                 <Pressable
                   onPress={handleConfirmPassword}
-                  className="flex-1 py-3 bg-[#4CC2D1] rounded-xl items-center active:opacity-75"
+                  className="flex-1 py-3 bg-[#0D8A72] rounded-xl items-center active:opacity-75"
                 >
-                  <Text className="text-[#071318] font-bold text-sm">Confirm</Text>
+                  <Text className="text-[#F5F5F5] font-bold text-sm">Confirm</Text>
                 </Pressable>
               </View>
             </View>
@@ -1703,12 +1694,12 @@ function LogoutModal({
         <Animated.View
           style={{
             width: '100%',
-            backgroundColor: '#111E27',
+            backgroundColor: '#1A1A1A',
             borderRadius: 24,
             padding: 28,
             alignItems: 'center',
             borderWidth: 1,
-            borderColor: '#1E3347',
+            borderColor: '#E8E8E8',
             transform: [{ scale: scaleAnim }],
             shadowColor: '#000',
             shadowOffset: { width: 0, height: 12 },
@@ -1719,16 +1710,16 @@ function LogoutModal({
         >
           {/* Icon */}
           <View className="w-16 h-16 rounded-full items-center justify-center mb-5"
-            style={{ backgroundColor: '#3D1515' }}
+            style={{ backgroundColor: '#FEE2E2' }}
           >
-            <Ionicons name="log-out-outline" size={32} color="#E05C5C" />
+            <Ionicons name="log-out-outline" size={32} color="#DC2626" />
           </View>
 
           {/* Text */}
-          <Text className="text-white text-xl font-bold text-center mb-2">
+          <Text className="text-[#1A1A1A] text-xl font-bold text-center mb-2">
             Log Out?
           </Text>
-          <Text className="text-gray-400 text-sm text-center leading-5 mb-8">
+          <Text className="text-[#6B7280] text-sm text-center leading-5 mb-8">
             Are you sure you want to log out of your AlertZone account?
           </Text>
 
@@ -1737,12 +1728,12 @@ function LogoutModal({
             onPress={onConfirm}
             disabled={loggingOut}
             className="w-full py-4 rounded-2xl items-center mb-3 active:opacity-80"
-            style={{ backgroundColor: loggingOut ? 'rgba(224,92,92,0.4)' : '#E05C5C' }}
+            style={{ backgroundColor: loggingOut ? 'rgba(224,92,92,0.4)' : '#DC2626' }}
           >
             {loggingOut ? (
               <ActivityIndicator color="white" />
             ) : (
-              <Text className="text-white font-bold text-base">Confirm Logout</Text>
+              <Text className="text-[#1A1A1A] font-bold text-base">Confirm Logout</Text>
             )}
           </Pressable>
 
@@ -1750,9 +1741,9 @@ function LogoutModal({
             onPress={handleCancel}
             disabled={loggingOut}
             className="w-full py-4 rounded-2xl items-center active:opacity-70"
-            style={{ borderWidth: 1, borderColor: '#2D4F5C' }}
+            style={{ borderWidth: 1, borderColor: '#E8E8E8' }}
           >
-            <Text className="text-gray-300 font-semibold text-base">Cancel</Text>
+            <Text className="text-[#4A4A4A] font-semibold text-base">Cancel</Text>
           </Pressable>
         </Animated.View>
       </Animated.View>
@@ -1810,17 +1801,17 @@ export default function ProfileScreen() {
   // Show spinner while profile is loading
   if (!profile) {
     return (
-      <LinearGradient colors={['#0D1F2D', '#0A1820', '#071318']} style={{ flex: 1 }}>
+      <LinearGradient colors={['#F5F5F5', '#FAFAFA', '#F5F5F5']} style={{ flex: 1 }}>
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator color="#4CC2D1" size="large" />
-          <Text className="text-gray-500 mt-4 text-sm">Loading profile...</Text>
+          <ActivityIndicator color="#0D8A72" size="large" />
+          <Text className="text-[#9CA3AF] mt-4 text-sm">Loading profile...</Text>
         </View>
       </LinearGradient>
     );
   }
 
   return (
-    <LinearGradient colors={['#0D1F2D', '#0A1820', '#071318']} style={{ flex: 1 }}>
+    <LinearGradient colors={['#F5F5F5', '#FAFAFA', '#F5F5F5']} style={{ flex: 1 }}>
       <ScrollView
         onScroll={onScroll}
         scrollEventThrottle={16}
@@ -1836,17 +1827,17 @@ export default function ProfileScreen() {
               style={{ width: 28, height: 28 }}
               resizeMode="contain"
             />
-            <Text className="text-white text-xl font-bold tracking-tight">AlertZone</Text>
+            <Text className="text-[#1A1A1A] text-xl font-bold tracking-tight">AlertZone</Text>
           </View>
           <Pressable onPress={() => router.push('/notifications' as any)} className="active:opacity-70">
-            <View className="w-10 h-10 rounded-full bg-[#1E3A44] items-center justify-center"
-              style={{ borderWidth: 1, borderColor: '#2D4F5C' }}
+            <View className="w-10 h-10 rounded-full bg-white items-center justify-center"
+              style={{ borderWidth: 1, borderColor: '#E8E8E8' }}
             >
-              <Ionicons name="notifications-outline" size={20} color="#5A7D8A" />
+              <Ionicons name="notifications-outline" size={20} color="#6B7280" />
             </View>
             {unreadCount > 0 && (
-              <View className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[#E05C5C] items-center justify-center">
-                <Text className="text-white text-[10px] font-bold">{unreadCount}</Text>
+              <View className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[#DC2626] items-center justify-center">
+                <Text className="text-[#1A1A1A] text-[10px] font-bold">{unreadCount}</Text>
               </View>
             )}
           </Pressable>
@@ -1862,25 +1853,25 @@ export default function ProfileScreen() {
                   : require('../../assets/images/iconAlerZone-Bg-none.png')
               }
               className="w-32 h-32 rounded-full"
-              style={{ borderWidth: 3, borderColor: '#4CC2D1' }}
+              style={{ borderWidth: 3, borderColor: '#0D8A72' }}
               resizeMode={profile.avatarUrl ? 'cover' : 'contain'}
             />
-            <View className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-[#4CC2D1] items-center justify-center"
-              style={{ borderWidth: 2, borderColor: '#0A1820' }}
+            <View className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-[#0D8A72] items-center justify-center"
+              style={{ borderWidth: 2, borderColor: '#1A1A1A' }}
             >
-              <Ionicons name="camera" size={14} color="#071318" />
+              <Ionicons name="camera" size={14} color="#1A1A1A" />
             </View>
           </Pressable>
 
           {/* ✅ Real data from Firestore via AuthContext */}
-          <Text className="text-white text-2xl font-bold mt-3">{profile.fullName}</Text>
-          <Text className="text-gray-400 text-sm mt-1">
+          <Text className="text-[#1A1A1A] text-2xl font-bold mt-3">{profile.fullName}</Text>
+          <Text className="text-[#6B7280] text-sm mt-1">
             {profile.role === 'citizen' ? 'Safety Contributor' : profile.role} • Level {profile.level ?? 1}
           </Text>
           {profile.localGovernmentArea && (
-            <View className="flex-row items-center mt-2 bg-[#1E3A44]/40 px-3 py-1.5 rounded-full border border-[#2D4F5C]/40">
-              <Ionicons name="location-outline" size={12} color="#4CC2D1" />
-              <Text className="text-gray-300 text-xs ml-1 font-medium">
+            <View className="flex-row items-center mt-2 bg-white/40 px-3 py-1.5 rounded-full border border-[#E8E8E8]/40">
+              <Ionicons name="location-outline" size={12} color="#0D8A72" />
+              <Text className="text-[#4A4A4A] text-xs ml-1 font-medium">
                 {profile.localGovernmentArea} • {profile.district}
               </Text>
             </View>
@@ -1905,9 +1896,9 @@ export default function ProfileScreen() {
         {/* ── 4. Earned Badges ── */}
         <View className="px-5 mb-6">
           <View className="flex-row justify-between items-center mb-3">
-            <Text className="text-white text-lg font-bold">Earned Badges</Text>
+            <Text className="text-[#1A1A1A] text-lg font-bold">Earned Badges</Text>
             <Pressable onPress={() => router.push('/badges' as any)} className="active:opacity-70">
-              <Text className="text-[#4CC2D1] text-sm font-semibold">View All</Text>
+              <Text className="text-[#0D8A72] text-sm font-semibold">View All</Text>
             </Pressable>
           </View>
           {(() => {
@@ -1917,10 +1908,10 @@ export default function ProfileScreen() {
               return (
                 <View
                   className="rounded-2xl items-center py-5"
-                  style={{ backgroundColor: '#0A1420', borderWidth: 1, borderColor: '#1E3347' }}
+                  style={{ backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E8E8E8' }}
                 >
-                  <Ionicons name="ribbon-outline" size={28} color="#2D4F5C" />
-                  <Text className="text-gray-600 text-xs mt-2 text-center">
+                  <Ionicons name="ribbon-outline" size={28} color="#E8E8E8" />
+                  <Text className="text-[#9CA3AF] text-xs mt-2 text-center">
                     No badges yet — get reports accepted to earn your first one!
                   </Text>
                 </View>
@@ -1938,41 +1929,41 @@ export default function ProfileScreen() {
 
         {/* ── 5. Account Settings ── */}
         <View className="px-5">
-          <Text className="text-white text-lg font-bold mb-3">Account Settings</Text>
-          <View className="bg-[#111E27] rounded-2xl px-4"
-            style={{ borderWidth: 1, borderColor: '#1E3347' }}
+          <Text className="text-[#1A1A1A] text-lg font-bold mb-3">Account Settings</Text>
+          <View className="bg-white rounded-2xl px-4"
+            style={{ borderWidth: 1, borderColor: '#E8E8E8' }}
           >
             <SettingsRow
               icon="person-outline"
-              iconBg="#1E3347"
-              iconColor="#4CC2D1"
+              iconBg="#E8E8E8"
+              iconColor="#0D8A72"
               label="Personal Information"
               subtitle="Email, phone, and address"
               onPress={() => setPersonalInfoVisible(true)}
             />
-            <View className="h-px bg-[#1E3347]" />
+            <View className="h-px bg-[#E8E8E8]" />
             <SettingsRow
               icon="notifications-outline"
               iconBg="#1E2D3D"
-              iconColor="#4CC2D1"
+              iconColor="#0D8A72"
               label="Alert Preferences"
               subtitle="Notification status and radius"
               onPress={() => setAlertPreferencesVisible(true)}
             />
-            <View className="h-px bg-[#1E3347]" />
+            <View className="h-px bg-[#E8E8E8]" />
             <SettingsRow
               icon="shield-checkmark-outline"
               iconBg="#182A3A"
-              iconColor="#4CC2D1"
+              iconColor="#0D8A72"
               label="Security"
               subtitle="Password management and biometrics"
               onPress={() => setSecurityVisible(true)}
             />
-            <View className="h-px bg-[#1E3347]" />
+            <View className="h-px bg-[#E8E8E8]" />
             <SettingsRow
               icon="log-out-outline"
-              iconBg="#3D1515"
-              iconColor="#E05C5C"
+              iconBg="#FEE2E2"
+              iconColor="#DC2626"
               label="Logout"
               subtitle="Sign out of your account"
               onPress={handleLogoutPress}

@@ -151,7 +151,7 @@ export default function Index() {
     // Pulsing ring — looping
     const pulse = () => {
       pulseScale.setValue(1);
-      pulseOpacity.setValue(0.5);
+      pulseOpacity.setValue(0.4);
       Animated.parallel([
         Animated.timing(pulseScale, {
           toValue: 1.9,
@@ -216,7 +216,7 @@ export default function Index() {
 
       {/* App name */}
       <Animated.View style={{ opacity: textOpacity, marginTop: 16, flexDirection: 'row' }}>
-        <Text style={styles.titleWhite}>Alert</Text>
+        <Text style={styles.titleDark}>Alert</Text>
         <Text style={styles.titleTeal}>Zone</Text>
       </Animated.View>
 
@@ -227,10 +227,10 @@ export default function Index() {
 
       {isOffline ? (
         <Animated.View style={[styles.offlineContainer, { opacity: taglineOpacity }]}>
-          <Ionicons name="cloud-offline-outline" size={28} color="#E05C5C" />
+          <Ionicons name="cloud-offline-outline" size={28} color="#DC2626" />
           <Text style={styles.offlineText}>No internet connection detected.</Text>
           <Pressable onPress={retryConnection} style={styles.retryButton} className="active:opacity-80">
-            <Ionicons name="refresh" size={14} color="#071318" style={{ marginRight: 6 }} />
+            <Ionicons name="refresh" size={14} color="#FFFFFF" style={{ marginRight: 6 }} />
             <Text style={styles.retryButtonText}>Retry</Text>
           </Pressable>
         </Animated.View>
@@ -281,7 +281,7 @@ function LoadingDots() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0D1F2D',
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -290,16 +290,16 @@ const styles = StyleSheet.create({
     width: 280,
     height: 280,
     borderRadius: 140,
-    backgroundColor: '#30A89C',
-    opacity: 0.07,
+    backgroundColor: '#0D8A72',
+    opacity: 0.04,
   },
   glowInner: {
     position: 'absolute',
     width: 160,
     height: 160,
     borderRadius: 80,
-    backgroundColor: '#4CC2D1',
-    opacity: 0.07,
+    backgroundColor: '#0D8A72',
+    opacity: 0.05,
     alignSelf: 'center',
     top: 60,
     left: 60,
@@ -309,12 +309,12 @@ const styles = StyleSheet.create({
     width: 190,
     height: 190,
     borderRadius: 95,
-    borderWidth: 2,
-    borderColor: '#30A89C',
+    borderWidth: 1.5,
+    borderColor: '#0D8A72',
   },
   pulseRing2: {
-    borderColor: '#4CC2D1',
-    borderWidth: 1.5,
+    borderColor: '#0D8A72',
+    borderWidth: 1,
     width: 200,
     height: 200,
     borderRadius: 100,
@@ -323,20 +323,20 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
   },
-  titleWhite: {
-    color: '#FFFFFF',
+  titleDark: {
+    color: '#1A1A1A',
     fontSize: 42,
     fontWeight: '800',
     letterSpacing: 1,
   },
   titleTeal: {
-    color: '#30A89C',
+    color: '#0D8A72',
     fontSize: 42,
     fontWeight: '800',
     letterSpacing: 1,
   },
   tagline: {
-    color: '#7BA8B5',
+    color: '#9CA3AF',
     fontSize: 12,
     fontWeight: '300',
     letterSpacing: 1,
@@ -351,7 +351,7 @@ const styles = StyleSheet.create({
     width: 7,
     height: 7,
     borderRadius: 4,
-    backgroundColor: '#30A89C',
+    backgroundColor: '#0D8A72',
   },
   offlineContainer: {
     position: 'absolute',
@@ -361,7 +361,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   offlineText: {
-    color: '#7BA8B5',
+    color: '#6B7280',
     fontSize: 13,
     marginTop: 6,
     marginBottom: 12,
@@ -369,20 +369,20 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   retryButton: {
-    backgroundColor: '#4CC2D1',
+    backgroundColor: '#0D8A72',
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 20,
-    shadowColor: '#4CC2D1',
+    shadowColor: '#0D8A72',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.2,
     shadowRadius: 6,
     elevation: 6,
   },
   retryButtonText: {
-    color: '#071318',
+    color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '700',
   },

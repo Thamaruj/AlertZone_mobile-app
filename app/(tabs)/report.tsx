@@ -52,17 +52,8 @@ const CATEGORIES = [
 
 type Category = typeof CATEGORIES[number];
 
-const DARK_MAP_STYLE = [
-  { elementType: 'geometry',                                 stylers: [{ color: '#0d1f2d' }] },
-  { elementType: 'labels.text.fill',                         stylers: [{ color: '#4CC2D1' }] },
-  { elementType: 'labels.text.stroke',                       stylers: [{ color: '#0a1820' }] },
-  { featureType: 'road',        elementType: 'geometry',     stylers: [{ color: '#1E3A44' }] },
-  { featureType: 'road',        elementType: 'geometry.stroke', stylers: [{ color: '#071318' }] },
-  { featureType: 'water',       elementType: 'geometry',     stylers: [{ color: '#071318' }] },
-  { featureType: 'poi',         elementType: 'geometry',     stylers: [{ color: '#0a1820' }] },
-  { featureType: 'transit',     elementType: 'geometry',     stylers: [{ color: '#1E3A44' }] },
-  { featureType: 'administrative', elementType: 'geometry',  stylers: [{ color: '#1E3A44' }] },
-];
+const DARK_MAP_STYLE: any[] = [];
+
 
 const DEFAULT_COORDS = { latitude: 6.8900, longitude: 79.8950 };
 
@@ -80,7 +71,7 @@ function CategoryModal({
 }) {
   return (
     <Modal visible={visible} animationType="slide" transparent={false}>
-      <LinearGradient colors={['#0D1F2D', '#0A1820', '#071318']} style={{ flex: 1 }}>
+      <LinearGradient colors={['#F5F5F5', '#FAFAFA', '#F5F5F5']} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
           <View className="px-5 pt-14 pb-2 flex-row items-center gap-3">
             <Pressable onPress={onClose} className="active:opacity-70 p-2">
@@ -178,7 +169,7 @@ function FullScreenMapModal({
 
   return (
     <Modal visible={visible} animationType="fade" transparent={false}>
-      <View style={{ flex: 1, backgroundColor: '#071318' }}>
+      <View style={{ flex: 1, backgroundColor: '#F5F5F5' }}>
         <MapView
           ref={fullMapRef}
           provider={PROVIDER_GOOGLE}
@@ -254,7 +245,7 @@ function FullScreenMapModal({
               onPress={onClose}
               className="bg-[#4CC2D1] py-3 rounded-xl items-center active:opacity-80"
             >
-              <Text className="text-[#071318] font-bold">Confirm Position</Text>
+              <Text className="text-[#F5F5F5] font-bold">Confirm Position</Text>
             </Pressable>
           </View>
         </View>
@@ -280,7 +271,7 @@ function SuccessScreen({
   onMyReports: () => void;
 }) {
   return (
-    <LinearGradient colors={['#0D1F2D', '#0A1820', '#071318']} style={{ flex: 1 }}>
+    <LinearGradient colors={['#F5F5F5', '#FAFAFA', '#F5F5F5']} style={{ flex: 1 }}>
       <View className="flex-1 items-center justify-center px-8">
         <View className="mb-8">
           <View
@@ -321,7 +312,7 @@ function SuccessScreen({
           onPress={onDashboard}
           className="w-full bg-[#4CC2D1] py-4 rounded-2xl items-center mb-3 active:opacity-80"
         >
-          <Text className="text-[#071318] font-bold text-base">Back to Dashboard</Text>
+          <Text className="text-[#F5F5F5] font-bold text-base">Back to Dashboard</Text>
         </Pressable>
         <Pressable
           onPress={onMyReports}
@@ -848,7 +839,7 @@ export default function ReportScreen() {
   const canSubmit = !!selectedCategory && description.trim().length > 10;
 
   return (
-    <LinearGradient colors={['#0D1F2D', '#0A1820', '#071318']} style={{ flex: 1 }}>
+    <LinearGradient colors={['#F5F5F5', '#FAFAFA', '#F5F5F5']} style={{ flex: 1 }}>
       <KeyboardAvoidingView
         behavior="padding"
         keyboardVerticalOffset={Platform.OS === 'android' ? 30 : 0}
@@ -968,7 +959,7 @@ export default function ReportScreen() {
                   style={{ backgroundColor: '#4CC2D1', borderRadius: 8, padding: 8 }}
                   className="active:opacity-80 shadow-md"
                 >
-                  <Ionicons name="navigate" size={16} color="#071318" />
+                  <Ionicons name="navigate" size={16} color="#F5F5F5" />
                 </Pressable>
               </View>
             </View>
@@ -1067,9 +1058,9 @@ export default function ReportScreen() {
               style={{ backgroundColor: (selectedCategory && description.trim().length >= 10) ? '#4CC2D1' : '#1E3347' }}
             >
               {loading ? (
-                <ActivityIndicator color="#071318" />
+                <ActivityIndicator color="#FFFFFF" />
               ) : (
-                <Text className="font-bold text-base" style={{ color: canSubmit ? '#071318' : '#3A6070' }}>
+                <Text className="font-bold text-base" style={{ color: canSubmit ? '#FFFFFF' : '#3A6070' }}>
                   Submit Report
                 </Text>
               )}

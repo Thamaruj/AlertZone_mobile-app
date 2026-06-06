@@ -58,22 +58,22 @@ interface Report {
 // Constants
 // ─────────────────────────────────────────────
 const STATUS_CONFIG: Record<ReportStatus, { label: string; color: string; bg: string; icon: string }> = {
-  PENDING:  { label: 'Pending',  color: '#F59E0B', bg: '#3D2E0A', icon: 'time-outline'             },
-  ASSIGNED: { label: 'Assigned', color: '#60A5FA', bg: '#0D1A3D', icon: 'person-add-outline'        },
-  FIXING:   { label: 'Fixing',   color: '#4CC2D1', bg: '#0D2A35', icon: 'construct-outline'         },
-  RESOLVED: { label: 'Resolved', color: '#30A89C', bg: '#0D3D35', icon: 'checkmark-circle-outline'  },
-  REJECTED: { label: 'Rejected', color: '#E05C5C', bg: '#3D1515', icon: 'close-circle-outline'      },
+  PENDING:  { label: 'Pending',  color: '#D97706', bg: '#FEF3C7', icon: 'time-outline'             },
+  ASSIGNED: { label: 'Assigned', color: '#3B82F6', bg: '#DBEAFE', icon: 'person-add-outline'        },
+  FIXING:   { label: 'Fixing',   color: '#0D8A72', bg: '#E6F7F3', icon: 'construct-outline'         },
+  RESOLVED: { label: 'Resolved', color: '#059669', bg: '#D1FAE5', icon: 'checkmark-circle-outline'  },
+  REJECTED: { label: 'Rejected', color: '#DC2626', bg: '#FEE2E2', icon: 'close-circle-outline'      },
 };
 
 const TIMELINE_STATUSES: ReportStatus[] = ['PENDING', 'ASSIGNED', 'FIXING', 'RESOLVED'];
 
 const CATEGORIES = [
-  { id: 'all',               label: 'All Categories',     icon: 'grid-outline',          color: '#4CC2D1' },
-  { id: 'road_traffic',      label: 'Road & Traffic',     icon: 'car-outline',          color: '#4CC2D1' },
-  { id: 'water_drainage',    label: 'Water & Drainage',   icon: 'water-outline',         color: '#60A5FA' },
+  { id: 'all',               label: 'All Categories',     icon: 'grid-outline',          color: '#0D8A72' },
+  { id: 'road_traffic',      label: 'Road & Traffic',     icon: 'car-outline',          color: '#0D8A72' },
+  { id: 'water_drainage',    label: 'Water & Drainage',   icon: 'water-outline',         color: '#3B82F6' },
   { id: 'waste_environment', label: 'Waste & Environment',icon: 'trash-outline',        color: '#34D399' },
   { id: 'social_safety',     label: 'Social Safety',      icon: 'shield-outline',        color: '#A78BFA' },
-  { id: 'bridge_structural', label: 'Bridge & Structural',icon: 'git-network-outline',   color: '#F59E0B' },
+  { id: 'bridge_structural', label: 'Bridge & Structural',icon: 'git-network-outline',   color: '#D97706' },
   { id: 'other',             label: 'Other',              icon: 'help-circle-outline',   color: '#94A3B8' },
 ] as const;
 
@@ -184,13 +184,13 @@ function CalendarModal({ value, onChange, onClose, title }: CalendarProps) {
           
           <View style={styles.calendarHeader}>
             <Pressable onPress={handlePrevMonth} style={styles.arrowButton}>
-              <Ionicons name="chevron-back" size={20} color="#4CC2D1" />
+              <Ionicons name="chevron-back" size={20} color="#0D8A72" />
             </Pressable>
             <Text style={styles.monthYearText}>
               {months[currentMonth]} {currentYear}
             </Text>
             <Pressable onPress={handleNextMonth} style={styles.arrowButton}>
-              <Ionicons name="chevron-forward" size={20} color="#4CC2D1" />
+              <Ionicons name="chevron-forward" size={20} color="#0D8A72" />
             </Pressable>
           </View>
 
@@ -249,10 +249,10 @@ function ReportCard({ report, onPress }: { report: Report; onPress: () => void }
         flexDirection: 'row',
         alignItems: 'center',
         padding: 12,
-        backgroundColor: '#111E27',
+        backgroundColor: '#1A1A1A',
         borderRadius: 16,
         borderWidth: 1,
-        borderColor: '#1E3347',
+        borderColor: '#E8E8E8',
         marginBottom: 10,
       }}
       className="active:opacity-85"
@@ -264,7 +264,7 @@ function ReportCard({ report, onPress }: { report: Report; onPress: () => void }
           height: 60,
           borderRadius: 12,
           overflow: 'hidden',
-          backgroundColor: '#0D1F2D',
+          backgroundColor: '#1A1A1A',
           marginRight: 12,
           justifyContent: 'center',
           alignItems: 'center',
@@ -278,7 +278,7 @@ function ReportCard({ report, onPress }: { report: Report; onPress: () => void }
               width: 36,
               height: 36,
               borderRadius: 10,
-              backgroundColor: (report.categoryColor ?? '#4CC2D1') + '22',
+              backgroundColor: (report.categoryColor ?? '#0D8A72') + '22',
               alignItems: 'center',
               justifyContent: 'center',
             }}
@@ -290,22 +290,22 @@ function ReportCard({ report, onPress }: { report: Report; onPress: () => void }
 
       {/* Title & Details */}
       <View style={{ flex: 1, marginRight: 8 }}>
-        <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 14 }} numberOfLines={1}>
+        <Text style={{ color: '#1A1A1A', fontWeight: 'bold', fontSize: 14 }} numberOfLines={1}>
           {report.title}
         </Text>
-        <Text style={{ color: '#5A7D8A', fontSize: 11, marginTop: 2 }}>
+        <Text style={{ color: '#6B7280', fontSize: 11, marginTop: 2 }}>
           {report.location?.address ?? 'Sri Lanka'}
         </Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-            <Ionicons name="time-outline" size={12} color="#5A7D8A" />
-            <Text style={{ color: '#5A7D8A', fontSize: 11 }}>
+            <Ionicons name="time-outline" size={12} color="#6B7280" />
+            <Text style={{ color: '#6B7280', fontSize: 11 }}>
               {formatDate(report.createdAt)}
             </Text>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-            <Ionicons name="arrow-up-circle-outline" size={12} color="#5A7D8A" />
-            <Text style={{ color: '#5A7D8A', fontSize: 11 }}>
+            <Ionicons name="arrow-up-circle-outline" size={12} color="#6B7280" />
+            <Text style={{ color: '#6B7280', fontSize: 11 }}>
               {report.upvoteCount ?? 0} upvotes
             </Text>
           </View>
@@ -317,7 +317,7 @@ function ReportCard({ report, onPress }: { report: Report; onPress: () => void }
         <View style={{ backgroundColor: cfg.bg, borderWidth: 1, borderColor: cfg.color, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12 }}>
           <Text style={{ color: cfg.color, fontSize: 10, fontWeight: 'bold' }}>{cfg.label}</Text>
         </View>
-        <Ionicons name="chevron-forward" size={16} color="#2D4F5C" />
+        <Ionicons name="chevron-forward" size={16} color="#E8E8E8" />
       </View>
     </Pressable>
   );
@@ -333,13 +333,13 @@ function ReportDetailModal({ report, onClose }: { report: Report | null; onClose
 
   return (
     <Modal visible={!!report} animationType="slide" transparent={false}>
-      <LinearGradient colors={['#0D1F2D', '#0A1820', '#071318']} style={{ flex: 1 }}>
+      <LinearGradient colors={['#F5F5F5', '#FAFAFA', '#F5F5F5']} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={{ paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
           <View className="px-5 pt-14 pb-4 flex-row items-center gap-3">
             <Pressable onPress={onClose} className="active:opacity-70">
-              <Ionicons name="arrow-back" size={24} color="#4CC2D1" />
+              <Ionicons name="arrow-back" size={24} color="#0D8A72" />
             </Pressable>
-            <Text className="text-white text-xl font-bold flex-1">Archived Report Details</Text>
+            <Text className="text-[#1A1A1A] text-xl font-bold flex-1">Archived Report Details</Text>
             <View className="px-3 py-1 rounded-full" style={{ backgroundColor: cfg.bg }}>
               <Text className="text-xs font-bold" style={{ color: cfg.color }}>{cfg.label}</Text>
             </View>
@@ -352,19 +352,19 @@ function ReportDetailModal({ report, onClose }: { report: Report | null; onClose
           )}
 
           <View className="px-5 mb-4">
-            <Text className="text-[#4CC2D1] text-xs font-bold mb-1">
+            <Text className="text-[#0D8A72] text-xs font-bold mb-1">
               Ref: {report.id}
             </Text>
-            <Text className="text-white text-2xl font-bold">{report.title}</Text>
+            <Text className="text-[#1A1A1A] text-2xl font-bold">{report.title}</Text>
             <View className="flex-row items-center mt-2 gap-2">
-              <Ionicons name={report.categoryIcon as any} size={13} color="#5A7D8A" />
-              <Text className="text-gray-500 text-xs">{formatDate(report.createdAt)}</Text>
+              <Ionicons name={report.categoryIcon as any} size={13} color="#6B7280" />
+              <Text className="text-[#9CA3AF] text-xs">{formatDate(report.createdAt)}</Text>
             </View>
           </View>
 
           <View className="px-5 gap-3 mb-4">
-            <View className="bg-[#111E27] rounded-2xl p-4" style={{ borderWidth: 1, borderColor: '#1E3347' }}>
-              <Text className="text-white font-bold mb-4">Status Timeline</Text>
+            <View className="bg-white rounded-2xl p-4" style={{ borderWidth: 1, borderColor: '#E8E8E8' }}>
+              <Text className="text-[#1A1A1A] font-bold mb-4">Status Timeline</Text>
               {report.status === 'REJECTED' ? (
                 <>
                   {(['PENDING'] as ReportStatus[]).map((s) => {
@@ -382,14 +382,14 @@ function ReportDetailModal({ report, onClose }: { report: Report | null; onClose
                     );
                   })}
                   <View className="flex-row items-center">
-                    <View className="w-8 h-8 rounded-full items-center justify-center mr-3 bg-[#3D1515]">
-                      <Ionicons name="close-circle-outline" size={16} color="#E05C5C" />
+                    <View className="w-8 h-8 rounded-full items-center justify-center mr-3 bg-[#FEE2E2]">
+                      <Ionicons name="close-circle-outline" size={16} color="#DC2626" />
                     </View>
                     <View className="flex-1">
-                      <Text className="text-[#E05C5C] font-semibold text-sm">Rejected</Text>
-                      <Text className="text-gray-500 text-xs">Current status</Text>
+                      <Text className="text-[#DC2626] font-semibold text-sm">Rejected</Text>
+                      <Text className="text-[#9CA3AF] text-xs">Current status</Text>
                     </View>
-                    <View className="w-2 h-2 rounded-full bg-[#E05C5C]" />
+                    <View className="w-2 h-2 rounded-full bg-[#DC2626]" />
                   </View>
                 </>
               ) : (
@@ -401,21 +401,21 @@ function ReportDetailModal({ report, onClose }: { report: Report | null; onClose
                     <View key={s} className="flex-row items-center mb-3">
                       <View style={{ alignItems: 'center', marginRight: 12 }}>
                         <View className="w-8 h-8 rounded-full items-center justify-center"
-                          style={{ backgroundColor: done ? sc.bg : '#1A2D3D' }}>
-                          <Ionicons name={sc.icon as any} size={16} color={done ? sc.color : '#2D4F5C'} />
+                          style={{ backgroundColor: done ? sc.bg : '#F0F0F0' }}>
+                          <Ionicons name={sc.icon as any} size={16} color={done ? sc.color : '#E8E8E8'} />
                         </View>
                         {i < TIMELINE_STATUSES.length - 1 && (
                           <View style={{
                             width: 2, height: 16, marginTop: 2,
-                            backgroundColor: done ? sc.color + '40' : '#1E3347',
+                            backgroundColor: done ? sc.color + '40' : '#E8E8E8',
                           }} />
                         )}
                       </View>
                       <View className="flex-1">
-                        <Text className="text-sm font-semibold" style={{ color: done ? sc.color : '#3A5060' }}>
+                        <Text className="text-sm font-semibold" style={{ color: done ? sc.color : '#9CA3AF' }}>
                           {sc.label}
                         </Text>
-                        {isCurrent && <Text className="text-gray-500 text-xs">Current status</Text>}
+                        {isCurrent && <Text className="text-[#9CA3AF] text-xs">Current status</Text>}
                       </View>
                       {isCurrent && <View className="w-2 h-2 rounded-full" style={{ backgroundColor: sc.color }} />}
                       {done && !isCurrent && <Ionicons name="checkmark" size={14} color={sc.color} />}
@@ -425,29 +425,29 @@ function ReportDetailModal({ report, onClose }: { report: Report | null; onClose
               )}
             </View>
 
-            <View className="bg-[#111E27] rounded-2xl p-4 flex-row items-start gap-3"
-              style={{ borderWidth: 1, borderColor: '#1E3347' }}>
-              <View className="w-8 h-8 rounded-lg bg-[#1E3347] items-center justify-center">
-                <Ionicons name="location-outline" size={16} color="#4CC2D1" />
+            <View className="bg-white rounded-2xl p-4 flex-row items-start gap-3"
+              style={{ borderWidth: 1, borderColor: '#E8E8E8' }}>
+              <View className="w-8 h-8 rounded-lg bg-[#E8E8E8] items-center justify-center">
+                <Ionicons name="location-outline" size={16} color="#0D8A72" />
               </View>
               <View className="flex-1">
-                <Text className="text-gray-500 text-[10px] uppercase font-bold tracking-wide mb-1">Location</Text>
-                <Text className="text-white text-sm leading-5">{report.location?.address ?? 'Unknown'}</Text>
+                <Text className="text-[#9CA3AF] text-[10px] uppercase font-bold tracking-wide mb-1">Location</Text>
+                <Text className="text-[#1A1A1A] text-sm leading-5">{report.location?.address ?? 'Unknown'}</Text>
                 {(report.location?.province || report.location?.district || report.location?.localGovernmentArea) && (
-                  <View className="mt-2 pt-2 border-t border-[#1E3347] gap-1">
+                  <View className="mt-2 pt-2 border-t border-[#E8E8E8] gap-1">
                     {report.location?.province && (
-                      <Text className="text-[#CBD5E1] text-xs">
-                        <Text className="text-gray-500 font-semibold">Province: </Text>{report.location.province}
+                      <Text className="text-[#4A4A4A] text-xs">
+                        <Text className="text-[#9CA3AF] font-semibold">Province: </Text>{report.location.province}
                       </Text>
                     )}
                     {report.location?.district && (
-                      <Text className="text-[#CBD5E1] text-xs">
-                        <Text className="text-gray-500 font-semibold">District: </Text>{report.location.district}
+                      <Text className="text-[#4A4A4A] text-xs">
+                        <Text className="text-[#9CA3AF] font-semibold">District: </Text>{report.location.district}
                       </Text>
                     )}
                     {report.location?.localGovernmentArea && (
-                      <Text className="text-[#CBD5E1] text-xs">
-                        <Text className="text-gray-500 font-semibold">LGA: </Text>{report.location.localGovernmentArea}
+                      <Text className="text-[#4A4A4A] text-xs">
+                        <Text className="text-[#9CA3AF] font-semibold">LGA: </Text>{report.location.localGovernmentArea}
                       </Text>
                     )}
                   </View>
@@ -455,17 +455,17 @@ function ReportDetailModal({ report, onClose }: { report: Report | null; onClose
               </View>
             </View>
 
-            <View className="bg-[#111E27] rounded-2xl p-4" style={{ borderWidth: 1, borderColor: '#1E3347' }}>
-              <Text className="text-gray-500 text-[10px] uppercase font-bold tracking-wide mb-2">Description</Text>
-              <Text className="text-white text-sm leading-6">{report.description}</Text>
+            <View className="bg-white rounded-2xl p-4" style={{ borderWidth: 1, borderColor: '#E8E8E8' }}>
+              <Text className="text-[#9CA3AF] text-[10px] uppercase font-bold tracking-wide mb-2">Description</Text>
+              <Text className="text-[#1A1A1A] text-sm leading-6">{report.description}</Text>
             </View>
 
             {report.resolutionNote && (
-              <View className="bg-[#111E27] rounded-2xl p-4" style={{ borderWidth: 1, borderColor: '#1E3347' }}>
-                <Text className="text-gray-500 text-[10px] uppercase font-bold tracking-wide mb-2">
+              <View className="bg-white rounded-2xl p-4" style={{ borderWidth: 1, borderColor: '#E8E8E8' }}>
+                <Text className="text-[#9CA3AF] text-[10px] uppercase font-bold tracking-wide mb-2">
                   {report.status === 'REJECTED' ? 'Rejection Reason' : 'Resolution Note'}
                 </Text>
-                <Text className="text-white text-sm leading-6">{report.resolutionNote}</Text>
+                <Text className="text-[#1A1A1A] text-sm leading-6">{report.resolutionNote}</Text>
               </View>
             )}
           </View>
@@ -590,28 +590,28 @@ export default function ArchiveScreen() {
   const hasMore = visibleCount < filtered.length;
 
   return (
-    <LinearGradient colors={['#0D1F2D', '#0A1820', '#071318']} style={{ flex: 1 }}>
+    <LinearGradient colors={['#F5F5F5', '#FAFAFA', '#F5F5F5']} style={{ flex: 1 }}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 60 }}
       >
         {/* ── Header ── */}
         <View className="flex-row items-center px-5 mb-5 gap-3">
-          <Pressable onPress={() => router.back()} className="w-10 h-10 rounded-full bg-[#1E3A44] items-center justify-center active:opacity-75">
-            <Ionicons name="arrow-back" size={20} color="#4CC2D1" />
+          <Pressable onPress={() => router.back()} className="w-10 h-10 rounded-full bg-white items-center justify-center active:opacity-75">
+            <Ionicons name="arrow-back" size={20} color="#0D8A72" />
           </Pressable>
           <View className="flex-1">
-            <Text className="text-white text-xl font-bold tracking-tight">Archive</Text>
-            <Text className="text-gray-500 text-xs mt-0.5">View resolved and historical reports</Text>
+            <Text className="text-[#1A1A1A] text-xl font-bold tracking-tight">Archive</Text>
+            <Text className="text-[#9CA3AF] text-xs mt-0.5">View resolved and historical reports</Text>
           </View>
-          <View className="bg-[#1E3347] px-3 py-1.5 rounded-full">
-            <Text className="text-[#4CC2D1] text-xs font-bold">{filtered.length} Found</Text>
+          <View className="bg-[#E8E8E8] px-3 py-1.5 rounded-full">
+            <Text className="text-[#0D8A72] text-xs font-bold">{filtered.length} Found</Text>
           </View>
         </View>
 
         {/* ── Category Filter List ── */}
         <View className="mb-4">
-          <Text className="text-gray-400 text-xs font-bold px-5 mb-2 uppercase tracking-wide">Category</Text>
+          <Text className="text-[#6B7280] text-xs font-bold px-5 mb-2 uppercase tracking-wide">Category</Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -625,17 +625,17 @@ export default function ArchiveScreen() {
                   onPress={() => setActiveCategory(cat.id)}
                   className="flex-row items-center px-4 py-2 rounded-full gap-1.5"
                   style={{
-                    backgroundColor: isActive ? '#4CC2D1' : '#111E27',
+                    backgroundColor: isActive ? '#0D8A72' : '#FFFFFF',
                     borderWidth: 1,
-                    borderColor: isActive ? '#4CC2D1' : '#1E3347',
+                    borderColor: isActive ? '#0D8A72' : '#E8E8E8',
                   }}
                 >
                   <Ionicons
                     name={cat.icon as any}
                     size={14}
-                    color={isActive ? '#071318' : cat.color}
+                    color={isActive ? '#F5F5F5' : cat.color}
                   />
-                  <Text className="text-xs font-semibold" style={{ color: isActive ? '#071318' : '#5A7D8A' }}>
+                  <Text className="text-xs font-semibold" style={{ color: isActive ? '#F5F5F5' : '#6B7280' }}>
                     {cat.label}
                   </Text>
                 </Pressable>
@@ -646,7 +646,7 @@ export default function ArchiveScreen() {
 
         {/* ── Date Filters ── */}
         <View className="mb-4">
-          <Text className="text-gray-400 text-xs font-bold px-5 mb-2 uppercase tracking-wide">Date Filter</Text>
+          <Text className="text-[#6B7280] text-xs font-bold px-5 mb-2 uppercase tracking-wide">Date Filter</Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -660,12 +660,12 @@ export default function ArchiveScreen() {
                   onPress={() => setActiveDateFilter(df.id)}
                   className="px-4 py-2 rounded-full"
                   style={{
-                    backgroundColor: isActive ? '#4CC2D1' : '#111E27',
+                    backgroundColor: isActive ? '#0D8A72' : '#FFFFFF',
                     borderWidth: 1,
-                    borderColor: isActive ? '#4CC2D1' : '#1E3347',
+                    borderColor: isActive ? '#0D8A72' : '#E8E8E8',
                   }}
                 >
-                  <Text className="text-xs font-semibold" style={{ color: isActive ? '#071318' : '#5A7D8A' }}>
+                  <Text className="text-xs font-semibold" style={{ color: isActive ? '#F5F5F5' : '#6B7280' }}>
                     {df.label}
                   </Text>
                 </Pressable>
@@ -676,40 +676,40 @@ export default function ArchiveScreen() {
 
         {/* ── Custom Date Picker Inputs ── */}
         {activeDateFilter === 'custom' && (
-          <View className="mx-5 mb-4 p-4 rounded-2xl bg-[#111E27] border border-[#1E3347]">
+          <View className="mx-5 mb-4 p-4 rounded-2xl bg-white border border-[#E8E8E8]">
             <View className="flex-row justify-between items-center mb-3">
-              <Text className="text-white text-xs font-bold uppercase tracking-wide">Select Date Range</Text>
+              <Text className="text-[#1A1A1A] text-xs font-bold uppercase tracking-wide">Select Date Range</Text>
               {(customStartDate || customEndDate) && (
                 <Pressable onPress={clearCustomRange} className="active:opacity-75">
-                  <Text className="text-[#E05C5C] text-xs font-semibold">Reset</Text>
+                  <Text className="text-[#DC2626] text-xs font-semibold">Reset</Text>
                 </Pressable>
               )}
             </View>
             <View className="flex-row gap-3">
               <Pressable
                 onPress={() => setShowStartPicker(true)}
-                className="flex-1 p-3 rounded-xl bg-[#1E3A44] border border-[#2D4F5C] flex-row justify-between items-center active:opacity-75"
+                className="flex-1 p-3 rounded-xl bg-white border border-[#E8E8E8] flex-row justify-between items-center active:opacity-75"
               >
                 <View>
-                  <Text className="text-gray-500 text-[10px] uppercase font-bold">Start Date</Text>
-                  <Text className="text-white text-sm font-semibold mt-0.5">
+                  <Text className="text-[#9CA3AF] text-[10px] uppercase font-bold">Start Date</Text>
+                  <Text className="text-[#1A1A1A] text-sm font-semibold mt-0.5">
                     {customStartDate ? customStartDate.toLocaleDateString('en-GB') : 'Select...'}
                   </Text>
                 </View>
-                <Ionicons name="calendar-outline" size={16} color="#4CC2D1" />
+                <Ionicons name="calendar-outline" size={16} color="#0D8A72" />
               </Pressable>
 
               <Pressable
                 onPress={() => setShowEndPicker(true)}
-                className="flex-1 p-3 rounded-xl bg-[#1E3A44] border border-[#2D4F5C] flex-row justify-between items-center active:opacity-75"
+                className="flex-1 p-3 rounded-xl bg-white border border-[#E8E8E8] flex-row justify-between items-center active:opacity-75"
               >
                 <View>
-                  <Text className="text-gray-500 text-[10px] uppercase font-bold">End Date</Text>
-                  <Text className="text-white text-sm font-semibold mt-0.5">
+                  <Text className="text-[#9CA3AF] text-[10px] uppercase font-bold">End Date</Text>
+                  <Text className="text-[#1A1A1A] text-sm font-semibold mt-0.5">
                     {customEndDate ? customEndDate.toLocaleDateString('en-GB') : 'Select...'}
                   </Text>
                 </View>
-                <Ionicons name="calendar-outline" size={16} color="#4CC2D1" />
+                <Ionicons name="calendar-outline" size={16} color="#0D8A72" />
               </Pressable>
             </View>
           </View>
@@ -719,16 +719,16 @@ export default function ArchiveScreen() {
         <View className="px-5 mt-2">
           {firestoreLoading ? (
             <View className="items-center py-16">
-              <ActivityIndicator color="#4CC2D1" size="large" />
-              <Text className="text-gray-500 mt-4 text-sm">Loading archive…</Text>
+              <ActivityIndicator color="#0D8A72" size="large" />
+              <Text className="text-[#9CA3AF] mt-4 text-sm">Loading archive…</Text>
             </View>
           ) : filtered.length === 0 ? (
-            <View className="items-center py-16 bg-[#111E27] border border-[#1E3347] rounded-3xl p-6">
-              <View className="w-16 h-16 rounded-full bg-[#1E3A44] items-center justify-center mb-4">
-                <Ionicons name="archive-outline" size={30} color="#4CC2D1" />
+            <View className="items-center py-16 bg-white border border-[#E8E8E8] rounded-3xl p-6">
+              <View className="w-16 h-16 rounded-full bg-white items-center justify-center mb-4">
+                <Ionicons name="archive-outline" size={30} color="#0D8A72" />
               </View>
-              <Text className="text-white font-bold text-base">No archived reports</Text>
-              <Text className="text-gray-500 text-sm text-center mt-1 leading-5">
+              <Text className="text-[#1A1A1A] font-bold text-base">No archived reports</Text>
+              <Text className="text-[#9CA3AF] text-sm text-center mt-1 leading-5">
                 Reports resolved for over 24 hours will automatically move to the archive. Use filters to adjust search.
               </Text>
             </View>
@@ -736,8 +736,8 @@ export default function ArchiveScreen() {
             <>
               {/* Results count */}
               <View className="flex-row justify-between items-center mb-3">
-                <Text className="text-gray-500 text-xs">
-                  Showing <Text className="text-[#4CC2D1] font-bold">{visibleReports.length}</Text> of <Text className="text-white font-semibold">{filtered.length}</Text> reports
+                <Text className="text-[#9CA3AF] text-xs">
+                  Showing <Text className="text-[#0D8A72] font-bold">{visibleReports.length}</Text> of <Text className="text-[#1A1A1A] font-semibold">{filtered.length}</Text> reports
                 </Text>
               </View>
 
@@ -754,11 +754,11 @@ export default function ArchiveScreen() {
                 <Pressable
                   onPress={() => setVisibleCount((c) => c + LOAD_MORE_SIZE)}
                   className="mt-2 mb-4 py-4 rounded-2xl items-center justify-center active:opacity-75"
-                  style={{ borderWidth: 1, borderColor: '#2D4F5C', backgroundColor: '#111E27' }}
+                  style={{ borderWidth: 1, borderColor: '#E8E8E8', backgroundColor: '#1A1A1A' }}
                 >
                   <View className="flex-row items-center gap-2">
-                    <Ionicons name="chevron-down-circle-outline" size={20} color="#4CC2D1" />
-                    <Text className="text-[#4CC2D1] font-bold text-sm">
+                    <Ionicons name="chevron-down-circle-outline" size={20} color="#0D8A72" />
+                    <Text className="text-[#0D8A72] font-bold text-sm">
                       Load More ({Math.min(LOAD_MORE_SIZE, filtered.length - visibleCount)} more)
                     </Text>
                   </View>
@@ -768,7 +768,7 @@ export default function ArchiveScreen() {
               {/* End indicator */}
               {!hasMore && filtered.length > INITIAL_PAGE_SIZE && (
                 <View className="items-center py-4">
-                  <Text className="text-gray-600 text-xs">All {filtered.length} reports shown</Text>
+                  <Text className="text-[#9CA3AF] text-xs">All {filtered.length} reports shown</Text>
                 </View>
               )}
             </>
@@ -818,15 +818,15 @@ const styles = StyleSheet.create({
   calendarContainer: {
     width: '100%',
     maxWidth: 340,
-    backgroundColor: '#111E27',
+    backgroundColor: '#1A1A1A',
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: '#1E3347',
+    borderColor: '#E8E8E8',
     padding: 20,
     alignItems: 'center',
   },
   calendarTitle: {
-    color: '#FFFFFF',
+    color: '#1A1A1A',
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 16,
@@ -842,7 +842,7 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   monthYearText: {
-    color: '#FFFFFF',
+    color: '#1A1A1A',
     fontSize: 16,
     fontWeight: '600',
   },
@@ -853,7 +853,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   weekdayText: {
-    color: '#5A7D8A',
+    color: '#6B7280',
     width: '14.28%',
     textAlign: 'center',
     fontSize: 12,
@@ -873,14 +873,14 @@ const styles = StyleSheet.create({
     marginVertical: 2,
   },
   selectedDayCell: {
-    backgroundColor: '#4CC2D1',
+    backgroundColor: '#0D8A72',
   },
   dayText: {
-    color: '#E2E8F0',
+    color: '#4A4A4A',
     fontSize: 14,
   },
   selectedDayText: {
-    color: '#071318',
+    color: '#1A1A1A',
     fontWeight: 'bold',
   },
   closeCalendarButton: {
@@ -889,10 +889,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#1E3347',
+    borderColor: '#E8E8E8',
   },
   closeCalendarText: {
-    color: '#5A7D8A',
+    color: '#6B7280',
     fontSize: 14,
     fontWeight: '600',
   },

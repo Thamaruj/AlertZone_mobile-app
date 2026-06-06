@@ -9,7 +9,6 @@ import {
   StyleSheet,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { router, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
@@ -71,11 +70,11 @@ interface Report {
 // Constants
 // ─────────────────────────────────────────────
 const STATUS_CONFIG: Record<ReportStatus, { label: string; color: string; bg: string; icon: string }> = {
-  PENDING:  { label: 'Pending',  color: '#F59E0B', bg: '#3D2E0A', icon: 'time-outline'             },
-  ASSIGNED: { label: 'Assigned', color: '#60A5FA', bg: '#0D1A3D', icon: 'person-add-outline'        },
-  FIXING:   { label: 'Fixing',   color: '#4CC2D1', bg: '#0D2A35', icon: 'construct-outline'         },
-  RESOLVED: { label: 'Resolved', color: '#30A89C', bg: '#0D3D35', icon: 'checkmark-circle-outline'  },
-  REJECTED: { label: 'Rejected', color: '#E05C5C', bg: '#3D1515', icon: 'close-circle-outline'      },
+  PENDING:  { label: 'Pending',  color: '#D97706', bg: '#FEF3C7', icon: 'time-outline'             },
+  ASSIGNED: { label: 'Assigned', color: '#3B82F6', bg: '#DBEAFE', icon: 'person-add-outline'        },
+  FIXING:   { label: 'Fixing',   color: '#0D8A72', bg: '#E6F7F3', icon: 'construct-outline'         },
+  RESOLVED: { label: 'Resolved', color: '#059669', bg: '#D1FAE5', icon: 'checkmark-circle-outline'  },
+  REJECTED: { label: 'Rejected', color: '#DC2626', bg: '#FEE2E2', icon: 'close-circle-outline'      },
 };
 
 const TIMELINE_STATUSES: ReportStatus[] = ['PENDING', 'ASSIGNED', 'FIXING', 'RESOLVED'];
@@ -169,11 +168,11 @@ function CalendarModal({ value, onChange, onClose, title }: CalendarProps) {
           <Text style={styles.calendarTitle}>{title}</Text>
           <View style={styles.calendarHeader}>
             <Pressable onPress={handlePrevMonth} style={styles.arrowButton}>
-              <Ionicons name="chevron-back" size={20} color="#4CC2D1" />
+              <Ionicons name="chevron-back" size={20} color="#0D8A72" />
             </Pressable>
             <Text style={styles.monthYearText}>{months[currentMonth]} {currentYear}</Text>
             <Pressable onPress={handleNextMonth} style={styles.arrowButton}>
-              <Ionicons name="chevron-forward" size={20} color="#4CC2D1" />
+              <Ionicons name="chevron-forward" size={20} color="#0D8A72" />
             </Pressable>
           </View>
           <View style={styles.weekdaysRow}>
@@ -219,15 +218,15 @@ function ReportDetailModal({ report, onClose }: { report: Report | null; onClose
 
   return (
     <Modal visible={!!report} animationType="slide" transparent={false}>
-      <LinearGradient colors={['#0D1F2D', '#0A1820', '#071318']} style={{ flex: 1 }}>
+      <View style={{ flex: 1, backgroundColor: '#F5F5F5' }}>
         <ScrollView contentContainerStyle={{ paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
 
           {/* Header */}
-          <View className="px-5 pt-14 pb-4 flex-row items-center gap-3">
+          <View className="px-5 pt-14 pb-4 flex-row items-center gap-3" style={{ backgroundColor: '#FFFFFF' }}>
             <Pressable onPress={onClose} className="active:opacity-70">
-              <Ionicons name="arrow-back" size={24} color="#4CC2D1" />
+              <Ionicons name="arrow-back" size={24} color="#1A1A1A" />
             </Pressable>
-            <Text className="text-white text-xl font-bold flex-1">Report Details</Text>
+            <Text style={{ color: '#1A1A1A', fontSize: 18, fontWeight: '700', flex: 1 }}>Report Details</Text>
             <View className="px-3 py-1 rounded-full" style={{ backgroundColor: cfg.bg }}>
               <Text className="text-xs font-bold" style={{ color: cfg.color }}>{cfg.label}</Text>
             </View>
@@ -235,26 +234,26 @@ function ReportDetailModal({ report, onClose }: { report: Report | null; onClose
 
           {/* Image */}
           {report.imageUrls?.[0] && (
-            <View className="mx-5 mb-4 rounded-2xl overflow-hidden" style={{ height: 180 }}>
+            <View className="mx-5 mb-4 mt-4 rounded-2xl overflow-hidden" style={{ height: 180 }}>
               <Image source={{ uri: report.imageUrls[0] }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
             </View>
           )}
 
           {/* Title + meta */}
-          <View className="px-5 mb-4">
-            <Text className="text-[#4CC2D1] text-xs font-bold mb-1">Ref: {report.id}</Text>
-            <Text className="text-white text-2xl font-bold">{report.title}</Text>
+          <View className="px-5 mb-4" style={{ marginTop: report.imageUrls?.[0] ? 0 : 16 }}>
+            <Text style={{ color: '#0D8A72', fontSize: 11, fontWeight: '700', marginBottom: 4 }}>Ref: {report.id}</Text>
+            <Text style={{ color: '#1A1A1A', fontSize: 22, fontWeight: '700' }}>{report.title}</Text>
             <View className="flex-row items-center mt-2 gap-2">
-              <Ionicons name={report.categoryIcon as any} size={13} color="#5A7D8A" />
-              <Text className="text-gray-500 text-xs">{formatDate(report.createdAt)}</Text>
+              <Ionicons name={report.categoryIcon as any} size={13} color="#9CA3AF" />
+              <Text style={{ color: '#6B7280', fontSize: 12 }}>{formatDate(report.createdAt)}</Text>
             </View>
           </View>
 
           <View className="px-5 gap-3 mb-4">
 
             {/* Status Timeline */}
-            <View className="bg-[#111E27] rounded-2xl p-4" style={{ borderWidth: 1, borderColor: '#1E3347' }}>
-              <Text className="text-white font-bold mb-4">Status Timeline</Text>
+            <View style={{ backgroundColor: '#FFFFFF', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#E8E8E8' }}>
+              <Text style={{ color: '#1A1A1A', fontWeight: '700', marginBottom: 16 }}>Status Timeline</Text>
 
               {report.status === 'REJECTED' ? (
                 <>
@@ -273,14 +272,14 @@ function ReportDetailModal({ report, onClose }: { report: Report | null; onClose
                     );
                   })}
                   <View className="flex-row items-center">
-                    <View className="w-8 h-8 rounded-full items-center justify-center mr-3 bg-[#3D1515]">
-                      <Ionicons name="close-circle-outline" size={16} color="#E05C5C" />
+                    <View className="w-8 h-8 rounded-full items-center justify-center mr-3" style={{ backgroundColor: '#FEE2E2' }}>
+                      <Ionicons name="close-circle-outline" size={16} color="#DC2626" />
                     </View>
                     <View className="flex-1">
-                      <Text className="text-[#E05C5C] font-semibold text-sm">Rejected</Text>
-                      <Text className="text-gray-500 text-xs">Current status</Text>
+                      <Text style={{ color: '#DC2626', fontWeight: '600', fontSize: 13 }}>Rejected</Text>
+                      <Text style={{ color: '#9CA3AF', fontSize: 12 }}>Current status</Text>
                     </View>
-                    <View className="w-2 h-2 rounded-full bg-[#E05C5C]" />
+                    <View className="w-2 h-2 rounded-full bg-[#DC2626]" />
                   </View>
                 </>
               ) : (
@@ -292,18 +291,18 @@ function ReportDetailModal({ report, onClose }: { report: Report | null; onClose
                     <View key={s} className="flex-row items-center mb-3">
                       <View style={{ alignItems: 'center', marginRight: 12 }}>
                         <View className="w-8 h-8 rounded-full items-center justify-center"
-                          style={{ backgroundColor: done ? sc.bg : '#1A2D3D' }}>
-                          <Ionicons name={sc.icon as any} size={16} color={done ? sc.color : '#2D4F5C'} />
+                          style={{ backgroundColor: done ? sc.bg : '#F5F5F5' }}>
+                          <Ionicons name={sc.icon as any} size={16} color={done ? sc.color : '#D1D5DB'} />
                         </View>
                         {i < TIMELINE_STATUSES.length - 1 && (
-                          <View style={{ width: 2, height: 16, marginTop: 2, backgroundColor: done ? sc.color + '40' : '#1E3347' }} />
+                          <View style={{ width: 2, height: 16, marginTop: 2, backgroundColor: done ? sc.color + '40' : '#E8E8E8' }} />
                         )}
                       </View>
                       <View className="flex-1">
-                        <Text className="text-sm font-semibold" style={{ color: done ? sc.color : '#3A5060' }}>
+                        <Text className="text-sm font-semibold" style={{ color: done ? sc.color : '#D1D5DB' }}>
                           {sc.label}
                         </Text>
-                        {isCurrent && <Text className="text-gray-500 text-xs">Current status</Text>}
+                        {isCurrent && <Text style={{ color: '#9CA3AF', fontSize: 12 }}>Current status</Text>}
                       </View>
                       {isCurrent && <View className="w-2 h-2 rounded-full" style={{ backgroundColor: sc.color }} />}
                       {done && !isCurrent && <Ionicons name="checkmark" size={14} color={sc.color} />}
@@ -314,29 +313,28 @@ function ReportDetailModal({ report, onClose }: { report: Report | null; onClose
             </View>
 
             {/* Location */}
-            <View className="bg-[#111E27] rounded-2xl p-4 flex-row items-start gap-3"
-              style={{ borderWidth: 1, borderColor: '#1E3347' }}>
-              <View className="w-8 h-8 rounded-lg bg-[#1E3347] items-center justify-center">
-                <Ionicons name="location-outline" size={16} color="#4CC2D1" />
+            <View style={{ backgroundColor: '#FFFFFF', borderRadius: 16, padding: 16, flexDirection: 'row', alignItems: 'flex-start', gap: 12, borderWidth: 1, borderColor: '#E8E8E8' }}>
+              <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: '#E6F7F3', alignItems: 'center', justifyContent: 'center' }}>
+                <Ionicons name="location-outline" size={16} color="#0D8A72" />
               </View>
               <View className="flex-1">
-                <Text className="text-gray-500 text-[10px] uppercase font-bold tracking-wide mb-1">Location</Text>
-                <Text className="text-white text-sm leading-5">{report.location?.address ?? 'Unknown'}</Text>
+                <Text style={{ color: '#9CA3AF', fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>Location</Text>
+                <Text style={{ color: '#1A1A1A', fontSize: 13, lineHeight: 20 }}>{report.location?.address ?? 'Unknown'}</Text>
                 {(report.location?.province || report.location?.district || report.location?.localGovernmentArea) && (
-                  <View className="mt-2 pt-2 border-t border-[#1E3347] gap-1">
+                  <View style={{ marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: '#F0F0F0', gap: 4 }}>
                     {report.location?.province && (
-                      <Text className="text-[#CBD5E1] text-xs">
-                        <Text className="text-gray-500 font-semibold">Province: </Text>{report.location.province}
+                      <Text style={{ color: '#4A4A4A', fontSize: 12 }}>
+                        <Text style={{ color: '#9CA3AF', fontWeight: '600' }}>Province: </Text>{report.location.province}
                       </Text>
                     )}
                     {report.location?.district && (
-                      <Text className="text-[#CBD5E1] text-xs">
-                        <Text className="text-gray-500 font-semibold">District: </Text>{report.location.district}
+                      <Text style={{ color: '#4A4A4A', fontSize: 12 }}>
+                        <Text style={{ color: '#9CA3AF', fontWeight: '600' }}>District: </Text>{report.location.district}
                       </Text>
                     )}
                     {report.location?.localGovernmentArea && (
-                      <Text className="text-[#CBD5E1] text-xs">
-                        <Text className="text-gray-500 font-semibold">LGA: </Text>{report.location.localGovernmentArea}
+                      <Text style={{ color: '#4A4A4A', fontSize: 12 }}>
+                        <Text style={{ color: '#9CA3AF', fontWeight: '600' }}>LGA: </Text>{report.location.localGovernmentArea}
                       </Text>
                     )}
                   </View>
@@ -345,17 +343,16 @@ function ReportDetailModal({ report, onClose }: { report: Report | null; onClose
             </View>
 
             {/* Description */}
-            <View className="bg-[#111E27] rounded-2xl p-4" style={{ borderWidth: 1, borderColor: '#1E3347' }}>
-              <Text className="text-gray-500 text-[10px] uppercase font-bold tracking-wide mb-2">Description</Text>
-              <Text className="text-white text-sm leading-6">{report.description}</Text>
+            <View style={{ backgroundColor: '#FFFFFF', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#E8E8E8' }}>
+              <Text style={{ color: '#9CA3AF', fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>Description</Text>
+              <Text style={{ color: '#1A1A1A', fontSize: 13, lineHeight: 22 }}>{report.description}</Text>
             </View>
 
             {/* Upvotes */}
-            <View className="bg-[#111E27] rounded-2xl p-4 flex-row items-center justify-between"
-              style={{ borderWidth: 1, borderColor: '#1E3347' }}>
+            <View style={{ backgroundColor: '#FFFFFF', borderRadius: 16, padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderColor: '#E8E8E8' }}>
               <View className="flex-row items-center gap-2">
-                <Ionicons name="arrow-up-circle-outline" size={20} color="#4CC2D1" />
-                <Text className="text-white font-semibold">{report.upvoteCount} community upvotes</Text>
+                <Ionicons name="arrow-up-circle-outline" size={20} color="#0D8A72" />
+                <Text style={{ color: '#1A1A1A', fontWeight: '600' }}>{report.upvoteCount} community upvotes</Text>
               </View>
             </View>
 
@@ -368,26 +365,26 @@ function ReportDetailModal({ report, onClose }: { report: Report | null; onClose
                   params: { lat: report.location.latitude, lng: report.location.longitude, id: report.id }
                 });
               }}
-              className="bg-[#1E3347] rounded-2xl p-4 flex-row items-center justify-center gap-2 active:opacity-70"
-              style={{ borderWidth: 1, borderColor: '#4CC2D1' }}
+              style={{ backgroundColor: '#FFFFFF', borderRadius: 16, padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1, borderColor: '#0D8A72' }}
+              className="active:opacity-70"
             >
-              <Ionicons name="map-outline" size={20} color="#4CC2D1" />
-              <Text className="text-[#4CC2D1] font-bold">View on Map</Text>
+              <Ionicons name="map-outline" size={20} color="#0D8A72" />
+              <Text style={{ color: '#0D8A72', fontWeight: '700' }}>View on Map</Text>
             </Pressable>
 
             {/* Resolution / Rejection note */}
             {report.resolutionNote && (
-              <View className="bg-[#111E27] rounded-2xl p-4" style={{ borderWidth: 1, borderColor: '#1E3347' }}>
-                <Text className="text-gray-500 text-[10px] uppercase font-bold tracking-wide mb-2">
+              <View style={{ backgroundColor: '#FFFFFF', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#E8E8E8' }}>
+                <Text style={{ color: '#9CA3AF', fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
                   {report.status === 'REJECTED' ? 'Rejection Reason' : 'Resolution Note'}
                 </Text>
-                <Text className="text-white text-sm leading-6">{report.resolutionNote}</Text>
+                <Text style={{ color: '#1A1A1A', fontSize: 13, lineHeight: 22 }}>{report.resolutionNote}</Text>
               </View>
             )}
           </View>
 
         </ScrollView>
-      </LinearGradient>
+      </View>
     </Modal>
   );
 }
@@ -404,10 +401,10 @@ function ReportCard({ report, onPress }: { report: Report; onPress: () => void }
         flexDirection: 'row',
         alignItems: 'center',
         padding: 12,
-        backgroundColor: '#111E27',
-        borderRadius: 16,
+        backgroundColor: '#FFFFFF',
+        borderRadius: 14,
         borderWidth: 1,
-        borderColor: '#1E3347',
+        borderColor: '#E8E8E8',
         marginBottom: 10,
       }}
       className="active:opacity-85"
@@ -419,7 +416,7 @@ function ReportCard({ report, onPress }: { report: Report; onPress: () => void }
           height: 60,
           borderRadius: 12,
           overflow: 'hidden',
-          backgroundColor: '#0D1F2D',
+          backgroundColor: '#F5F5F5',
           marginRight: 12,
           justifyContent: 'center',
           alignItems: 'center',
@@ -433,7 +430,7 @@ function ReportCard({ report, onPress }: { report: Report; onPress: () => void }
               width: 36,
               height: 36,
               borderRadius: 10,
-              backgroundColor: (report.categoryColor ?? '#4CC2D1') + '22',
+              backgroundColor: (report.categoryColor ?? '#0D8A72') + '18',
               alignItems: 'center',
               justifyContent: 'center',
             }}
@@ -445,22 +442,22 @@ function ReportCard({ report, onPress }: { report: Report; onPress: () => void }
 
       {/* Title & Details */}
       <View style={{ flex: 1, marginRight: 8 }}>
-        <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 14 }} numberOfLines={1}>
+        <Text style={{ color: '#1A1A1A', fontWeight: 'bold', fontSize: 14 }} numberOfLines={1}>
           {report.title}
         </Text>
-        <Text style={{ color: '#5A7D8A', fontSize: 11, marginTop: 2 }}>
+        <Text style={{ color: '#6B7280', fontSize: 11, marginTop: 2 }}>
           {report.location?.address ?? 'Sri Lanka'}
         </Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-            <Ionicons name="time-outline" size={12} color="#5A7D8A" />
-            <Text style={{ color: '#5A7D8A', fontSize: 11 }}>
+            <Ionicons name="time-outline" size={12} color="#9CA3AF" />
+            <Text style={{ color: '#9CA3AF', fontSize: 11 }}>
               {formatDate(report.createdAt)}
             </Text>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-            <Ionicons name="arrow-up-circle-outline" size={12} color="#5A7D8A" />
-            <Text style={{ color: '#5A7D8A', fontSize: 11 }}>
+            <Ionicons name="arrow-up-circle-outline" size={12} color="#9CA3AF" />
+            <Text style={{ color: '#9CA3AF', fontSize: 11 }}>
               {report.upvoteCount ?? 0} upvotes
             </Text>
           </View>
@@ -469,10 +466,10 @@ function ReportCard({ report, onPress }: { report: Report; onPress: () => void }
 
       {/* Status Pill & Arrow */}
       <View style={{ alignItems: 'flex-end', gap: 6 }}>
-        <View style={{ backgroundColor: cfg.bg, borderWidth: 1, borderColor: cfg.color, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12 }}>
+        <View style={{ backgroundColor: cfg.bg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12 }}>
           <Text style={{ color: cfg.color, fontSize: 10, fontWeight: 'bold' }}>{cfg.label}</Text>
         </View>
-        <Ionicons name="chevron-forward" size={16} color="#2D4F5C" />
+        <Ionicons name="chevron-forward" size={16} color="#D1D5DB" />
       </View>
     </Pressable>
   );
@@ -694,7 +691,7 @@ export default function HistoryScreen() {
   };
 
   return (
-    <LinearGradient colors={['#0D1F2D', '#0A1820', '#071318']} style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: '#F5F5F5' }}>
       <ScrollView
         onScroll={onScroll}
         scrollEventThrottle={16}
@@ -709,19 +706,19 @@ export default function HistoryScreen() {
               style={{ width: 28, height: 28 }}
               resizeMode="contain"
             />
-            <Text className="text-white text-xl font-bold tracking-tight">My Reports</Text>
+            <Text style={{ color: '#1A1A1A', fontSize: 20, fontWeight: '700', letterSpacing: -0.3 }}>My Reports</Text>
           </View>
           <View className="flex-row items-center gap-2">
             <Pressable
               onPress={() => router.push('/archive' as any)}
-              className="bg-[#1E3347] px-3 py-1.5 rounded-full flex-row items-center gap-1.5 active:opacity-75"
-              style={{ borderWidth: 1, borderColor: '#2D4F5C' }}
+              style={{ backgroundColor: '#FFFFFF', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderColor: '#E8E8E8' }}
+              className="active:opacity-75"
             >
-              <Ionicons name="archive-outline" size={14} color="#4CC2D1" />
-              <Text className="text-[#4CC2D1] text-xs font-bold">Archive</Text>
+              <Ionicons name="archive-outline" size={14} color="#0D8A72" />
+              <Text style={{ color: '#0D8A72', fontSize: 12, fontWeight: '700' }}>Archive</Text>
             </Pressable>
-            <View className="bg-[#111E27] px-3 py-1.5 rounded-full" style={{ borderWidth: 1, borderColor: '#1E3347' }}>
-              <Text className="text-gray-400 text-xs font-bold">
+            <View style={{ backgroundColor: '#FFFFFF', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1, borderColor: '#E8E8E8' }}>
+              <Text style={{ color: '#6B7280', fontSize: 12, fontWeight: '700' }}>
                 {filtered.length}
               </Text>
             </View>
@@ -730,7 +727,7 @@ export default function HistoryScreen() {
 
         {/* ── Status Filter Tabs ── */}
         <View className="mb-1">
-          <Text className="text-gray-400 text-xs font-bold px-5 mb-2 uppercase tracking-wide">Status</Text>
+          <Text style={{ color: '#9CA3AF', fontSize: 11, fontWeight: '700', paddingHorizontal: 20, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>Status</Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -745,17 +742,17 @@ export default function HistoryScreen() {
                   onPress={() => setActiveFilter(tab)}
                   className="flex-row items-center px-4 py-2 rounded-full gap-1.5"
                   style={{
-                    backgroundColor: isActive ? '#4CC2D1' : '#111E27',
+                    backgroundColor: isActive ? '#0D8A72' : '#FFFFFF',
                     borderWidth: 1,
-                    borderColor: isActive ? '#4CC2D1' : '#1E3347',
+                    borderColor: isActive ? '#0D8A72' : '#E8E8E8',
                   }}
                 >
-                  <Text className="text-sm font-semibold" style={{ color: isActive ? '#071318' : '#5A7D8A' }}>
+                  <Text className="text-sm font-semibold" style={{ color: isActive ? '#FFFFFF' : '#6B7280' }}>
                     {tab}
                   </Text>
                   <View className="px-1.5 py-0.5 rounded-full"
-                    style={{ backgroundColor: isActive ? 'rgba(7,19,24,0.2)' : '#1E3347' }}>
-                    <Text className="text-[10px] font-bold" style={{ color: isActive ? '#071318' : '#4CC2D1' }}>
+                    style={{ backgroundColor: isActive ? 'rgba(255,255,255,0.2)' : '#F0F0F0' }}>
+                    <Text className="text-[10px] font-bold" style={{ color: isActive ? '#FFFFFF' : '#0D8A72' }}>
                       {count}
                     </Text>
                   </View>
@@ -767,7 +764,7 @@ export default function HistoryScreen() {
 
         {/* ── Date Filter ── */}
         <View className="mb-4">
-          <Text className="text-gray-400 text-xs font-bold px-5 mb-2 uppercase tracking-wide">Date Filter</Text>
+          <Text style={{ color: '#9CA3AF', fontSize: 11, fontWeight: '700', paddingHorizontal: 20, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>Date Filter</Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -781,12 +778,12 @@ export default function HistoryScreen() {
                   onPress={() => setActiveDateFilter(df.id)}
                   className="px-4 py-2 rounded-full"
                   style={{
-                    backgroundColor: isActive ? '#4CC2D1' : '#111E27',
+                    backgroundColor: isActive ? '#0D8A72' : '#FFFFFF',
                     borderWidth: 1,
-                    borderColor: isActive ? '#4CC2D1' : '#1E3347',
+                    borderColor: isActive ? '#0D8A72' : '#E8E8E8',
                   }}
                 >
-                  <Text className="text-xs font-semibold" style={{ color: isActive ? '#071318' : '#5A7D8A' }}>
+                  <Text className="text-xs font-semibold" style={{ color: isActive ? '#FFFFFF' : '#6B7280' }}>
                     {df.label}
                   </Text>
                 </Pressable>
@@ -797,40 +794,42 @@ export default function HistoryScreen() {
 
         {/* ── Custom Date Range Picker ── */}
         {activeDateFilter === 'custom' && (
-          <View className="mx-5 mb-4 p-4 rounded-2xl bg-[#111E27] border border-[#1E3347]">
+          <View style={{ marginHorizontal: 20, marginBottom: 16, padding: 16, borderRadius: 16, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E8E8E8' }}>
             <View className="flex-row justify-between items-center mb-3">
-              <Text className="text-white text-xs font-bold uppercase tracking-wide">Select Date Range</Text>
+              <Text style={{ color: '#1A1A1A', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 }}>Select Date Range</Text>
               {(customStartDate || customEndDate) && (
                 <Pressable onPress={clearCustomRange} className="active:opacity-75">
-                  <Text className="text-[#E05C5C] text-xs font-semibold">Reset</Text>
+                  <Text style={{ color: '#DC2626', fontSize: 12, fontWeight: '600' }}>Reset</Text>
                 </Pressable>
               )}
             </View>
             <View className="flex-row gap-3">
               <Pressable
                 onPress={() => setShowStartPicker(true)}
-                className="flex-1 p-3 rounded-xl bg-[#1E3A44] border border-[#2D4F5C] flex-row justify-between items-center active:opacity-75"
+                style={{ flex: 1, padding: 12, borderRadius: 12, backgroundColor: '#F5F5F5', borderWidth: 1, borderColor: '#E8E8E8', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
+                className="active:opacity-75"
               >
                 <View>
-                  <Text className="text-gray-500 text-[10px] uppercase font-bold">Start Date</Text>
-                  <Text className="text-white text-sm font-semibold mt-0.5">
+                  <Text style={{ color: '#9CA3AF', fontSize: 10, fontWeight: '700', textTransform: 'uppercase' }}>Start Date</Text>
+                  <Text style={{ color: '#1A1A1A', fontSize: 13, fontWeight: '600', marginTop: 2 }}>
                     {customStartDate ? customStartDate.toLocaleDateString('en-GB') : 'Select...'}
                   </Text>
                 </View>
-                <Ionicons name="calendar-outline" size={16} color="#4CC2D1" />
+                <Ionicons name="calendar-outline" size={16} color="#0D8A72" />
               </Pressable>
 
               <Pressable
                 onPress={() => setShowEndPicker(true)}
-                className="flex-1 p-3 rounded-xl bg-[#1E3A44] border border-[#2D4F5C] flex-row justify-between items-center active:opacity-75"
+                style={{ flex: 1, padding: 12, borderRadius: 12, backgroundColor: '#F5F5F5', borderWidth: 1, borderColor: '#E8E8E8', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
+                className="active:opacity-75"
               >
                 <View>
-                  <Text className="text-gray-500 text-[10px] uppercase font-bold">End Date</Text>
-                  <Text className="text-white text-sm font-semibold mt-0.5">
+                  <Text style={{ color: '#9CA3AF', fontSize: 10, fontWeight: '700', textTransform: 'uppercase' }}>End Date</Text>
+                  <Text style={{ color: '#1A1A1A', fontSize: 13, fontWeight: '600', marginTop: 2 }}>
                     {customEndDate ? customEndDate.toLocaleDateString('en-GB') : 'Select...'}
                   </Text>
                 </View>
-                <Ionicons name="calendar-outline" size={16} color="#4CC2D1" />
+                <Ionicons name="calendar-outline" size={16} color="#0D8A72" />
               </Pressable>
             </View>
           </View>
@@ -840,18 +839,18 @@ export default function HistoryScreen() {
         <View className="px-5">
           {firestoreLoading ? (
             <View className="items-center py-16">
-              <ActivityIndicator color="#4CC2D1" size="large" />
-              <Text className="text-gray-500 mt-4 text-sm">Loading your reports…</Text>
+              <ActivityIndicator color="#0D8A72" size="large" />
+              <Text style={{ color: '#9CA3AF', marginTop: 16, fontSize: 13 }}>Loading your reports…</Text>
             </View>
           ) : filtered.length === 0 ? (
-            <View className="items-center py-16 bg-[#111E27] border border-[#1E3347] rounded-3xl p-6">
-              <View className="w-16 h-16 rounded-full bg-[#1E3A44] items-center justify-center mb-4">
-                <Ionicons name="document-outline" size={30} color="#2D4F5C" />
+            <View style={{ alignItems: 'center', paddingVertical: 48, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E8E8E8', borderRadius: 20, padding: 24 }}>
+              <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: '#F5F5F5', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+                <Ionicons name="document-outline" size={28} color="#D1D5DB" />
               </View>
-              <Text className="text-white font-bold text-base">
+              <Text style={{ color: '#1A1A1A', fontWeight: '700', fontSize: 15 }}>
                 {activeFilter === 'All' ? 'No reports found' : `No ${activeFilter} reports`}
               </Text>
-              <Text className="text-gray-500 text-sm mt-1 text-center leading-5">
+              <Text style={{ color: '#9CA3AF', fontSize: 13, marginTop: 4, textAlign: 'center', lineHeight: 20 }}>
                 {activeFilter === 'All' && activeDateFilter === 'all'
                   ? 'Submit your first report using the + button'
                   : 'Try adjusting your filters'}
@@ -861,8 +860,8 @@ export default function HistoryScreen() {
             <>
               {/* Results count */}
               <View className="flex-row justify-between items-center mb-3">
-                <Text className="text-gray-500 text-xs">
-                  Showing <Text className="text-[#4CC2D1] font-bold">{visibleReports.length}</Text> of <Text className="text-white font-semibold">{filtered.length}</Text> reports
+                <Text style={{ color: '#9CA3AF', fontSize: 12 }}>
+                  Showing <Text style={{ color: '#0D8A72', fontWeight: '700' }}>{visibleReports.length}</Text> of <Text style={{ color: '#1A1A1A', fontWeight: '600' }}>{filtered.length}</Text> reports
                 </Text>
               </View>
 
@@ -878,12 +877,12 @@ export default function HistoryScreen() {
               {hasMore && (
                 <Pressable
                   onPress={() => setVisibleCount((c) => c + LOAD_MORE_SIZE)}
-                  className="mt-2 mb-4 py-4 rounded-2xl items-center justify-center active:opacity-75"
-                  style={{ borderWidth: 1, borderColor: '#2D4F5C', backgroundColor: '#111E27' }}
+                  style={{ marginTop: 8, marginBottom: 16, paddingVertical: 16, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#E8E8E8', backgroundColor: '#FFFFFF' }}
+                  className="active:opacity-75"
                 >
                   <View className="flex-row items-center gap-2">
-                    <Ionicons name="chevron-down-circle-outline" size={20} color="#4CC2D1" />
-                    <Text className="text-[#4CC2D1] font-bold text-sm">
+                    <Ionicons name="chevron-down-circle-outline" size={20} color="#0D8A72" />
+                    <Text style={{ color: '#0D8A72', fontWeight: '700', fontSize: 13 }}>
                       Load More ({Math.min(LOAD_MORE_SIZE, filtered.length - visibleCount)} more)
                     </Text>
                   </View>
@@ -893,7 +892,7 @@ export default function HistoryScreen() {
               {/* End indicator */}
               {!hasMore && filtered.length > INITIAL_PAGE_SIZE && (
                 <View className="items-center py-4">
-                  <Text className="text-gray-600 text-xs">All {filtered.length} reports shown</Text>
+                  <Text style={{ color: '#D1D5DB', fontSize: 12 }}>All {filtered.length} reports shown</Text>
                 </View>
               )}
             </>
@@ -923,7 +922,7 @@ export default function HistoryScreen() {
         report={selectedReport}
         onClose={() => setSelectedReport(null)}
       />
-    </LinearGradient>
+    </View>
   );
 }
 
@@ -933,7 +932,7 @@ export default function HistoryScreen() {
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
@@ -941,15 +940,15 @@ const styles = StyleSheet.create({
   calendarContainer: {
     width: '100%',
     maxWidth: 340,
-    backgroundColor: '#111E27',
-    borderRadius: 24,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#1E3347',
+    borderColor: '#E8E8E8',
     padding: 20,
     alignItems: 'center',
   },
   calendarTitle: {
-    color: '#FFFFFF',
+    color: '#1A1A1A',
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 16,
@@ -962,7 +961,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   arrowButton: { padding: 8 },
-  monthYearText: { color: '#FFFFFF', fontSize: 16, fontWeight: '600' },
+  monthYearText: { color: '#1A1A1A', fontSize: 16, fontWeight: '600' },
   weekdaysRow: {
     flexDirection: 'row',
     width: '100%',
@@ -970,7 +969,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   weekdayText: {
-    color: '#5A7D8A',
+    color: '#9CA3AF',
     width: '14.28%',
     textAlign: 'center',
     fontSize: 12,
@@ -985,16 +984,16 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginVertical: 2,
   },
-  selectedDayCell: { backgroundColor: '#4CC2D1' },
-  dayText: { color: '#E2E8F0', fontSize: 14 },
-  selectedDayText: { color: '#071318', fontWeight: 'bold' },
+  selectedDayCell: { backgroundColor: '#0D8A72' },
+  dayText: { color: '#4A4A4A', fontSize: 14 },
+  selectedDayText: { color: '#FFFFFF', fontWeight: 'bold' },
   closeCalendarButton: {
     marginTop: 16,
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#2D4F5C',
+    borderColor: '#E8E8E8',
   },
-  closeCalendarText: { color: '#5A7D8A', fontWeight: '600', fontSize: 14 },
+  closeCalendarText: { color: '#6B7280', fontWeight: '600', fontSize: 14 },
 });

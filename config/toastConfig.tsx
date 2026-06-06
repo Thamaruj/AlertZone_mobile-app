@@ -9,10 +9,10 @@ success: (props: BaseToastProps) => (
   <BaseToast
     {...props}
     style={{
-      borderLeftColor: "#1ABC9C",   // accent line
-      backgroundColor: "#143D3D",   // dark background
+      borderLeftColor: "#0D8A72",
+      backgroundColor: "#FFFFFF",
       borderRadius: 12,
-      paddingVertical: 10,           // increased vertical padding
+      paddingVertical: 10,
       paddingHorizontal: 0,
       minHeight:70,
       maxHeight:100,
@@ -20,19 +20,24 @@ success: (props: BaseToastProps) => (
       width: 'auto',
       maxWidth: '90%',
       alignSelf: 'center',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.1,
+      shadowRadius: 8,
+      elevation: 6,
     }}
     text1Style={{
       fontSize: 16,
-      fontWeight: "light",
-      color: "#FFFFFF",             // optional spacing below title
+      fontWeight: "600",
+      color: "#1A1A1A",
     }}
     text2Style={{
       fontSize: 13,
-      color: "#A0E1DD",
+      color: "#6B7280",
       flex: 1,
     }}
     text2Props={{
-      numberOfLines: 0,             // allows multi-line text
+      numberOfLines: 0,
     }}
   />
 ),
@@ -41,10 +46,10 @@ success: (props: BaseToastProps) => (
     <ErrorToast
       {...props}
       style={{
-        borderLeftColor: "#FF4D4F",   // accent line
-        backgroundColor: "#4A1A1A",   // dark error background
+        borderLeftColor: "#DC2626",
+        backgroundColor: "#FFFFFF",
         borderRadius: 12,
-        paddingVertical: 10,           // increased vertical padding
+        paddingVertical: 10,
         paddingHorizontal: 0,
         minHeight:70,
         maxHeight:100,
@@ -52,19 +57,24 @@ success: (props: BaseToastProps) => (
         width: 'auto',
         maxWidth: '90%',
         alignSelf: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        elevation: 6,
       }}
       text1Style={{
         fontSize: 16,
         fontWeight: "bold",
-        color: "#FFFFFF",              // title text
+        color: "#1A1A1A",
       }}
       text2Style={{
         fontSize: 13,
-        color: "#FF9999",              
+        color: "#6B7280",              
         flex: 1,
       }}
       text2Props={{
-        numberOfLines: 0,   // allow wrapping
+        numberOfLines: 0,
       }}
     />
   ),

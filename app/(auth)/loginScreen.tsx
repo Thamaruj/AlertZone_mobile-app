@@ -269,7 +269,7 @@ export default function LoginScreen() {
 
 
   return (
-    <LinearGradient colors={['#0D1F2D', '#0A1820', '#071318']} className="flex-1">
+    <LinearGradient colors={['#F5F5F5', '#FAFAFA', '#F5F5F5']} className="flex-1">
 
       <KeyboardAvoidingView 
         behavior="padding"
@@ -291,8 +291,8 @@ export default function LoginScreen() {
                 className="w-24 h-24"
                 resizeMode="contain"
               />
-              <Text className="text-white text-3xl font-bold mt-4">Welcome!</Text>
-              <Text className="text-gray-400 text-center mt-2">
+              <Text className="text-[#1A1A1A] text-3xl font-bold mt-4">Welcome!</Text>
+              <Text className="text-[#6B7280] text-center mt-2">
                 Log in to continue making your{"\n"}community safer.
               </Text>
             </View>
@@ -300,18 +300,18 @@ export default function LoginScreen() {
             {/* 2. Input Fields */}
             <View className="space-y-4">
             {/* Email Field */}
-            <View className={`bg-[#1E3A44] border rounded-2xl flex-row items-center p-1 ${
-                isEmailFocused ? "border-[#4CC2D1]" : "border-[#2D4F5C]"
+            <View className={`bg-[#FFFFFF] border rounded-2xl flex-row items-center p-1 ${
+                isEmailFocused ? "border-[#0D8A72]" : "border-[#E8E8E8]"
         }`}>
-                <View className="px-3 py-3 border-r border-[#2D4F5C] justify-center items-center">
-                  <Ionicons name="mail-outline" size={20} color="#30A89C" />
+                <View className="px-3 py-3 border-r border-[#E8E8E8] justify-center items-center">
+                  <Ionicons name="mail-outline" size={20} color="#059669" />
                 </View>
                 <View className="flex-1 px-3 py-2">
-                   <Text className="text-gray-400 text-xs p-0 m-0">E-mail:</Text>
+                   <Text className="text-[#6B7280] text-xs p-0 m-0">E-mail:</Text>
                   <TextInput
                     placeholder="Enter your email"
-                    placeholderTextColor="#5A7D8A"
-                    className="text-white text-base p-0 m-0"
+                    placeholderTextColor="#6B7280"
+                    className="text-[#1A1A1A] text-base p-0 m-0"
                     style={{ paddingLeft: 0, marginLeft: 0 }}
                     keyboardType="email-address"
                     autoCapitalize="none"
@@ -327,19 +327,19 @@ export default function LoginScreen() {
              </View>
 
                   {/* Password Field */}
-              <View className={`bg-[#1E3A44] border rounded-2xl flex-row items-center p-1 mt-4 ${
-                isPasswordFocused ? "border-[#4CC2D1]" : "border-[#2D4F5C]"
+              <View className={`bg-[#FFFFFF] border rounded-2xl flex-row items-center p-1 mt-4 ${
+                isPasswordFocused ? "border-[#0D8A72]" : "border-[#E8E8E8]"
                  }`}>
-                <View className="px-3 py-3 border-r border-[#2D4F5C] justify-center items-center">
-                   <Ionicons name="lock-closed-outline" size={20} color="#30A89C" />
+                <View className="px-3 py-3 border-r border-[#E8E8E8] justify-center items-center">
+                   <Ionicons name="lock-closed-outline" size={20} color="#059669" />
                 </View>
                 <View className="flex-1 px-3 py-2">
-                  <Text className="text-gray-400 text-xs p-0 m-0">Password:</Text>
+                  <Text className="text-[#6B7280] text-xs p-0 m-0">Password:</Text>
                   <TextInput
                     ref={passwordRef}
                     placeholder="Enter your password"
-                    placeholderTextColor="#5A7D8A"
-                    className="text-white text-base p-0 m-0"
+                    placeholderTextColor="#6B7280"
+                    className="text-[#1A1A1A] text-base p-0 m-0"
                     style={{ paddingLeft: 0, marginLeft: 0 }}
                     secureTextEntry={!showPassword}
                     autoCapitalize="none"
@@ -380,7 +380,7 @@ export default function LoginScreen() {
                   <Ionicons
                     name={showPassword ? "eye-outline" : "eye-off-outline"}
                     size={20}
-                    color={isPasswordFromStorage ? "#2D4F5C" : "#30A89C"}
+                    color={isPasswordFromStorage ? "#E8E8E8" : "#059669"}
                   />
                 </Pressable>
               </View>
@@ -392,17 +392,17 @@ export default function LoginScreen() {
                 className="flex-row items-center" 
                 onPress={() => setRememberMe(!rememberMe)}
               >
-                <View className={`w-5 h-5 rounded border ${rememberMe ? 'bg-[#30A89C] border-[#30A89C]' : 'border-gray-500'} items-center justify-center`}>
+                <View className={`w-5 h-5 rounded border ${rememberMe ? 'bg-[#059669] border-[#059669]' : 'border-gray-500'} items-center justify-center`}>
                      {rememberMe && <Ionicons name="checkmark" size={14} color="white" />}
                 </View>
-                <Text className="text-gray-400 ml-2">Remember me</Text>
+                <Text className="text-[#6B7280] ml-2">Remember me</Text>
               </Pressable>
               
               <Pressable
                   onPress={() => router.push("/(auth)/passwordReset")}
                 className="active:opacity-70"
               >
-                <Text className="text-[#4CC2D1]">Forgot Password?</Text>
+                <Text className="text-[#0D8A72]">Forgot Password?</Text>
               </Pressable>
             </View>
 
@@ -410,7 +410,7 @@ export default function LoginScreen() {
             <View className="mt-8">
               <View className="flex-row gap-3 items-center">
                 <Pressable 
-                  className={`flex-1 p-4 rounded-full shadow-lg items-center active:opacity-70 ${loading ? 'bg-[#4CC2D1]/50' : 'bg-[#4CC2D1]'}`}
+                  className={`flex-1 p-4 rounded-full shadow-lg items-center active:opacity-70 ${loading ? 'bg-[#0D8A72]/50' : 'bg-[#0D8A72]'}`}
                   onPress={handleLogin}
                   disabled={loading}
                 >
@@ -424,9 +424,9 @@ export default function LoginScreen() {
                 {isBiometricSupported && isBiometricEnrolled && hasBiometricSetup && (
                   <Pressable
                     onPress={handleBiometricAuth}
-                    className="w-14 h-14 rounded-full bg-[#1E3A44] border border-[#2D4F5C] items-center justify-center active:opacity-80"
+                    className="w-14 h-14 rounded-full bg-[#FFFFFF] border border-[#E8E8E8] items-center justify-center active:opacity-80"
                   >
-                    <Ionicons name="finger-print" size={26} color="#4CC2D1" />
+                    <Ionicons name="finger-print" size={26} color="#0D8A72" />
                   </Pressable>
                 )}
               </View>
@@ -436,9 +436,9 @@ export default function LoginScreen() {
 
             {/* 5. Footer */}
             <View className="flex-row justify-center mt-10">
-              <Text className="text-gray-400">Don&apos;t have an account? </Text>
+              <Text className="text-[#6B7280]">Don&apos;t have an account? </Text>
               <Pressable onPress={() => router.push("/(auth)/signupScreen")} className="active:opacity-70">
-                <Text className="text-[#4CC2D1] font-bold">Create Account</Text>
+                <Text className="text-[#0D8A72] font-bold">Create Account</Text>
               </Pressable>
             </View>
 
@@ -449,14 +449,14 @@ export default function LoginScreen() {
       {/* Visual Custom Biometric Prompt Dialog */}
       <Modal visible={showBiometricPrompt} transparent animationType="fade">
         <View className="flex-1 items-center justify-center bg-black/75 px-6">
-          <View className="bg-[#111E27] w-full max-w-sm rounded-3xl p-6 border border-[#2D4F5C] items-center"
+          <View className="bg-[#FFFFFF] w-full max-w-sm rounded-3xl p-6 border border-[#E8E8E8] items-center"
             style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.5, shadowRadius: 15, elevation: 20 }}
           >
-            <View className="w-16 h-16 rounded-full bg-[#1E3A44] items-center justify-center mb-4 border border-[#4CC2D1]/30">
-              <Ionicons name="finger-print" size={32} color="#4CC2D1" />
+            <View className="w-16 h-16 rounded-full bg-[#FFFFFF] items-center justify-center mb-4 border border-[#0D8A72]/30">
+              <Ionicons name="finger-print" size={32} color="#0D8A72" />
             </View>
-            <Text className="text-white text-xl font-bold text-center mb-2">Enable Biometrics</Text>
-            <Text className="text-gray-400 text-sm text-center leading-5 mb-6">
+            <Text className="text-[#1A1A1A] text-xl font-bold text-center mb-2">Enable Biometrics</Text>
+            <Text className="text-[#6B7280] text-sm text-center leading-5 mb-6">
               Would you like to log in quickly using Face ID or Fingerprint next time?
             </Text>
             <View className="w-full flex-row gap-3">
@@ -465,9 +465,9 @@ export default function LoginScreen() {
                   setShowBiometricPrompt(false);
                   router.replace('/(tabs)/home');
                 }}
-                className="flex-1 py-3.5 bg-[#1E3A44] border border-[#2D4F5C] rounded-xl items-center active:opacity-75"
+                className="flex-1 py-3.5 bg-[#FFFFFF] border border-[#E8E8E8] rounded-xl items-center active:opacity-75"
               >
-                <Text className="text-gray-400 font-semibold text-sm">Maybe Later</Text>
+                <Text className="text-[#6B7280] font-semibold text-sm">Maybe Later</Text>
               </Pressable>
               <Pressable
                 onPress={async () => {
@@ -488,9 +488,9 @@ export default function LoginScreen() {
                     router.replace('/(tabs)/home');
                   }, 800);
                 }}
-                className="flex-1 py-3.5 bg-[#4CC2D1] rounded-xl items-center active:opacity-75"
+                className="flex-1 py-3.5 bg-[#0D8A72] rounded-xl items-center active:opacity-75"
               >
-                <Text className="text-[#071318] font-bold text-sm">Enable</Text>
+                <Text className="text-[#F5F5F5] font-bold text-sm">Enable</Text>
               </Pressable>
             </View>
           </View>

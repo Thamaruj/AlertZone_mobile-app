@@ -1,6 +1,7 @@
 import { AuthProvider } from "@/config/authConfig";
 import { Stack } from "expo-router";
 import { Platform } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message"; // <-- import Toast
 import { toastConfig } from "../config/toastConfig"; // make sure this matches the exported name
@@ -14,6 +15,7 @@ function AppContent() {
 
   return (
     <>
+      <StatusBar style="dark" />
       <Stack screenOptions={{ headerShown: false }} />
       <NetworkStatusGate />
       <Toast
