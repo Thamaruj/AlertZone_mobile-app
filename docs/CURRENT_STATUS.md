@@ -1,7 +1,7 @@
 # Current Status — AlertZone Mobile App
 > **Full Log:** [PROJECT_PROGRESS.md](./PROJECT_PROGRESS.md)
 
-> **Last Updated:** 2026-06-01 (Gamification System — Points, Badges, Badge Showcase Screen)
+> **Last Updated:** 2026-06-06 (Google Sign-in Cleanup, Offline Caching, and Preferences Sync Fixes)
 >
 > This document tracks what is done, what is broken, and what remains. Agents MUST read this before starting work.
 
@@ -18,7 +18,7 @@
 | Phase 4: Notifications | 🟢 Done | expo-notifications plugin ✅, push tokens ✅, foreground listeners ✅, in-app Notification Center ✅ |
 | Phase 5: Badge System | 🟢 Done | Points awarded on ASSIGNED (+10 pts), 12 real badges, badge showcase screen ✅ |
 | Phase 6: Polish & Launch | 🟢 Done | Animated splash gate, onboarding seen flag, and 7 critical/medium APK readiness fixes ✅ |
-| Phase 7: Google Sign-In & Complete Profile | 🟢 Done | Native Google Sign-In integrated, profile completion flow enforced with redirection guards, and path type assertions added ✅ |
+| Phase 7: Profile Completion & Settings Sync | 🟢 Done | Profile completion flow enforced with redirection guards, offline AsyncStorage profile caching implemented, and notification preference toggle sync resolved ✅ |
 
 ---
 
@@ -50,9 +50,10 @@
 - [x] Global network status gate (`NetworkStatusGate`) with bottom sheet and manual "Check Connection" retry controls ✅
 - [x] Logout functionality with confirmation modal
 - [x] Password validation (min 8 chars, uppercase, number)
-- [x] Native Google Sign-In on Login & Signup screens ✅
+- [x] Native Google Sign-In (removed / dropped) ✅
 - [x] Complete Profile page (`completeProfile.tsx`) requesting required details for incomplete profile users ✅
 - [x] Redirection guards on Splash Screen & Tab Layout preventing access to home/map/report tabs for users with incomplete profiles ✅
+- [x] Offline AsyncStorage user profile caching (resolves offline Complete Profile redirection bug) ✅
 - [x] Graceful Cancel & Log Out button on Complete Profile screen to switch accounts safely ✅
 
 ### Profile (Partially Functional)

@@ -346,6 +346,24 @@ This document tracks the end-to-end development journey of the AlertZone mobile 
     - Added warning/explanation text inside the disabled button (`"You cannot upvote your own report"`) and text input placeholder (`"You cannot comment on your own report"`).
     - Extended safety guards inside the `handleUpvotePress`, `performUpvote`, and `handlePostComment` callback logic to securely block transaction execution if called manually.
 
+- **[2026-06-06] Notifications Unread Count Pills (`notifications.tsx`):**
+    - Redesigned the screen header to display a red count pill badge next to the "Notifications" title showing the exact number of unread notifications.
+    - Added a matching count pill badge inside the "Unread" filter tab element to display the unread count in real-time.
+
+- **[2026-06-06] Clean Up of Google Sign-in & Terms Checklist:**
+    - Cleaned up and uninstalled the `@react-native-google-signin/google-signin` package and removed its configuration plugin from `app.json`.
+    - Removed all Google Sign-in/Up buttons, configuration logic, and related helper methods from `loginScreen.tsx` and `signupScreen.tsx`.
+    - Removed the "Terms of Services" checkbox and its validation check from the signup screen for immediate submission flow.
+
+- **[2026-06-06] Offline User Profile Caching (`authConfig.tsx`):**
+    - Resolved startup routing issue where returning users are incorrectly redirected to the "Complete Profile" screen when booting offline.
+    - Implemented a local profile cache in `AsyncStorage` (key: `cachedProfile`).
+    - Wired `AuthProvider` to retrieve the cached profile on startup and block layout guards until the cache is fully resolved, preserving accurate `isProfileComplete` state while offline.
+
+- **[2026-06-06] Push Notification Preferences Toggle Fix (`useNotifications.ts`):**
+    - Fixed an issue where the user still received push notifications after toggling "notifications off" in settings.
+    - Refactored the global `useNotifications()` root hook to check the user's `profile.notificationsEnabled` value, automatically calling `unregisterPushNotificationsAsync` (setting the push token to null in Firestore) if toggled off, instead of unconditionally registering the token on startup.
+
 ---
 
-*Last Updated: 2026-06-06 — Self-Upvoting/Commenting Prevention & Offline Handling*
+*Last Updated: 2026-06-06 — Google Sign-in Cleanup, Offline Caching, & Preference Sync*

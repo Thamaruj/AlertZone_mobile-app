@@ -107,6 +107,45 @@ Fields like `contributionPoints`, `reportsValidated`, `level`, `badges`, `area`,
 
 **Path**: `reports/{reportId}`
 
+> [!NOTE]
+> Instead of a default random Firestore ID string, the `reportId` functions as the **Custom Report Reference ID** and is generated in a structured format: `yyyymmddPDDXXXXX`
+> - `yyyymmdd`: The current local date of submission.
+> - `P`: A 1-digit Province code (e.g. `9` for Western).
+> - `DD`: A 2-digit District code (e.g. `05` for Colombo).
+> - `XXXXX`: A 5-digit zero-padded daily sequence counter incremented via transactions.
+>
+> **Example**: `2026060690500001` (Road & Traffic report in Colombo district, Western province, submitted on June 6, 2026 as the first report of the day).
+
+### Province Codes Mapping Table
+| Province | Code |
+|---|---|
+| Central | 1 |
+| Eastern | 2 |
+| North Central | 3 |
+| North Western | 4 |
+| Northern | 5 |
+| Sabaragamuwa | 6 |
+| Southern | 7 |
+| Uva | 8 |
+| Western | 9 |
+
+### District Codes Mapping Table
+| District | Code | District | Code |
+|---|---|---|---|
+| Ampara | 01 | Kurunegala | 14 |
+| Anuradhapura | 02 | Mannar | 15 |
+| Badulla | 03 | Matale | 16 |
+| Batticaloa | 04 | Matara | 17 |
+| Colombo | 05 | Moneragala | 18 |
+| Galle | 06 | Mullaitivu | 19 |
+| Gampaha | 07 | Nuwara Eliya | 20 |
+| Hambantota | 08 | Polonnaruwa | 21 |
+| Jaffna | 09 | Puttalam | 22 |
+| Kalutara | 10 | Ratnapura | 23 |
+| Kandy | 11 | Trincomalee | 24 |
+| Kegalle | 12 | Vavuniya | 25 |
+| Kilinochchi | 13 | | |
+
 | Field | Type | Required | Default | Description |
 |---|---|---|---|---|
 | `uid` | `string` | ✅ | — | Report author's user UID |
