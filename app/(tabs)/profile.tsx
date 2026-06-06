@@ -863,7 +863,7 @@ function PersonalInfoModal({
               <View className="absolute bottom-3 right-3">
                 <Pressable
                   onPress={recenter}
-                  style={{ backgroundColor: '#1A1A1A', borderRadius: 8, padding: 8, borderWidth: 1, borderColor: '#E8E8E8' }}
+                  style={{ backgroundColor: '#FFFFFF', borderRadius: 8, padding: 8, borderWidth: 1, borderColor: '#E8E8E8' }}
                   className="active:opacity-80"
                 >
                   <Ionicons name="locate" size={20} color="#0D8A72" />
@@ -881,7 +881,7 @@ function PersonalInfoModal({
               style={{ backgroundColor: saving ? 'rgba(76,194,209,0.4)' : '#0D8A72' }}
             >
               {saving
-                ? <ActivityIndicator color="#1A1A1A" />
+                ? <ActivityIndicator color="#FFFFFF" />
                 : <Text className="text-[#F5F5F5] font-bold text-base">Save</Text>
               }
             </Pressable>
@@ -1007,7 +1007,7 @@ function PersonalInfoModal({
               left: 0,
               right: 0,
               bottom: 0,
-              backgroundColor: 'rgba(7, 19, 24, 0.85)',
+              backgroundColor: 'rgba(255, 255, 255, 0.85)',
               justifyContent: 'center',
               alignItems: 'center',
               zIndex: 9999,
@@ -1196,7 +1196,7 @@ function AlertPreferencesModal({
               style={{ backgroundColor: saving ? 'rgba(76,194,209,0.4)' : '#0D8A72' }}
             >
               {saving
-                ? <ActivityIndicator color="#1A1A1A" />
+                ? <ActivityIndicator color="#FFFFFF" />
                 : <Text className="text-[#F5F5F5] font-bold text-base">Save Preferences</Text>
               }
             </Pressable>
@@ -1533,7 +1533,7 @@ function SecurityModal({
                   className="w-full py-3.5 bg-[#0D8A72] rounded-xl items-center active:opacity-75 mb-3"
                 >
                   {passwordResetLoading ? (
-                    <ActivityIndicator size="small" color="#1A1A1A" />
+                    <ActivityIndicator size="small" color="#FFFFFF" />
                   ) : (
                     <Text className="text-[#F5F5F5] font-bold text-sm">Update Password</Text>
                   )}
@@ -1694,7 +1694,7 @@ function LogoutModal({
         <Animated.View
           style={{
             width: '100%',
-            backgroundColor: '#1A1A1A',
+            backgroundColor: '#FFFFFF',
             borderRadius: 24,
             padding: 28,
             alignItems: 'center',
@@ -1703,9 +1703,9 @@ function LogoutModal({
             transform: [{ scale: scaleAnim }],
             shadowColor: '#000',
             shadowOffset: { width: 0, height: 12 },
-            shadowOpacity: 0.5,
+            shadowOpacity: 0.1,
             shadowRadius: 24,
-            elevation: 20,
+            elevation: 10,
           }}
         >
           {/* Icon */}
@@ -1728,12 +1728,12 @@ function LogoutModal({
             onPress={onConfirm}
             disabled={loggingOut}
             className="w-full py-4 rounded-2xl items-center mb-3 active:opacity-80"
-            style={{ backgroundColor: loggingOut ? 'rgba(224,92,92,0.4)' : '#DC2626' }}
+            style={{ backgroundColor: loggingOut ? 'rgba(220,38,38,0.4)' : '#DC2626' }}
           >
             {loggingOut ? (
               <ActivityIndicator color="white" />
             ) : (
-              <Text className="text-[#1A1A1A] font-bold text-base">Confirm Logout</Text>
+              <Text className="text-white font-bold text-base">Confirm Logout</Text>
             )}
           </Pressable>
 
@@ -1944,7 +1944,7 @@ export default function ProfileScreen() {
             <View className="h-px bg-[#E8E8E8]" />
             <SettingsRow
               icon="notifications-outline"
-              iconBg="#1E2D3D"
+              iconBg="#E8E8E8"
               iconColor="#0D8A72"
               label="Alert Preferences"
               subtitle="Notification status and radius"
@@ -1953,7 +1953,7 @@ export default function ProfileScreen() {
             <View className="h-px bg-[#E8E8E8]" />
             <SettingsRow
               icon="shield-checkmark-outline"
-              iconBg="#182A3A"
+              iconBg="#E8E8E8"
               iconColor="#0D8A72"
               label="Security"
               subtitle="Password management and biometrics"

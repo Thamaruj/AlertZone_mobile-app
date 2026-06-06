@@ -13,10 +13,10 @@ import { BADGE_DEFINITIONS, BadgeDefinition } from '../services/gamification.ser
 const TIER_ORDER = ['bronze', 'silver', 'gold', 'diamond'] as const;
 
 const TIER_CONFIG: Record<string, { label: string; labelColor: string; bg: string; borderColor: string }> = {
-  bronze:  { label: 'Bronze',  labelColor: '#CD7F32', bg: '#1A0E05', borderColor: '#CD7F3240' },
-  silver:  { label: 'Silver',  labelColor: '#C0C0C0', bg: '#141414', borderColor: '#C0C0C040' },
-  gold:    { label: 'Gold',    labelColor: '#D97706', bg: '#1A1005', borderColor: '#D9770640' },
-  diamond: { label: 'Diamond', labelColor: '#67E8F9', bg: '#051A1F', borderColor: '#67E8F940' },
+  bronze:  { label: 'Bronze',  labelColor: '#CD7F32', bg: '#FFF7ED', borderColor: '#CD7F3240' },
+  silver:  { label: 'Silver',  labelColor: '#9CA3AF', bg: '#F3F4F6', borderColor: '#9CA3AF40' },
+  gold:    { label: 'Gold',    labelColor: '#D97706', bg: '#FEF3C7', borderColor: '#D9770640' },
+  diamond: { label: 'Diamond', labelColor: '#0D8A72', bg: '#E6F7F3', borderColor: '#0D8A7240' },
 };
 
 // ─────────────────────────────────────────────────────────────────
@@ -29,7 +29,7 @@ function BadgeCard({ badge, earned }: { badge: BadgeDefinition; earned: boolean 
       style={{
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: earned ? '#FFFFFF' : '#080F16',
+        backgroundColor: earned ? '#FFFFFF' : '#F9FAFB',
         borderRadius: 16,
         borderWidth: 1,
         borderColor: earned ? badge.color + '30' : '#E8E8E8',
@@ -44,7 +44,7 @@ function BadgeCard({ badge, earned }: { badge: BadgeDefinition; earned: boolean 
           width: 52,
           height: 52,
           borderRadius: 14,
-          backgroundColor: earned ? badge.bg : '#F9FAFB',
+          backgroundColor: earned ? badge.bg : '#F3F4F6',
           alignItems: 'center',
           justifyContent: 'center',
           borderWidth: 1,
@@ -52,13 +52,13 @@ function BadgeCard({ badge, earned }: { badge: BadgeDefinition; earned: boolean 
           marginRight: 14,
         }}
       >
-        <Ionicons name={badge.icon as any} size={24} color={earned ? badge.color : '#E8E8E8'} />
+        <Ionicons name={badge.icon as any} size={24} color={earned ? badge.color : '#B2B2B2'} />
       </View>
 
       {/* Name + description */}
       <View style={{ flex: 1 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 3 }}>
-          <Text style={{ color: earned ? '#FFFFFF' : '#9CA3AF', fontWeight: '700', fontSize: 14 }}>
+          <Text style={{ color: earned ? '#1A1A1A' : '#9CA3AF', fontWeight: '700', fontSize: 14 }}>
             {badge.name}
           </Text>
           {/* Tier chip */}
@@ -67,17 +67,17 @@ function BadgeCard({ badge, earned }: { badge: BadgeDefinition; earned: boolean 
               paddingHorizontal: 7,
               paddingVertical: 2,
               borderRadius: 6,
-              backgroundColor: earned ? tierCfg.bg : '#F9FAFB',
+              backgroundColor: earned ? tierCfg.bg : '#F3F4F6',
               borderWidth: 1,
               borderColor: earned ? tierCfg.borderColor : '#E8E8E8',
             }}
           >
-            <Text style={{ color: earned ? tierCfg.labelColor : '#E8E8E8', fontSize: 9, fontWeight: '700' }}>
+            <Text style={{ color: earned ? tierCfg.labelColor : '#B2B2B2', fontSize: 9, fontWeight: '700' }}>
               {tierCfg.label.toUpperCase()}
             </Text>
           </View>
         </View>
-        <Text style={{ color: earned ? '#6B8A96' : '#2D4050', fontSize: 12, lineHeight: 17 }}>
+        <Text style={{ color: earned ? '#4B5563' : '#6B7280', fontSize: 12, lineHeight: 17 }}>
           {badge.description}
         </Text>
       </View>
@@ -98,7 +98,7 @@ function BadgeCard({ badge, earned }: { badge: BadgeDefinition; earned: boolean 
             <Ionicons name="checkmark" size={16} color={badge.color} />
           </View>
         ) : (
-          <Ionicons name="lock-closed" size={16} color="#E8E8E8" />
+          <Ionicons name="lock-closed" size={16} color="#B2B2B2" />
         )}
       </View>
     </View>
@@ -121,11 +121,11 @@ function EarnedBadgeGrid({ earnedBadges }: { earnedBadges: BadgeDefinition[] }) 
           alignItems: 'center',
         }}
       >
-        <Ionicons name="ribbon-outline" size={36} color="#E8E8E8" />
-        <Text style={{ color: '#9CA3AF', fontSize: 14, fontWeight: '600', marginTop: 10 }}>
+        <Ionicons name="ribbon-outline" size={36} color="#B2B2B2" />
+        <Text style={{ color: '#1A1A1A', fontSize: 14, fontWeight: '600', marginTop: 10 }}>
           No badges earned yet
         </Text>
-        <Text style={{ color: '#2D4050', fontSize: 12, textAlign: 'center', marginTop: 6, lineHeight: 18 }}>
+        <Text style={{ color: '#6B7280', fontSize: 12, textAlign: 'center', marginTop: 6, lineHeight: 18 }}>
           Get your reports accepted by authorities{'\n'}to start earning badges!
         </Text>
       </View>
@@ -157,7 +157,7 @@ function EarnedBadgeGrid({ earnedBadges }: { earnedBadges: BadgeDefinition[] }) 
                   marginBottom: 6,
                   shadowColor: badge.color,
                   shadowOffset: { width: 0, height: 0 },
-                  shadowOpacity: 0.5,
+                  shadowOpacity: 0.2,
                   shadowRadius: 8,
                   elevation: 4,
                 }}
@@ -165,7 +165,7 @@ function EarnedBadgeGrid({ earnedBadges }: { earnedBadges: BadgeDefinition[] }) 
                 <Ionicons name={badge.icon as any} size={28} color={badge.color} />
               </View>
               <Text
-                style={{ color: '#9CA3AF', fontSize: 10, textAlign: 'center', lineHeight: 13 }}
+                style={{ color: '#6B7280', fontSize: 10, textAlign: 'center', lineHeight: 13 }}
                 numberOfLines={2}
               >
                 {badge.name}
@@ -202,7 +202,7 @@ export default function BadgesScreen() {
   }));
 
   return (
-    <LinearGradient colors={['#F5F5F5', '#FAFAFA', '#F5F5F5']} style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: '#F5F5F5' }}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 60 }}
@@ -222,7 +222,7 @@ export default function BadgesScreen() {
               width: 40,
               height: 40,
               borderRadius: 12,
-              backgroundColor: '#1A1A1A',
+              backgroundColor: '#FFFFFF',
               borderWidth: 1,
               borderColor: '#E8E8E8',
               alignItems: 'center',
@@ -234,14 +234,14 @@ export default function BadgesScreen() {
           </Pressable>
           <View style={{ flex: 1 }}>
             <Text style={{ color: '#1A1A1A', fontSize: 22, fontWeight: '800' }}>Badges</Text>
-            <Text style={{ color: '#4A6E7A', fontSize: 13, marginTop: 1 }}>
+            <Text style={{ color: '#6B7280', fontSize: 13, marginTop: 1 }}>
               {earnedBadges.length} of {BADGE_DEFINITIONS.length} earned
             </Text>
           </View>
           {/* Points chip */}
           <View
             style={{
-              backgroundColor: '#1A1A1A',
+              backgroundColor: '#FFFFFF',
               borderRadius: 20,
               paddingHorizontal: 12,
               paddingVertical: 6,
@@ -273,7 +273,7 @@ export default function BadgesScreen() {
         <View style={{ paddingHorizontal: 20, marginBottom: 28 }}>
           <View
             style={{
-              backgroundColor: '#1A1A1A',
+              backgroundColor: '#FFFFFF',
               borderRadius: 16,
               padding: 16,
               borderWidth: 1,
@@ -281,7 +281,7 @@ export default function BadgesScreen() {
             }}
           >
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-              <Text style={{ color: '#9CA3AF', fontSize: 12, fontWeight: '600' }}>
+              <Text style={{ color: '#6B7280', fontSize: 12, fontWeight: '600' }}>
                 Collection Progress
               </Text>
               <Text style={{ color: '#0D8A72', fontSize: 12, fontWeight: '700' }}>
@@ -386,12 +386,12 @@ export default function BadgesScreen() {
           }}
         >
           <Ionicons name="information-circle-outline" size={18} color="#0D8A72" style={{ marginTop: 1 }} />
-          <Text style={{ color: '#5A8A96', fontSize: 12, lineHeight: 18, flex: 1 }}>
+          <Text style={{ color: '#0D8A72', fontSize: 12, lineHeight: 18, flex: 1 }}>
             Earn <Text style={{ color: '#0D8A72', fontWeight: '700' }}>10 points</Text> for every
             report accepted by authorities. Points accumulate and unlock higher-tier badges.
           </Text>
         </View>
       </ScrollView>
-    </LinearGradient>
+    </View>
   );
 }
