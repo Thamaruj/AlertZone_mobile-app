@@ -341,6 +341,7 @@ export default function ReportScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user, profile } = useAuth();
+  const { colors, isDark } = useTheme();
   const mapRef = useRef<MapView>(null);
 
   // ── Location state ──
@@ -844,8 +845,6 @@ export default function ReportScreen() {
   }
 
   const canSubmit = !!selectedCategory && description.trim().length > 10;
-
-  const { colors, isDark } = useTheme();
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
