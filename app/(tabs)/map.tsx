@@ -50,15 +50,7 @@ interface ReportPin {
 // ─────────────────────────────────────────────
 // Constants
 // ─────────────────────────────────────────────
-const FILTER_CHIPS = [
-  { id: 'all', label: 'All', icon: 'warning-outline', color: '#D97706' },
-  { id: 'road_traffic', label: 'Roads', icon: 'car-outline', color: '#0D8A72' },
-  { id: 'water_drainage', label: 'Water', icon: 'water-outline', color: '#3B82F6' },
-  { id: 'waste_environment', label: 'Waste', icon: 'trash-outline', color: '#059669' },
-  { id: 'social_safety', label: 'Safety', icon: 'shield-outline', color: '#7C3AED' },
-  { id: 'bridge_structural', label: 'Structural', icon: 'git-network-outline', color: '#D97706' },
-  { id: 'other', label: 'Other', icon: 'help-circle-outline', color: '#6B7280' },
-];
+
 
 const DEFAULT_REGION = {
   latitude: 6.8900,
@@ -182,9 +174,7 @@ export default function MapScreen() {
   const { user, profile } = useAuth();
 
   const [reports, setReports] = useState<ReportPin[]>([]);
-  const [activeFilter, setActiveFilter] = useState('all');
   const [selectedPin, setSelectedPin] = useState<ReportPin | null>(null);
-  const [showDropdown, setShowDropdown] = useState(false);
   const [region, setRegion] = useState(DEFAULT_REGION);
   const [locationGranted, setLocationGranted] = useState(false);
   const [userLocation, setUserLocation] = useState<{ latitude: number, longitude: number } | null>(null);
@@ -361,19 +351,7 @@ export default function MapScreen() {
     return dist <= radiusKm;
   });
 
-  const counts = reportsInRadius.reduce((acc, pin) => {
-    acc[pin.categoryId] = (acc[pin.categoryId] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-
-  const filteredPins = reportsInRadius.filter((pin) => {
-    if (params.id === pin.id || selectedPin?.id === pin.id) return true;
-    const matchesCategory = activeFilter === 'all' || pin.categoryId === activeFilter;
-    return matchesCategory;
-  });
-
-  const activeChip = FILTER_CHIPS.find(c => c.id === activeFilter) || FILTER_CHIPS[0];
-  const activeCount = activeFilter === 'all' ? reportsInRadius.length : (counts[activeFilter] || 0);
+  const filteredPins = reportsInRadius;
 
   const processedPins = filteredPins.map(pin => ({
     ...pin,
@@ -421,35 +399,29 @@ export default function MapScreen() {
         ))}
       </MapView>
 
-      <View style={{ position: 'absolute', top: insets.top + 8, left: 0, right: 0, paddingHorizontal: 16 }}>
-        <View style={{ flexDirection: 'row', gap: 8, marginBottom: 10, zIndex: 10 }}>
-          {/* Dropdown Selector Button */}
-          <Pressable
-            onPress={() => setShowDropdown(!showDropdown)}
-            style={{
-              flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-              backgroundColor: colors.card, borderRadius: 14,
-              paddingHorizontal: 14, paddingVertical: 12,
-              borderWidth: 1, borderColor: colors.border,
-              shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.06, shadowRadius: 6, elevation: 4,
-            }}
-            className="active:opacity-75"
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <Ionicons name={activeChip.icon as any} size={18} color={activeChip.color} />
-              <Text style={{ color: colors.text, fontSize: 14, fontWeight: '600' }}>
-                {activeChip.label} {activeCount > 0 ? `(${activeCount})` : ''}
-              </Text>
-            </View>
-            <Ionicons name={showDropdown ? "chevron-up" : "chevron-down"} size={18} color={colors.textSecondary} />
-          </Pressable>
+      {/* Tap outside backdrop overlay to close nearby list */}
+      {isListOpen && (
+        <Pressable
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'transparent',
+            zIndex: 5,
+          }}
+          onPress={() => setIsListOpen(false)}
+        />
+      )}
 
+      <View style={{ position: 'absolute', top: insets.top + 8, zIndex: 10, left: 0, right: 0, paddingHorizontal: 16 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 10, zIndex: 10 }}>
           {/* List Toggle Button */}
           <Pressable
-            onPress={() => { setIsListOpen(!isListOpen); setShowDropdown(false); }}
+            onPress={() => { setIsListOpen(!isListOpen); }}
             style={{
-              backgroundColor: colors.card, width: 44, borderRadius: 14,
+              backgroundColor: colors.card, width: 44, height: 44, borderRadius: 14,
               alignItems: 'center', justifyContent: 'center',
               borderWidth: 1, borderColor: colors.border,
               shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
@@ -460,53 +432,6 @@ export default function MapScreen() {
             <Ionicons name={isListOpen ? "map-outline" : "list-outline"} size={20} color={colors.primary} />
           </Pressable>
         </View>
-
-        {/* Dropdown Floating Options Card */}
-        {showDropdown && (
-          <View
-            style={{
-              position: 'absolute', top: 52, left: 16, right: 68,
-              backgroundColor: colors.card, borderRadius: 14,
-              borderWidth: 1, borderColor: colors.border,
-              paddingVertical: 6,
-              shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.1, shadowRadius: 10, elevation: 8,
-              zIndex: 100,
-            }}
-          >
-            {FILTER_CHIPS.map((chip) => {
-              const isSelected = activeFilter === chip.id;
-              const count = chip.id === 'all' ? reportsInRadius.length : (counts[chip.id] || 0);
-              return (
-                <Pressable
-                  key={chip.id}
-                  onPress={() => {
-                    setActiveFilter(chip.id);
-                    setSelectedPin(null);
-                    setShowDropdown(false);
-                  }}
-                  style={({ pressed }) => ({
-                    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-                    paddingHorizontal: 16, paddingVertical: 10,
-                    backgroundColor: isSelected ? colors.primary + '12' : (pressed ? colors.background : 'transparent'),
-                  })}
-                >
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                    <Ionicons name={chip.icon as any} size={16} color={chip.color} />
-                    <Text style={{ color: isSelected ? colors.primary : colors.text, fontSize: 13, fontWeight: isSelected ? '700' : '500' }}>
-                      {chip.label}
-                    </Text>
-                  </View>
-                  <View style={{ backgroundColor: isSelected ? colors.primary : colors.border, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 10 }}>
-                    <Text style={{ color: isSelected ? '#FFFFFF' : colors.textSecondary, fontSize: 10, fontWeight: '700' }}>
-                      {count}
-                    </Text>
-                  </View>
-                </Pressable>
-              );
-            })}
-          </View>
-        )}
 
         {isListOpen && (
           <View style={{

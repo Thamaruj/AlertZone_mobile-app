@@ -94,7 +94,7 @@
 
 ### Map Screen (`map.tsx`) ✅ LIVE
 - [x] Issue pins — live Firestore subscription (`onSnapshot`, resolved/rejected reports excluded) ✅
-- [x] Category dropdown filter selector — choose active issue categories to filter Firestore pins in real-time ✅
+- [x] Category dropdown filter selector — choose active issue categories to filter Firestore pins in real-time (pure text, customized rounded card, no dividers/icons, active coral highlighting) ✅
 - [x] Nearby Issues List — vertical list overlay showing all reports in alert radius, styled identical to the home screen issues list ✅
 - [x] Category Counts — shows number of reports by type within radius ✅
 - [x] Navigation Support — centers on specific report if params provided ✅

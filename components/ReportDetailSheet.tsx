@@ -959,7 +959,7 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
                       })}
                     >
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                        <Ionicons name="navigate" size={18} color="white" />
+                        <Ionicons name="navigate" size={18} color={colors.primary}/>
                         <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 13 }} numberOfLines={1}>
                           Open in Maps 
                         </Text>
