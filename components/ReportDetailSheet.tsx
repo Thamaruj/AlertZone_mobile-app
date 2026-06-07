@@ -199,6 +199,15 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
     }
   };
 
+  const handleScroll = (event: any) => {
+    const contentOffset = event.nativeEvent.contentOffset.x;
+    const layoutWidth = event.nativeEvent.layoutMeasurement.width;
+    if (layoutWidth > 0) {
+      const index = Math.round(contentOffset / layoutWidth);
+      setActiveImageIndex(index);
+    }
+  };
+
   const [report, setReport] = useState<Report | null>(null);
   const [hasUpvoted, setHasUpvoted] = useState(false);
   const [isUpvoting, setIsUpvoting] = useState(false);
@@ -209,6 +218,8 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [showAllComments, setShowAllComments] = useState(false);
   const [asOfTime, setAsOfTime] = useState('');
+  const imageScrollViewRef = useRef<ScrollView>(null);
+  const [imageWidth, setImageWidth] = useState(0);
 
   // Upvote confirmation modal states
   const [upvoteModalType, setUpvoteModalType] = useState<'add' | 'remove' | null>(null);
@@ -268,6 +279,7 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
 
     setLoading(true);
     setActiveImageIndex(0);
+    imageScrollViewRef.current?.scrollTo({ x: 0, animated: false });
     setShowAllComments(false);
 
     const unsubReport = onSnapshot(doc(db, 'reports', reportId), (snap) => {
@@ -589,14 +601,30 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
                 </View>
 
                 {/* ── Image Carousel ── */}
-                {report.imageUrls?.length > 0 && (
-                  <View style={{ marginHorizontal: 20, marginBottom: 16, borderRadius: 18, overflow: 'hidden', height: 200 }}>
-                    <Image
-                      source={{ uri: report.imageUrls[activeImageIndex] }}
-                      style={{ width: '100%', height: '100%' }}
-                      resizeMode="cover"
-                    />
-                    {report.imageUrls.length > 1 && (
+                {report.imageUrls && report.imageUrls.length > 0 && (
+                  <View 
+                    style={{ marginHorizontal: 20, marginBottom: 16, borderRadius: 18, overflow: 'hidden', height: 200, position: 'relative' }}
+                    onLayout={(e) => setImageWidth(e.nativeEvent.layout.width)}
+                  >
+                    <ScrollView
+                      ref={imageScrollViewRef}
+                      horizontal
+                      pagingEnabled
+                      showsHorizontalScrollIndicator={false}
+                      onMomentumScrollEnd={handleScroll}
+                      scrollEventThrottle={16}
+                    >
+                      {report.imageUrls.map((url, index) => (
+                        <View key={index} style={{ width: imageWidth, height: 200 }}>
+                          <Image
+                            source={{ uri: url }}
+                            style={{ width: '100%', height: '100%' }}
+                            resizeMode="cover"
+                          />
+                        </View>
+                      ))}
+                    </ScrollView>
+                    {report.imageUrls.length > 1 && imageWidth > 0 && (
                       <>
                         <View
                           style={{
@@ -605,7 +633,13 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
                           }}
                         >
                           {report.imageUrls.map((_, i) => (
-                            <Pressable key={i} onPress={() => setActiveImageIndex(i)}>
+                            <Pressable
+                              key={i}
+                              onPress={() => {
+                                setActiveImageIndex(i);
+                                imageScrollViewRef.current?.scrollTo({ x: i * imageWidth, animated: true });
+                              }}
+                            >
                               <View
                                 style={{
                                   width: i === activeImageIndex ? 20 : 6,
@@ -618,7 +652,11 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
                         </View>
                         {activeImageIndex > 0 && (
                           <Pressable
-                            onPress={() => setActiveImageIndex(activeImageIndex - 1)}
+                            onPress={() => {
+                              const nextIdx = activeImageIndex - 1;
+                              setActiveImageIndex(nextIdx);
+                              imageScrollViewRef.current?.scrollTo({ x: nextIdx * imageWidth, animated: true });
+                            }}
                             style={{ position: 'absolute', left: 10, top: 84, backgroundColor: colors.modalBackdrop, borderRadius: 16, padding: 6 }}
                           >
                             <Ionicons name="chevron-back" size={20} color="white" />
@@ -626,7 +664,11 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
                         )}
                         {activeImageIndex < report.imageUrls.length - 1 && (
                           <Pressable
-                            onPress={() => setActiveImageIndex(activeImageIndex + 1)}
+                            onPress={() => {
+                              const nextIdx = activeImageIndex + 1;
+                              setActiveImageIndex(nextIdx);
+                              imageScrollViewRef.current?.scrollTo({ x: nextIdx * imageWidth, animated: true });
+                            }}
                             style={{ position: 'absolute', right: 10, top: 84, backgroundColor: colors.modalBackdrop, borderRadius: 16, padding: 6 }}
                           >
                             <Ionicons name="chevron-forward" size={20} color="white" />
@@ -917,9 +959,9 @@ export default function ReportDetailSheet({ reportId, onClose }: Props) {
                       })}
                     >
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                        <Ionicons name="navigate" size={18} color="white" />
-                        <Text style={{ color: 'white', fontWeight: '700', fontSize: 13 }} numberOfLines={1}>
-                          Open in Maps
+                        <Ionicons name="navigate" size={18} color={colors.primary}/>
+                        <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 13 }} numberOfLines={1}>
+                          Open in Maps 
                         </Text>
                       </View>
                     </Pressable>

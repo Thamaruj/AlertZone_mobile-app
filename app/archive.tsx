@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -68,6 +68,14 @@ const CATEGORIES = [
   { id: 'bridge_structural', label: 'Bridge & Structural',icon: 'git-network-outline',   color: '#D97706' },
   { id: 'other',             label: 'Other',              icon: 'help-circle-outline',   color: '#94A3B8' },
 ] as const;
+
+const STATUS_FILTERS = [
+  { id: 'all',      label: 'All Statuses' },
+  { id: 'resolved', label: 'Resolved' },
+  { id: 'rejected', label: 'Rejected' },
+] as const;
+
+type StatusFilterId = typeof STATUS_FILTERS[number]['id'];
 
 const DATE_FILTERS = [
   { id: 'all',    label: 'All Time' },
@@ -342,6 +350,14 @@ function ReportCard({ report, onPress }: { report: Report; onPress: () => void }
 // ─────────────────────────────────────────────
 function ReportDetailModal({ report, onClose }: { report: Report | null; onClose: () => void }) {
   const { colors, isDark } = useTheme();
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const imageScrollViewRef = useRef<ScrollView>(null);
+  const [imageWidth, setImageWidth] = useState(0);
+
+  useEffect(() => {
+    setActiveImageIndex(0);
+    imageScrollViewRef.current?.scrollTo({ x: 0, animated: false });
+  }, [report]);
 
   const getStatusColorConfig = (status: ReportStatus) => {
     switch (status) {
@@ -364,6 +380,15 @@ function ReportDetailModal({ report, onClose }: { report: Report | null; onClose
   const cfg = getStatusColorConfig(report.status);
   const timelineIndex = TIMELINE_STATUSES.indexOf(report.status);
 
+  const handleScroll = (event: any) => {
+    const contentOffset = event.nativeEvent.contentOffset.x;
+    const layoutWidth = event.nativeEvent.layoutMeasurement.width;
+    if (layoutWidth > 0) {
+      const index = Math.round(contentOffset / layoutWidth);
+      setActiveImageIndex(index);
+    }
+  };
+
   return (
     <Modal visible={!!report} animationType="slide" transparent={false}>
       <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -378,9 +403,83 @@ function ReportDetailModal({ report, onClose }: { report: Report | null; onClose
             </View>
           </View>
 
-          {report.imageUrls?.[0] && (
-            <View className="mx-5 mb-4 rounded-2xl overflow-hidden" style={{ height: 180 }}>
-              <Image source={{ uri: report.imageUrls[0] }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+          {/* Image Carousel */}
+          {report.imageUrls && report.imageUrls.length > 0 && (
+            <View 
+              className="mx-5 mb-4 rounded-2xl overflow-hidden" 
+              style={{ height: 180, position: 'relative' }}
+              onLayout={(e) => setImageWidth(e.nativeEvent.layout.width)}
+            >
+              <ScrollView
+                ref={imageScrollViewRef}
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                onMomentumScrollEnd={handleScroll}
+                scrollEventThrottle={16}
+              >
+                {report.imageUrls.map((url, index) => (
+                  <View key={index} style={{ width: imageWidth, height: 180 }}>
+                    <Image
+                      source={{ uri: url }}
+                      style={{ width: '100%', height: '100%' }}
+                      resizeMode="cover"
+                    />
+                  </View>
+                ))}
+              </ScrollView>
+              {report.imageUrls.length > 1 && imageWidth > 0 && (
+                <>
+                  <View
+                    style={{
+                      position: 'absolute', bottom: 10, left: 0, right: 0,
+                      flexDirection: 'row', justifyContent: 'center', gap: 6,
+                    }}
+                  >
+                    {report.imageUrls.map((_, i) => (
+                      <Pressable
+                        key={i}
+                        onPress={() => {
+                          setActiveImageIndex(i);
+                          imageScrollViewRef.current?.scrollTo({ x: i * imageWidth, animated: true });
+                        }}
+                      >
+                        <View
+                          style={{
+                            width: i === activeImageIndex ? 20 : 6,
+                            height: 6, borderRadius: 3,
+                            backgroundColor: i === activeImageIndex ? colors.primary : 'rgba(255,255,255,0.4)',
+                          }}
+                        />
+                      </Pressable>
+                    ))}
+                  </View>
+                  {activeImageIndex > 0 && (
+                    <Pressable
+                      onPress={() => {
+                        const nextIdx = activeImageIndex - 1;
+                        setActiveImageIndex(nextIdx);
+                        imageScrollViewRef.current?.scrollTo({ x: nextIdx * imageWidth, animated: true });
+                      }}
+                      style={{ position: 'absolute', left: 10, top: 74, backgroundColor: colors.modalBackdrop, borderRadius: 16, padding: 6 }}
+                    >
+                      <Ionicons name="chevron-back" size={20} color="white" />
+                    </Pressable>
+                  )}
+                  {activeImageIndex < report.imageUrls.length - 1 && (
+                    <Pressable
+                      onPress={() => {
+                        const nextIdx = activeImageIndex + 1;
+                        setActiveImageIndex(nextIdx);
+                        imageScrollViewRef.current?.scrollTo({ x: nextIdx * imageWidth, animated: true });
+                      }}
+                      style={{ position: 'absolute', right: 10, top: 74, backgroundColor: colors.modalBackdrop, borderRadius: 16, padding: 6 }}
+                    >
+                      <Ionicons name="chevron-forward" size={20} color="white" />
+                    </Pressable>
+                  )}
+                </>
+              )}
             </View>
           )}
 
@@ -520,6 +619,7 @@ export default function ArchiveScreen() {
   const [reports, setReports] = useState<Report[]>([]);
   const [firestoreLoading, setFirestoreLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState<string>('all');
+  const [activeStatusFilter, setActiveStatusFilter] = useState<StatusFilterId>('all');
   const [activeDateFilter, setActiveDateFilter] = useState<DateFilterId>('all');
   
   const [customStartDate, setCustomStartDate] = useState<Date | null>(null);
@@ -563,6 +663,11 @@ export default function ArchiveScreen() {
     return unsub;
   }, [user]);
 
+  // ── Reset visible count when any filter changes ──
+  useEffect(() => {
+    setVisibleCount(INITIAL_PAGE_SIZE);
+  }, [activeCategory, activeStatusFilter, activeDateFilter, customStartDate, customEndDate]);
+
   const clearCustomRange = () => {
     setCustomStartDate(null);
     setCustomEndDate(null);
@@ -572,6 +677,14 @@ export default function ArchiveScreen() {
   const filtered = reports.filter((r) => {
     // 1. Category filter
     if (activeCategory !== 'all' && r.categoryId !== activeCategory) {
+      return false;
+    }
+
+    // 1b. Status filter
+    if (activeStatusFilter === 'resolved' && r.status !== 'RESOLVED') {
+      return false;
+    }
+    if (activeStatusFilter === 'rejected' && r.status !== 'REJECTED') {
       return false;
     }
 
@@ -667,6 +780,36 @@ export default function ArchiveScreen() {
                   />
                   <Text className="text-xs font-semibold" style={{ color: isActive ? '#F5F5F5' : colors.textSecondary }}>
                     {cat.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </View>
+
+        {/* ── Status Filters ── */}
+        <View className="mb-4">
+          <Text className="text-xs font-bold px-5 mb-2 uppercase tracking-wide" style={{ color: colors.textSecondary }}>Status</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}
+          >
+            {STATUS_FILTERS.map((sf) => {
+              const isActive = activeStatusFilter === sf.id;
+              return (
+                <Pressable
+                  key={sf.id}
+                  onPress={() => setActiveStatusFilter(sf.id)}
+                  className="px-4 py-2 rounded-full"
+                  style={{
+                    backgroundColor: isActive ? colors.primary : colors.card,
+                    borderWidth: 1,
+                    borderColor: isActive ? colors.primary : colors.border,
+                  }}
+                >
+                  <Text className="text-xs font-semibold" style={{ color: isActive ? '#F5F5F5' : colors.textSecondary }}>
+                    {sf.label}
                   </Text>
                 </Pressable>
               );

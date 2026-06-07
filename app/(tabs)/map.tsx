@@ -14,10 +14,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useTheme } from '../../config/themeContext';
 import { DARK_MAP_STYLE } from '../../config/mapStyle';
 import {
+  Image,
   Pressable,
   ScrollView,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import MapView, { Circle, Marker, PROVIDER_GOOGLE } from 'react-native-maps';
@@ -44,20 +44,13 @@ interface ReportPin {
   address: string;
   upvoteCount: number;
   createdAt: any;
+  image?: string;
 }
 
 // ─────────────────────────────────────────────
 // Constants
 // ─────────────────────────────────────────────
-const FILTER_CHIPS = [
-  { id: 'all', label: 'All', icon: 'warning-outline', color: '#D97706' },
-  { id: 'road_traffic', label: 'Roads', icon: 'car-outline', color: '#0D8A72' },
-  { id: 'water_drainage', label: 'Water', icon: 'water-outline', color: '#3B82F6' },
-  { id: 'waste_environment', label: 'Waste', icon: 'trash-outline', color: '#059669' },
-  { id: 'social_safety', label: 'Safety', icon: 'shield-outline', color: '#7C3AED' },
-  { id: 'bridge_structural', label: 'Structural', icon: 'git-network-outline', color: '#D97706' },
-  { id: 'other', label: 'Other', icon: 'help-circle-outline', color: '#6B7280' },
-];
+
 
 const DEFAULT_REGION = {
   latitude: 6.8900,
@@ -75,6 +68,102 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 // ─────────────────────────────────────────────
+// Nearby List Row Component
+// ─────────────────────────────────────────────
+function NearbyListRow({ item, onPress }: { item: ReportPin & { distance?: number }; onPress: () => void }) {
+  const { colors } = useTheme();
+  const statusColor = STATUS_COLOR[item.status] || '#D97706';
+  const statusBg = statusColor + '14';
+  
+  const formatDistance = (dist: number) => {
+    if (dist < 1) {
+      return `${Math.round(dist * 1000)}m`;
+    }
+    return `${dist.toFixed(1)}km`;
+  };
+
+  return (
+    <Pressable
+      onPress={onPress}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 12,
+        backgroundColor: colors.card,
+        borderRadius: 14,
+        borderWidth: 1,
+        borderColor: colors.border,
+        marginBottom: 10,
+      }}
+      className="active:opacity-85"
+    >
+      {/* Image / Icon preview */}
+      <View
+        style={{
+          width: 60,
+          height: 60,
+          borderRadius: 12,
+          overflow: 'hidden',
+          backgroundColor: colors.background,
+          marginRight: 12,
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        {item.image ? (
+          <Image source={{ uri: item.image }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+        ) : (
+          <View
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 10,
+              backgroundColor: item.categoryColor + '18',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Ionicons name={item.categoryIcon as any} size={18} color={item.categoryColor} />
+          </View>
+        )}
+      </View>
+
+      {/* Title & Details */}
+      <View style={{ flex: 1, marginRight: 8 }}>
+        <Text style={{ color: colors.text, fontWeight: 'bold', fontSize: 14 }} numberOfLines={1}>
+          {item.title}
+        </Text>
+        <Text style={{ color: colors.textSecondary, fontSize: 11, marginTop: 2 }} numberOfLines={1}>
+          {item.address || 'Sri Lanka'}
+        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+            <Ionicons name="location-outline" size={12} color={colors.primary} />
+            <Text style={{ color: colors.primary, fontSize: 11, fontWeight: '600' }}>
+              {item.distance !== undefined ? formatDistance(item.distance) : 'Nearby'}
+            </Text>
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+            <Ionicons name="arrow-up-circle-outline" size={12} color={colors.textSecondary} />
+            <Text style={{ color: colors.textSecondary, fontSize: 11 }}>
+              {item.upvoteCount ?? 0} upvotes
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Status Pill & Arrow */}
+      <View style={{ alignItems: 'flex-end', gap: 6 }}>
+        <View style={{ backgroundColor: statusBg, borderWidth: 1, borderColor: statusColor + '40', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12 }}>
+          <Text style={{ color: statusColor, fontSize: 10, fontWeight: 'bold' }}>{item.status}</Text>
+        </View>
+        <Ionicons name="chevron-forward" size={16} color={colors.border} />
+      </View>
+    </Pressable>
+  );
+}
+
+// ─────────────────────────────────────────────
 // Map Screen
 // ─────────────────────────────────────────────
 export default function MapScreen() {
@@ -85,9 +174,7 @@ export default function MapScreen() {
   const { user, profile } = useAuth();
 
   const [reports, setReports] = useState<ReportPin[]>([]);
-  const [activeFilter, setActiveFilter] = useState('all');
   const [selectedPin, setSelectedPin] = useState<ReportPin | null>(null);
-  const [searchText, setSearchText] = useState('');
   const [region, setRegion] = useState(DEFAULT_REGION);
   const [locationGranted, setLocationGranted] = useState(false);
   const [userLocation, setUserLocation] = useState<{ latitude: number, longitude: number } | null>(null);
@@ -181,6 +268,7 @@ export default function MapScreen() {
             address: data.location.address ?? '',
             upvoteCount: data.upvoteCount ?? 0,
             createdAt: data.createdAt,
+            image: data.imageUrls && data.imageUrls.length > 0 ? data.imageUrls[0] : undefined,
           } as ReportPin;
         })
         .filter(Boolean) as ReportPin[];
@@ -263,19 +351,12 @@ export default function MapScreen() {
     return dist <= radiusKm;
   });
 
-  const counts = reportsInRadius.reduce((acc, pin) => {
-    acc[pin.categoryId] = (acc[pin.categoryId] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+  const filteredPins = reportsInRadius;
 
-  const filteredPins = reportsInRadius.filter((pin) => {
-    if (params.id === pin.id || selectedPin?.id === pin.id) return true;
-    const matchesCategory = activeFilter === 'all' || pin.categoryId === activeFilter;
-    const matchesSearch = searchText.trim() === '' ||
-      pin.title.toLowerCase().includes(searchText.toLowerCase()) ||
-      pin.address.toLowerCase().includes(searchText.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
+  const processedPins = filteredPins.map(pin => ({
+    ...pin,
+    distance: userLocation ? getDistance(userLocation.latitude, userLocation.longitude, pin.latitude, pin.longitude) : undefined
+  }));
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -318,29 +399,29 @@ export default function MapScreen() {
         ))}
       </MapView>
 
-      <View style={{ position: 'absolute', top: insets.top + 8, left: 0, right: 0, paddingHorizontal: 16 }}>
-        <View style={{ flexDirection: 'row', gap: 8, marginBottom: 10 }}>
-          <View style={{
-            flex: 1, flexDirection: 'row', alignItems: 'center',
-            backgroundColor: colors.card, borderRadius: 14,
-            paddingHorizontal: 14, paddingVertical: 10,
-            borderWidth: 1, borderColor: colors.border,
-            shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.06, shadowRadius: 6, elevation: 4,
-          }}>
-            <Ionicons name="search-outline" size={18} color={colors.textSecondary} />
-            <TextInput
-              placeholder="Search location or issue…"
-              placeholderTextColor={colors.textMuted}
-              value={searchText}
-              onChangeText={setSearchText}
-              style={{ flex: 1, color: colors.text, fontSize: 14, marginLeft: 10, padding: 0 }}
-            />
-          </View>
+      {/* Tap outside backdrop overlay to close nearby list */}
+      {isListOpen && (
+        <Pressable
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'transparent',
+            zIndex: 5,
+          }}
+          onPress={() => setIsListOpen(false)}
+        />
+      )}
+
+      <View style={{ position: 'absolute', top: insets.top + 8, zIndex: 10, left: 0, right: 0, paddingHorizontal: 16 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 10, zIndex: 10 }}>
+          {/* List Toggle Button */}
           <Pressable
-            onPress={() => setIsListOpen(!isListOpen)}
+            onPress={() => { setIsListOpen(!isListOpen); }}
             style={{
-              backgroundColor: colors.card, paddingHorizontal: 16, borderRadius: 14,
+              backgroundColor: colors.card, width: 44, height: 44, borderRadius: 14,
               alignItems: 'center', justifyContent: 'center',
               borderWidth: 1, borderColor: colors.border,
               shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
@@ -352,36 +433,6 @@ export default function MapScreen() {
           </Pressable>
         </View>
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <View style={{ flexDirection: 'row', gap: 8, paddingBottom: 5 }}>
-            {FILTER_CHIPS.map((chip) => {
-              const isActive = activeFilter === chip.id;
-              const count = chip.id === 'all' ? reportsInRadius.length : (counts[chip.id] || 0);
-              return (
-                <Pressable
-                  key={chip.id}
-                  onPress={() => { setActiveFilter(chip.id); setSelectedPin(null); }}
-                  className="active:opacity-80"
-                  style={{
-                    flexDirection: 'row', alignItems: 'center', gap: 6,
-                    paddingHorizontal: 12, paddingVertical: 7,
-                    backgroundColor: isActive ? colors.card : colors.card + 'EB',
-                    borderRadius: 20, borderWidth: 1,
-                    borderColor: isActive ? chip.color : colors.border,
-                    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-                    shadowOpacity: 0.04, shadowRadius: 3, elevation: 2,
-                  }}
-                >
-                  <Ionicons name={chip.icon as any} size={13} color={isActive ? chip.color : colors.textSecondary} />
-                  <Text style={{ color: isActive ? chip.color : colors.textSecondary, fontSize: 12, fontWeight: '600' }}>
-                    {chip.label} {count > 0 ? `(${count})` : ''}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        </ScrollView>
-
         {isListOpen && (
           <View style={{
             marginTop: 10, backgroundColor: colors.card, borderRadius: 16,
@@ -392,19 +443,20 @@ export default function MapScreen() {
           }}>
             <View style={{ padding: 12, borderBottomWidth: 1, borderBottomColor: colors.border }}>
               <Text style={{ color: colors.text, fontWeight: 'bold', fontSize: 13 }}>
-                Nearby Reports ({filteredPins.length})
+                Nearby Reports ({processedPins.length})
               </Text>
             </View>
-            <ScrollView showsVerticalScrollIndicator={false}>
-              {filteredPins.length === 0 ? (
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 12 }}>
+              {processedPins.length === 0 ? (
                 <View style={{ padding: 30, alignItems: 'center' }}>
-                  <Ionicons name="search-outline" size={30} color={colors.border} />
+                  <Ionicons name="warning-outline" size={30} color={colors.border} />
                   <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 10 }}>No reports found in this area.</Text>
                 </View>
               ) : (
-                filteredPins.map((item) => (
-                  <Pressable
+                processedPins.map((item) => (
+                  <NearbyListRow
                     key={item.id}
+                    item={item}
                     onPress={() => {
                       setSelectedPin(item);
                       setIsListOpen(false);
@@ -415,25 +467,7 @@ export default function MapScreen() {
                         longitudeDelta: 0.01
                       }, 800);
                     }}
-                    style={({ pressed }) => ({
-                      flexDirection: 'row', alignItems: 'center', padding: 14,
-                      backgroundColor: pressed ? colors.background : 'transparent',
-                      borderBottomWidth: 1, borderBottomColor: colors.border
-                    })}
-                  >
-                    <View style={{
-                      width: 36, height: 36, borderRadius: 10,
-                      backgroundColor: item.categoryColor + '18',
-                      alignItems: 'center', justifyContent: 'center', marginRight: 12
-                    }}>
-                      <Ionicons name={item.categoryIcon as any} size={18} color={item.categoryColor} />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ color: colors.text, fontWeight: '600', fontSize: 13 }} numberOfLines={1}>{item.title}</Text>
-                      <Text style={{ color: colors.textSecondary, fontSize: 11, marginTop: 2 }} numberOfLines={1}>{item.address}</Text>
-                    </View>
-                    <Ionicons name="chevron-forward" size={14} color={colors.border} />
-                  </Pressable>
+                  />
                 ))
               )}
             </ScrollView>

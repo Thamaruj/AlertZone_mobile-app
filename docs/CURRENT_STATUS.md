@@ -1,7 +1,7 @@
 # Current Status — AlertZone Mobile App
 > **Full Log:** [PROJECT_PROGRESS.md](./PROJECT_PROGRESS.md)
 
-> **Last Updated:** 2026-06-06 (Report Card Photo Thumbnails, Address Wrap, Details Category Removal, Nearby Issues Filters & Vertical List, Google Sign-in Cleanup, Caching, Preferences Sync, Biometrics, Upvote Constraints)
+> **Last Updated:** 2026-06-07 (Multi-image carousel in history/archive details, Subtle status bar gradient overlay, Rule of Hooks fix in report screen, Report Card Photo Thumbnails, Address Wrap, Details Category Removal, Nearby Issues Filters & Vertical List, Google Sign-in Cleanup, Caching, Preferences Sync, Biometrics, Upvote Constraints)
 >
 > This document tracks what is done, what is broken, and what remains. Agents MUST read this before starting work.
 
@@ -79,6 +79,7 @@
 - [x] Custom toast configuration (success + error styles)
 - [x] Keyboard-aware forms (KeyboardAvoidingView)
 - [x] Loading states on buttons and screens
+- [x] Subtle status bar gradient overlay in light and dark modes to prevent scrolling content from showing through the status bar content (excluded on map and auth/onboarding screens) ✅
 
 ---
 
@@ -93,8 +94,8 @@
 
 ### Map Screen (`map.tsx`) ✅ LIVE
 - [x] Issue pins — live Firestore subscription (`onSnapshot`, resolved/rejected reports excluded) ✅
-- [x] Filter chips by category — filters active (non-resolved/rejected) Firestore data in real-time ✅
-- [x] Search bar — filters by title or address ✅
+- [x] Category dropdown filter selector — choose active issue categories to filter Firestore pins in real-time (pure text, customized rounded card, no dividers/icons, active coral highlighting) ✅
+- [x] Nearby Issues List — vertical list overlay showing all reports in alert radius, styled identical to the home screen issues list ✅
 - [x] Category Counts — shows number of reports by type within radius ✅
 - [x] Navigation Support — centers on specific report if params provided ✅
 - [x] User area circle (red) around device location ✅
@@ -126,8 +127,11 @@
 ### History Screen (`history.tsx`) ✅ LIVE
 - [x] Report list — live Firestore subscription for current user ✅
 - [x] View on Map — navigate to Map tab and center on report ✅
-- [x] Filters (All/Pending/Fixing/Resolved/Rejected) — filter real data ✅
+- [x] Filters (Pending/Fixing/Resolved/Rejected/All) — default to Pending, All moved to far right ✅
+- [x] Archive warning banners on Resolved and Rejected filters linking directly to the Archive screen ✅
+- [x] Manual archiving support for Rejected reports from both the report card list and the report detail modal ✅
 - [x] Report detail modal — shows real Firestore data ✅
+- [x] Multi-image support (horizontal paging swipeable image carousel with dot navigation, layout-sync, and back/forward chevrons) in history detail modal ✅
 - [x] Status timeline with ASSIGNED stage ✅
 - [x] Real-time updates — modal reflects status changes instantly ✅
 - [x] Human-readable date formatting ✅
@@ -139,9 +143,11 @@
 ### Archive Screen (`archive.tsx`) ✅ NEW
 - [x] Live Firestore subscription filtered to `isArchived == true` for the current user ✅
 - [x] **Category filter chips** — All Categories + 6 specific categories ✅
+- [x] **Status filter chips** — All Statuses / Resolved / Rejected to filter archived reports ✅
 - [x] **Date filter chips** — All Time / Today / Last 7 Days / Last 30 Days / Custom Range ✅
 - [x] **Custom date range** — pure React Native calendar modal, no third-party date picker ✅
 - [x] Report detail modal with status timeline and resolution notes ✅
+- [x] Multi-image support (horizontal paging swipeable image carousel with dot navigation, layout-sync, and back/forward chevrons) in archive detail modal ✅
 - [x] Informative empty state explaining the auto-archive behaviour ✅
 
 ### Profile Screen (`profile.tsx`) ✅
