@@ -127,9 +127,9 @@
 ### History Screen (`history.tsx`) ✅ LIVE
 - [x] Report list — live Firestore subscription for current user ✅
 - [x] View on Map — navigate to Map tab and center on report ✅
-- [x] Filters (All/Pending/Fixing/Resolved/Rejected) — filter real data ✅
+- [x] Filters (Pending/Fixing/Resolved/Rejected/All) — default to Pending, All moved to far right ✅
 - [x] Report detail modal — shows real Firestore data ✅
-- [x] Multi-image support (interactive image carousel with dot navigation and back/forward chevrons) in history detail modal ✅
+- [x] Multi-image support (horizontal paging swipeable image carousel with dot navigation, layout-sync, and back/forward chevrons) in history detail modal ✅
 - [x] Status timeline with ASSIGNED stage ✅
 - [x] Real-time updates — modal reflects status changes instantly ✅
 - [x] Human-readable date formatting ✅
@@ -144,7 +144,7 @@
 - [x] **Date filter chips** — All Time / Today / Last 7 Days / Last 30 Days / Custom Range ✅
 - [x] **Custom date range** — pure React Native calendar modal, no third-party date picker ✅
 - [x] Report detail modal with status timeline and resolution notes ✅
-- [x] Multi-image support (interactive image carousel with dot navigation and back/forward chevrons) in archive detail modal ✅
+- [x] Multi-image support (horizontal paging swipeable image carousel with dot navigation, layout-sync, and back/forward chevrons) in archive detail modal ✅
 - [x] Informative empty state explaining the auto-archive behaviour ✅
 
 ### Profile Screen (`profile.tsx`) ✅

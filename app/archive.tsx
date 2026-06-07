@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -343,9 +343,12 @@ function ReportCard({ report, onPress }: { report: Report; onPress: () => void }
 function ReportDetailModal({ report, onClose }: { report: Report | null; onClose: () => void }) {
   const { colors, isDark } = useTheme();
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const imageScrollViewRef = useRef<ScrollView>(null);
+  const [imageWidth, setImageWidth] = useState(0);
 
   useEffect(() => {
     setActiveImageIndex(0);
+    imageScrollViewRef.current?.scrollTo({ x: 0, animated: false });
   }, [report]);
 
   const getStatusColorConfig = (status: ReportStatus) => {
@@ -369,6 +372,15 @@ function ReportDetailModal({ report, onClose }: { report: Report | null; onClose
   const cfg = getStatusColorConfig(report.status);
   const timelineIndex = TIMELINE_STATUSES.indexOf(report.status);
 
+  const handleScroll = (event: any) => {
+    const contentOffset = event.nativeEvent.contentOffset.x;
+    const layoutWidth = event.nativeEvent.layoutMeasurement.width;
+    if (layoutWidth > 0) {
+      const index = Math.round(contentOffset / layoutWidth);
+      setActiveImageIndex(index);
+    }
+  };
+
   return (
     <Modal visible={!!report} animationType="slide" transparent={false}>
       <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -385,13 +397,30 @@ function ReportDetailModal({ report, onClose }: { report: Report | null; onClose
 
           {/* Image Carousel */}
           {report.imageUrls && report.imageUrls.length > 0 && (
-            <View className="mx-5 mb-4 rounded-2xl overflow-hidden" style={{ height: 180, position: 'relative' }}>
-              <Image
-                source={{ uri: report.imageUrls[activeImageIndex] }}
-                style={{ width: '100%', height: '100%' }}
-                resizeMode="cover"
-              />
-              {report.imageUrls.length > 1 && (
+            <View 
+              className="mx-5 mb-4 rounded-2xl overflow-hidden" 
+              style={{ height: 180, position: 'relative' }}
+              onLayout={(e) => setImageWidth(e.nativeEvent.layout.width)}
+            >
+              <ScrollView
+                ref={imageScrollViewRef}
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                onMomentumScrollEnd={handleScroll}
+                scrollEventThrottle={16}
+              >
+                {report.imageUrls.map((url, index) => (
+                  <View key={index} style={{ width: imageWidth, height: 180 }}>
+                    <Image
+                      source={{ uri: url }}
+                      style={{ width: '100%', height: '100%' }}
+                      resizeMode="cover"
+                    />
+                  </View>
+                ))}
+              </ScrollView>
+              {report.imageUrls.length > 1 && imageWidth > 0 && (
                 <>
                   <View
                     style={{
@@ -400,7 +429,13 @@ function ReportDetailModal({ report, onClose }: { report: Report | null; onClose
                     }}
                   >
                     {report.imageUrls.map((_, i) => (
-                      <Pressable key={i} onPress={() => setActiveImageIndex(i)}>
+                      <Pressable
+                        key={i}
+                        onPress={() => {
+                          setActiveImageIndex(i);
+                          imageScrollViewRef.current?.scrollTo({ x: i * imageWidth, animated: true });
+                        }}
+                      >
                         <View
                           style={{
                             width: i === activeImageIndex ? 20 : 6,
@@ -413,7 +448,11 @@ function ReportDetailModal({ report, onClose }: { report: Report | null; onClose
                   </View>
                   {activeImageIndex > 0 && (
                     <Pressable
-                      onPress={() => setActiveImageIndex(activeImageIndex - 1)}
+                      onPress={() => {
+                        const nextIdx = activeImageIndex - 1;
+                        setActiveImageIndex(nextIdx);
+                        imageScrollViewRef.current?.scrollTo({ x: nextIdx * imageWidth, animated: true });
+                      }}
                       style={{ position: 'absolute', left: 10, top: 74, backgroundColor: colors.modalBackdrop, borderRadius: 16, padding: 6 }}
                     >
                       <Ionicons name="chevron-back" size={20} color="white" />
@@ -421,7 +460,11 @@ function ReportDetailModal({ report, onClose }: { report: Report | null; onClose
                   )}
                   {activeImageIndex < report.imageUrls.length - 1 && (
                     <Pressable
-                      onPress={() => setActiveImageIndex(activeImageIndex + 1)}
+                      onPress={() => {
+                        const nextIdx = activeImageIndex + 1;
+                        setActiveImageIndex(nextIdx);
+                        imageScrollViewRef.current?.scrollTo({ x: nextIdx * imageWidth, animated: true });
+                      }}
                       style={{ position: 'absolute', right: 10, top: 74, backgroundColor: colors.modalBackdrop, borderRadius: 16, padding: 6 }}
                     >
                       <Ionicons name="chevron-forward" size={20} color="white" />
