@@ -128,6 +128,8 @@
 - [x] Report list — live Firestore subscription for current user ✅
 - [x] View on Map — navigate to Map tab and center on report ✅
 - [x] Filters (Pending/Fixing/Resolved/Rejected/All) — default to Pending, All moved to far right ✅
+- [x] Archive warning banners on Resolved and Rejected filters linking directly to the Archive screen ✅
+- [x] Manual archiving support for Rejected reports from both the report card list and the report detail modal ✅
 - [x] Report detail modal — shows real Firestore data ✅
 - [x] Multi-image support (horizontal paging swipeable image carousel with dot navigation, layout-sync, and back/forward chevrons) in history detail modal ✅
 - [x] Status timeline with ASSIGNED stage ✅

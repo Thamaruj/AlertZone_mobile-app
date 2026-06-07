@@ -24,6 +24,7 @@ import {
   onSnapshot,
   writeBatch,
   doc,
+  updateDoc,
 } from 'firebase/firestore';
 import { Image } from 'react-native';
 import {
@@ -213,7 +214,7 @@ function CalendarModal({ value, onChange, onClose, title }: CalendarProps) {
 // ─────────────────────────────────────────────
 // Report Detail Modal
 // ─────────────────────────────────────────────
-function ReportDetailModal({ report, onClose }: { report: Report | null; onClose: () => void }) {
+function ReportDetailModal({ report, onClose, onArchive }: { report: Report | null; onClose: () => void; onArchive?: (reportId: string) => void }) {
   const { colors } = useTheme();
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const imageScrollViewRef = useRef<ScrollView>(null);
@@ -475,6 +476,30 @@ function ReportDetailModal({ report, onClose }: { report: Report | null; onClose
                 <Text style={{ color: colors.text, fontSize: 13, lineHeight: 22 }}>{report.resolutionNote}</Text>
               </View>
             )}
+
+            {/* Move to Archive for REJECTED reports */}
+            {report.status === 'REJECTED' && onArchive && (
+              <Pressable
+                onPress={() => {
+                  onArchive(report.id);
+                  onClose();
+                }}
+                style={{
+                  backgroundColor: '#DC2626',
+                  borderRadius: 16,
+                  padding: 16,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  marginTop: 8
+                }}
+                className="active:opacity-70"
+              >
+                <Ionicons name="archive-outline" size={20} color="white" />
+                <Text style={{ color: 'white', fontWeight: '700' }}>Move to Archive</Text>
+              </Pressable>
+            )}
           </View>
 
         </ScrollView>
@@ -486,7 +511,7 @@ function ReportDetailModal({ report, onClose }: { report: Report | null; onClose
 // ─────────────────────────────────────────────
 // Report Card
 // ─────────────────────────────────────────────
-function ReportCard({ report, onPress }: { report: Report; onPress: () => void }) {
+function ReportCard({ report, onPress, onArchive }: { report: Report; onPress: () => void; onArchive?: () => void }) {
   const { colors } = useTheme();
   const cfg = STATUS_CONFIG[report.status] ?? STATUS_CONFIG.PENDING;
   return (
@@ -557,6 +582,32 @@ function ReportCard({ report, onPress }: { report: Report; onPress: () => void }
             </Text>
           </View>
         </View>
+
+        {report.status === 'REJECTED' && onArchive && (
+          <Pressable
+            onPress={(e) => {
+              e.stopPropagation();
+              onArchive();
+            }}
+            style={{
+              backgroundColor: colors.background,
+              borderColor: '#DC2626',
+              borderWidth: 1,
+              borderRadius: 10,
+              paddingVertical: 6,
+              paddingHorizontal: 12,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 6,
+              marginTop: 8,
+              alignSelf: 'flex-start',
+            }}
+            className="active:opacity-75"
+          >
+            <Ionicons name="archive-outline" size={14} color="#DC2626" />
+            <Text style={{ color: '#DC2626', fontSize: 11, fontWeight: '700' }}>Move to Archive</Text>
+          </Pressable>
+        )}
       </View>
 
       {/* Status Pill & Arrow */}
@@ -609,6 +660,27 @@ export default function HistoryScreen() {
   const [firestoreLoading, setFirestoreLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<FilterTab>('Pending');
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
+
+  const handleArchive = async (reportId: string) => {
+    try {
+      await updateDoc(doc(db, 'reports', reportId), {
+        isArchived: true,
+        updatedAt: new Date(),
+      });
+      Toast.show({
+        type: 'success',
+        text1: 'Report Archived',
+        text2: 'The report has been moved to the archive.',
+      });
+    } catch (err) {
+      console.error('Error archiving report:', err);
+      Toast.show({
+        type: 'error',
+        text1: 'Failed to Archive',
+        text2: 'An error occurred while archiving the report.',
+      });
+    }
+  };
 
   // Date filter state
   const [activeDateFilter, setActiveDateFilter] = useState<DateFilterId>('all');
@@ -933,6 +1005,68 @@ export default function HistoryScreen() {
 
         {/* ── Report List ── */}
         <View className="px-5">
+          {!firestoreLoading && activeFilter === 'Resolved' && (
+            <Pressable
+              onPress={() => router.push('/archive' as any)}
+              style={{
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+                borderWidth: 1,
+                borderRadius: 16,
+                padding: 16,
+                marginBottom: 16,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 12
+              }}
+              className="active:opacity-85"
+            >
+              <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#0D8A7218', alignItems: 'center', justifyContent: 'center' }}>
+                <Ionicons name="archive-outline" size={20} color="#0D8A72" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: colors.text, fontSize: 13, fontWeight: '600' }}>
+                  Resolved Issues Archive
+                </Text>
+                <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 2, lineHeight: 16 }}>
+                  All resolved issues are moved to the archive 24 hours after they have been resolved. <Text style={{ color: colors.primary, fontWeight: '700' }}>Click here to see those.</Text>
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+            </Pressable>
+          )}
+
+          {!firestoreLoading && activeFilter === 'Rejected' && (
+            <Pressable
+              onPress={() => router.push('/archive' as any)}
+              style={{
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+                borderWidth: 1,
+                borderRadius: 16,
+                padding: 16,
+                marginBottom: 16,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 12
+              }}
+              className="active:opacity-85"
+            >
+              <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#DC262618', alignItems: 'center', justifyContent: 'center' }}>
+                <Ionicons name="archive-outline" size={20} color="#DC2626" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: colors.text, fontSize: 13, fontWeight: '600' }}>
+                  Rejected Issues Archive
+                </Text>
+                <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 2, lineHeight: 16 }}>
+                  Rejected issues can be manually moved to the archive to clean up your history. <Text style={{ color: colors.primary, fontWeight: '700' }}>Click here to see those.</Text>
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+            </Pressable>
+          )}
+
           {firestoreLoading ? (
             <View className="items-center py-16">
               <ActivityIndicator color={colors.primary} size="large" />
@@ -966,6 +1100,7 @@ export default function HistoryScreen() {
                   key={report.id}
                   report={report}
                   onPress={() => setSelectedReport(report)}
+                  onArchive={() => handleArchive(report.id)}
                 />
               ))}
 
@@ -1017,6 +1152,7 @@ export default function HistoryScreen() {
       <ReportDetailModal
         report={selectedReport}
         onClose={() => setSelectedReport(null)}
+        onArchive={handleArchive}
       />
     </View>
   );
